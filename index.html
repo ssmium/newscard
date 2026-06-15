@@ -182,6 +182,7 @@ const SUGGEST={
 let tags={beauty:[],fashion:[]};
 let currentArticles=[];
 let cards=[];
+let generationSeq=0;
 let cardImages={};
 let cardStyles={};
 let lastQuery='';
@@ -338,16 +339,18 @@ async function fetchTextProxy(targetUrl){
   ];
 
   for(const url of proxies){
+    let timer=null;
     try{
       const ctrl=new AbortController();
-      const timer=setTimeout(()=>ctrl.abort(),9000);
+      timer=setTimeout(()=>ctrl.abort(),6500);
       const res=await fetch(url,{signal:ctrl.signal});
-      clearTimeout(timer);
       if(!res.ok) continue;
       const text=await res.text();
       if(text && text.length>400) return text;
     }catch(e){
       console.warn('본문 프록시 실패:', e.message);
+    }finally{
+      if(timer) clearTimeout(timer);
     }
   }
 
@@ -575,44 +578,64 @@ function makePoints(title,desc){
 }
 function makeTags(title,desc){return [...new Set(('#카드뉴스 #뉴스 '+lastQuery.split(/\s+/).map(v=>'#'+v).join(' ')).split(/\s+/))].slice(0,8).join(' ')}
 
+
+function commitGeneratedCards(article,sourceText){
+  const hook=makeHook(article.title,sourceText).replace(/요요/g,'요');
+  const pts=makePoints(article.title,sourceText).map(v=>String(v||'').replace(/요요/g,'요').replace(/죠요/g,'죠'));
+
+  cards=[
+    {label:'HOOK',role:'HOOK',title:hook,body:'',subtitle:(article.domain||'')+' · '+(article.date||''),type:'hook'},
+    {label:'BODY 1',role:'NOW TRENDING',title:'NOW TRENDING',body:pts[0]||'',type:'body'},
+    {label:'BODY 2',role:'THE TAKEAWAY',title:'THE TAKEAWAY',body:pts[1]||'',type:'body'},
+    {label:'BODY 3',role:"WHAT'S NEXT",title:"WHAT'S NEXT",body:pts[2]||'',type:'body'},
+    {label:'CTA',role:'CTA',title:'"이거 왜 난리예요?"',body:'복잡한 이슈, 핵심만 쉽게\n한 장씩 넘기면 정리 끝',type:'cta'}
+  ];
+
+  // 뉴스가 바뀌면 이전 뉴스의 이미지/색상/수정 상태가 섞이지 않도록 초기화
+  cardImages={};
+  cardStyles={};
+
+  renderCards();
+  $('cards-panel').style.display='block';
+}
+
 async function generateFromArticle(index){
-  const a=currentArticles[index];
-  if(!a){showToast('기사 정보를 찾지 못했어요.');return}
+  hideLoading();
+  const token=++generationSeq;
+
+  const article=currentArticles[index];
+  if(!article){
+    showToast('기사 정보를 찾지 못했어요.');
+    return;
+  }
+
   document.querySelectorAll('.article').forEach((el,i)=>el.classList.toggle('selected',i===index));
 
-  showLoading('기사 본문을 불러오는 중...');
+  // 1차: 두 번째 뉴스부터 먹통처럼 보이지 않게, 검색 결과 설명으로 즉시 카드 전체 반영
+  const quickSource=article.desc || article.title || '';
+  commitGeneratedCards(article,quickSource);
 
+  setTimeout(()=>$('cards-panel').scrollIntoView({behavior:'smooth',block:'start'}),60);
+  showToast('선택한 뉴스가 카드뉴스에 바로 반영됐어요.');
+
+  // 2차: 본문 읽기는 백그라운드에서만 시도. 화면 전체 로딩으로 클릭을 막지 않음.
   let body='';
   try{
-    body=await readArticleBody(a);
+    body=await readArticleBody(article);
   }catch(e){
     console.warn('기사 본문 읽기 실패:', e);
     body='';
   }
 
-  const sourceText=body || a.desc || a.title;
+  // 그 사이 다른 뉴스를 눌렀으면 이전 뉴스 결과가 뒤늦게 덮어쓰지 않게 차단
+  if(token!==generationSeq) return;
 
-  const hook=makeHook(a.title,sourceText).replace(/요요/g,'요');
-  const pts=makePoints(a.title,sourceText).map(v=>String(v||'').replace(/요요/g,'요').replace(/죠요/g,'죠'));
-  cards=[
-    {label:'HOOK',role:'HOOK',title:hook,body:'',subtitle:(a.domain||'')+' · '+(a.date||''),type:'hook'},
-    {label:'BODY 1',role:'NOW TRENDING',title:'NOW TRENDING',body:pts[0],type:'body'},
-    {label:'BODY 2',role:'THE TAKEAWAY',title:'THE TAKEAWAY',body:pts[1],type:'body'},
-    {label:'BODY 3',role:"WHAT'S NEXT",title:"WHAT'S NEXT",body:pts[2],type:'body'},
-    {label:'CTA',role:'CTA',title:'"이거 왜 난리예요?"',body:'복잡한 이슈, 핵심만 쉽게\n한 장씩 넘기면 정리 끝',type:'cta'}
-  ];
-  cardImages={}; cardStyles={};
-  renderCards();
-  $('cards-panel').style.display='block';
-  hideLoading();
-
-  if(body){
-    showToast('기사 본문을 읽고 카드뉴스에 반영했어요.');
+  if(body && body.length>120){
+    commitGeneratedCards(article,body);
+    showToast('기사 본문 기반으로 요약을 업데이트했어요.');
   }else{
-    showToast('본문 접근 실패: 검색 설명으로 카드뉴스를 만들었어요.');
+    console.warn('[ARTICLE_BODY_FAIL] 본문 접근 실패. 검색 설명 기반 카드를 유지합니다.');
   }
-
-  setTimeout(()=>$('cards-panel').scrollIntoView({behavior:'smooth',block:'start'}),80);
 }
 
 function styleOf(i){
