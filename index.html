@@ -713,7 +713,7 @@
     }
     .mini-body{
       margin-top:10px;
-      font-size:7.8px;
+      font-size:7.2px;
       line-height:1.58;
       font-weight:850;
       white-space:pre-line;
@@ -1646,24 +1646,25 @@ function stripNaverHtml(value=""){
 }
 
 function makeArticlePoints(title,description,query,category){
-  const keyword=query || (category==="fashion" ? "패션" : "뷰티");
-  const cleanTitle=cleanText(title);
-  const cleanDesc=cleanText(description);
-  const sourceText=cleanDesc || cleanTitle;
-
+  // 검색 결과의 설명문을 임의로 바꾸지 않고, 실제 문장을 순서대로 나눠 담습니다.
+  const sourceText=cleanText(description || title || "");
   const sentences=splitSentences(sourceText)
-    .map(v=>v.replace(/\.\.\.$/,"").trim())
-    .filter(v=>v.length>6);
+    .map(v=>cleanText(v))
+    .filter(v=>v.length>0);
 
-  const first=sentences[0] || sourceText || `${keyword} 관련 최신 뉴스가 검색 결과에서 확인됐어요.`;
-  const second=sentences[1] || `기사의 핵심은 '${cleanTitle.slice(0,32)}' 이슈가 ${keyword} 키워드와 연결되고 있다는 점이에요.`;
-  const third=sentences[2] || `정리하면 ${keyword} 관련 흐름을 짧게 저장하고 공유하기 좋은 뉴스로 볼 수 있어요.`;
+  if(sentences.length>=3){
+    return [sentences[0], sentences[1], sentences.slice(2).join(" ")];
+  }
 
-  return [
-    trimText(first,170),
-    trimText(second,170),
-    trimText(third,170)
-  ];
+  if(sentences.length===2){
+    return [sentences[0], sentences[1], ""];
+  }
+
+  if(sentences.length===1){
+    return [sentences[0], "", ""];
+  }
+
+  return [sourceText, "", ""];
 }
 
 async function fetchJsonWithTimeout(url,options={},timeout=12000){
@@ -1848,11 +1849,6 @@ function extractArticleTextFromHtml(htmlText){
     doc.querySelector('meta[name="description"]')?.getAttribute("content") ||
     "";
 
-  const title =
-    doc.querySelector('meta[property="og:title"]')?.getAttribute("content") ||
-    doc.querySelector("title")?.textContent ||
-    "";
-
   const articleSelectors=[
     "#dic_area",
     "#newsct_article",
@@ -1881,29 +1877,35 @@ function extractArticleTextFromHtml(htmlText){
     bodyText=paragraphs.join(" ");
   }
 
-  return cleanText([title, metaDesc, bodyText].filter(Boolean).join(" "));
+  // 제목을 본문에 섞지 않습니다. 실제 기사 본문 또는 description만 사용합니다.
+  return cleanText(bodyText || metaDesc);
 }
 
 function summarizeTextToPoints(title,content,keyword){
-  const cleanTitle=cleanText(title);
-  const cleanContent=cleanText(content);
-  const key=keyword || "뉴스";
-
+  // 기사 본문을 임의로 변형하지 않고 실제 문장만 순서대로 가져옵니다.
+  const cleanContent=cleanText(content || "");
   const sentences=splitSentences(cleanContent)
     .map(v=>v.replace(/\[[^\]]+\]/g,"").trim())
-    .filter(v=>v.length>10)
-    .filter(v=>!/(무단전재|재배포|기자|Copyright|저작권|구독|공유|사진=|제공=)/i.test(v));
+    .filter(v=>v.length>0)
+    .filter(v=>!/(무단전재|재배포|Copyright|저작권|구독|공유|사진=|제공=)/i.test(v));
 
-  const who = cleanTitle.split(/[,.…·\-]/)[0].slice(0,22);
-  const s1 = sentences[0] || cleanContent || cleanTitle;
-  const s2 = sentences[1] || sentences[0] || cleanTitle;
-  const s3 = sentences.slice(2,4).join(" ") || sentences[1] || sentences[0] || cleanTitle;
+  if(sentences.length>=3){
+    return [
+      sentences[0],
+      sentences[1],
+      sentences.slice(2,4).join(" ")
+    ];
+  }
 
-  return [
-    trimText(`${s1}`, 155),
-    trimText(`${s2}`, 155),
-    trimText(`${s3}`, 155)
-  ];
+  if(sentences.length===2){
+    return [sentences[0], sentences[1], ""];
+  }
+
+  if(sentences.length===1){
+    return [sentences[0], "", ""];
+  }
+
+  return [cleanContent, "", ""];
 }
 
 async function enrichArticleBeforeSummary(article){
@@ -2042,54 +2044,39 @@ function trimText(text,max=145){
 }
 
 function makeHookTitle(title,keyword){
-  const clean=cleanText(title)
-    .replace(/\[[^\]]+\]/g,"")
-    .replace(/["“”]/g,"")
-    .replace(/\s+/g," ")
+  // 기사 제목을 임의로 변형하지 않고 그대로 사용합니다.
+  // 네이버 검색 결과에 포함된 <b> 태그, 과한 공백만 제거합니다.
+  return cleanText(title)
+    .replace(/\[[^\]]+\]\s*/g, "")
+    .replace(/\s+/g, " ")
     .trim();
-
-  // 기사 제목을 카드뉴스 첫 장에 맞게 짧고 궁금증 있게 변환
-  if(/[?？]$/.test(clean)) return trimText(clean,34);
-
-  const cut=clean
-    .replace(/^\[.*?\]\s*/,"")
-    .replace(/\s*[-|].*$/,"")
-    .replace(/….*$/,"")
-    .slice(0,28)
-    .trim();
-
-  if(keyword && !cut.includes(keyword) && cut.length < 18){
-    return trimText(`${keyword}, 지금 왜 주목받을까?`,34);
-  }
-
-  return trimText(`${cut}`,34);
 }
 
 function summarizeArticle(article){
-  const title=cleanText(article.title || "").replace(/[“”"']/g,"").trim();
+  const title=cleanText(article.title || "").replace(/[“”"]/g,"").trim();
   const keyword=article.tag || "뉴스";
-  const content=cleanText(article.content || article.summary || article.description || title);
+  const content=cleanText(article.content || article.summary || article.description || "");
 
   const basePoints = article.points && article.points.length >= 3
-    ? article.points.map(v=>trimText(cleanText(v),155))
+    ? article.points.map(v=>cleanText(v))
     : summarizeTextToPoints(title, content, keyword);
 
   const hook = makeHookTitle(title, keyword);
 
   return {
     hook,
-    body1:basePoints[0],
-    body2:basePoints[1],
-    body3:basePoints[2],
+    body1:basePoints[0] || "",
+    body2:basePoints[1] || "",
+    body3:basePoints[2] || "",
     caption:[
       `⭐ ${hook}`,
       "",
-      `📍 ${basePoints[0]}`,
+      basePoints[0] ? `📍 ${basePoints[0]}` : "",
       "",
-      `📍 ${basePoints[1]}`,
+      basePoints[1] ? `📍 ${basePoints[1]}` : "",
       "",
-      `💬 ${basePoints[2]}`
-    ].join("\n")
+      basePoints[2] ? `💬 ${basePoints[2]}` : ""
+    ].filter(v=>v !== "").join("\n")
   };
 }
 
