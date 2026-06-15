@@ -1,0 +1,2183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MAGAZINIE 카드뉴스 메이커 v3</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
+
+    :root{
+      --ink:#101014;
+      --muted:#697386;
+      --line:#e5e7eb;
+      --soft:#f8fafc;
+      --pink:#ff70ba;
+      --pink-soft:#fff0f8;
+      --point:#e0483b;
+      --black:#101010;
+      --radius:14px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--ink);
+      background:#fff;
+      letter-spacing:-.025em;
+    }
+    button,input,textarea,select{font:inherit}
+    button{border:0;cursor:pointer}
+    [hidden]{display:none!important}
+
+    .app{
+      display:grid;
+      grid-template-columns:250px minmax(0,1fr);
+      min-height:100vh;
+    }
+
+    .sidebar{
+      border-right:1px solid var(--line);
+      padding:32px 22px;
+      position:sticky;
+      top:0;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      gap:28px;
+      background:#fff;
+      z-index:2;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding-bottom:22px;
+      border-bottom:1px solid var(--line);
+    }
+    .brand-mark{
+      width:32px;height:32px;
+      border-radius:7px;
+      background:#111;color:#fff;
+      display:grid;place-items:center;
+      font-weight:900;
+      font-family:Georgia,serif;
+    }
+    .brand-name{
+      font-size:14px;
+      font-weight:950;
+      letter-spacing:.16em;
+    }
+
+    .side-section-title{
+      margin:0 0 12px 14px;
+      color:#64748b;
+      font-size:12px;
+      font-weight:850;
+      text-transform:uppercase;
+      letter-spacing:.18em;
+    }
+
+    .nav{display:grid;gap:8px}
+    .nav button{
+      width:100%;
+      padding:13px 14px;
+      border-radius:8px;
+      background:transparent;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      color:#454b55;
+      font-weight:850;
+      text-align:left;
+    }
+    .nav button.active{
+      background:#f3f3f3;
+      color:#111;
+    }
+    .nav .num{
+      width:18px;height:18px;
+      border:1.5px solid #9ca3af;
+      border-radius:999px;
+      display:grid;place-items:center;
+      font-size:11px;
+      color:#64748b;
+      background:#fff;
+      flex:0 0 auto;
+    }
+
+    .steps{
+      border-top:1px solid var(--line);
+      padding-top:18px;
+    }
+    .step-title-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      color:#526071;
+      font-size:13px;
+      margin-bottom:12px;
+    }
+    .step-list{display:grid;gap:12px}
+    .step-card{
+      display:grid;
+      grid-template-columns:26px 1fr;
+      gap:10px;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:16px 14px;
+      opacity:.72;
+    }
+    .step-card.active{
+      background:var(--pink-soft);
+      border-color:var(--pink);
+      opacity:1;
+      box-shadow:0 12px 30px rgba(255,112,186,.10);
+    }
+    .step-badge{
+      width:24px;height:24px;
+      border-radius:9px;
+      background:#d1d5db;
+      color:#fff;
+      display:grid;place-items:center;
+      font-size:13px;
+      font-weight:950;
+    }
+    .step-card.active .step-badge{background:var(--pink)}
+    .step-card strong{
+      display:block;
+      font-size:13px;
+      margin-bottom:5px;
+    }
+    .step-card p{
+      margin:0;
+      color:#7d7080;
+      font-size:11px;
+      line-height:1.55;
+    }
+    .side-foot{
+      margin-top:auto;
+      color:#64748b;
+      font-size:12px;
+      line-height:1.6;
+    }
+
+    .main{
+      padding:66px 56px;
+      min-width:0;
+    }
+    .eyebrow{
+      color:#6b7280;
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.22em;
+      text-transform:uppercase;
+      margin-bottom:8px;
+    }
+    h1{
+      margin:0;
+      font-size:32px;
+      line-height:1.15;
+      letter-spacing:-.06em;
+    }
+    .page-top{margin-bottom:24px}
+
+    .layout{
+      display:grid;
+      grid-template-columns:minmax(420px,540px) minmax(310px,360px);
+      gap:36px;
+      align-items:start;
+    }
+
+    .form-card,.panel{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:#fff;
+      padding:22px;
+    }
+
+    .field{margin-bottom:20px}
+    .field:last-child{margin-bottom:0}
+    label{
+      display:block;
+      color:#374151;
+      font-size:13px;
+      font-weight:850;
+      margin-bottom:7px;
+    }
+    .help{
+      margin:-2px 0 9px;
+      color:#6b7280;
+      font-size:12px;
+      line-height:1.55;
+    }
+    input[type="text"],textarea,select{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:8px;
+      padding:12px 13px;
+      background:#fff;
+      outline:none;
+    }
+    textarea{min-height:76px;resize:vertical}
+    input[type="text"]:focus,textarea:focus,select:focus{
+      border-color:#111;
+      box-shadow:0 0 0 3px rgba(17,17,17,.05);
+    }
+
+    .divider-label{
+      margin:28px 0 14px;
+      color:#5b6471;
+      font-size:13px;
+      font-weight:950;
+      letter-spacing:.08em;
+    }
+    .upload-row{
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
+    .logo-preview{
+      width:64px;height:64px;
+      border-radius:999px;
+      background:#e5e7eb;
+      overflow:hidden;
+      display:grid;place-items:center;
+      color:#9ca3af;
+      font-weight:900;
+      flex:0 0 auto;
+    }
+    .logo-preview img{width:100%;height:100%;object-fit:cover}
+    .file-btn,.ghost-btn{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:8px;
+      padding:10px 12px;
+      font-size:12px;
+      font-weight:900;
+      color:#111;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+    }
+    .file-btn input{display:none}
+
+    .color-row{
+      display:grid;
+      grid-template-columns:44px 1fr;
+      gap:12px;
+      align-items:center;
+    }
+    input[type="color"]{
+      width:42px;height:34px;
+      border:1px solid var(--line);
+      border-radius:6px;
+      background:#fff;
+      padding:3px;
+    }
+
+    .btn-primary{
+      width:100%;
+      background:#111;
+      color:#fff;
+      border-radius:8px;
+      padding:15px 18px;
+      font-weight:950;
+      margin-top:18px;
+    }
+    .btn-primary:hover{background:#222}
+    .btn-secondary{
+      background:#f3f4f6;
+      color:#111827;
+      border-radius:8px;
+      padding:12px 14px;
+      font-weight:900;
+      border:1px solid #e5e7eb;
+    }
+
+    .preview-panel h3{
+      margin:0 0 14px;
+      color:#5b6471;
+      font-size:14px;
+      font-weight:900;
+    }
+    .preview-shell{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      min-height:430px;
+      padding:22px;
+      background:#fff;
+      display:grid;
+      place-items:center;
+    }
+
+    .news-card{
+      width:300px;
+      height:380px;
+      padding:42px 30px 26px;
+      background:#fff;
+      color:#111;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-end;
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);
+      overflow:hidden;
+      position:relative;
+    }
+    .card-logo-img{
+      width:58px;height:58px;
+      border-radius:999px;
+      object-fit:cover;
+      margin-bottom:26px;
+      background:#eee;
+    }
+    .card-title{
+      font-size:24px;
+      line-height:1.22;
+      letter-spacing:-.075em;
+      font-weight:950;
+      white-space:pre-line;
+      word-break:keep-all;
+    }
+    .card-sub{
+      margin-top:14px;
+      color:#4b5563;
+      font-size:13px;
+      line-height:1.55;
+      font-weight:700;
+      white-space:pre-line;
+    }
+    .card-point{
+      color:var(--point);
+      font-weight:900;
+      margin-top:10px;
+      font-size:13px;
+      white-space:pre-line;
+    }
+    .hashtags{
+      border-top:1px solid rgba(0,0,0,.08);
+      padding-top:16px;
+      margin-top:20px;
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+    .tag{
+      font-size:9px;
+      border:1px solid rgba(0,0,0,.25);
+      padding:3px 6px;
+      color:#111;
+      background:rgba(255,255,255,.22);
+    }
+
+    /* Maker page */
+    .maker-grid{max-width:1120px}
+    .mag-select-row{
+      width:480px;
+      max-width:100%;
+      margin-bottom:18px;
+    }
+    .limit-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:9px 14px;
+      color:#6b7280;
+      font-size:13px;
+      margin-bottom:18px;
+    }
+    .limit-pill strong{color:#111;font-size:14px}
+
+    .search-card{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:#fff;
+      padding:18px;
+      margin-bottom:16px;
+      height:594px;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+    .search-title{
+      font-size:14px;
+      font-weight:950;
+      margin-bottom:3px;
+    }
+    .search-desc{
+      color:#64748b;
+      font-size:12px;
+      margin-bottom:16px;
+    }
+    .keyword-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:22px;
+      margin-bottom:16px;
+    }
+    .keyword-box{
+      border:1px solid #dbe3ee;
+      border-radius:12px;
+      padding:18px 16px 14px;
+      background:#fff;
+      min-height:206px;
+    }
+    .keyword-box.active{border-color:var(--pink)}
+    .keyword-head{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:8px;
+    }
+    .keyword-title{font-size:18px;font-weight:950}
+    .keyword-count{color:#64748b;font-size:12px;padding-top:3px}
+    .keyword-sub{
+      color:#64748b;
+      font-size:12px;
+      line-height:1.5;
+      margin-bottom:10px;
+    }
+    .chip-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-bottom:10px;
+    }
+    .chip{
+      border:1px solid #dbe3ee;
+      border-radius:999px;
+      background:#f8fafc;
+      color:#334155;
+      padding:4px 9px;
+      font-size:11px;
+      font-weight:850;
+    }
+    .chip.selected{
+      color:#e14b96;
+      background:#fff3fa;
+      border-color:#ffb6dd;
+    }
+    .add-row{
+      display:grid;
+      grid-template-columns:1fr 48px;
+      gap:6px;
+      margin-bottom:10px;
+    }
+    .add-row input{
+      height:32px;
+      padding:7px 10px;
+      font-size:12px;
+    }
+    .add-row button{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:8px;
+      font-size:12px;
+      font-weight:900;
+    }
+    .search-btn{
+      width:100%;
+      height:42px;
+      border-radius:8px;
+      background:#111;
+      color:#fff;
+      font-weight:950;
+    }
+    .search-btn.disabled{
+      background:#9ca3af;
+      pointer-events:none;
+    }
+
+    .result-area{
+      min-height:0;
+      flex:1;
+      overflow:auto;
+      padding-right:8px;
+    }
+    .result-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
+    }
+    .article-card{
+      display:grid;
+      grid-template-columns:118px 1fr;
+      gap:12px;
+      min-height:96px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      background:#fff;
+      padding:10px;
+      cursor:pointer;
+      transition:.16s ease;
+    }
+    .article-card:hover{
+      border-color:#ff8cc8;
+      box-shadow:0 8px 22px rgba(255,112,186,.10);
+    }
+    .article-card.selected{
+      border-color:#ff70ba;
+      background:#fff7fc;
+    }
+    .thumb{
+      height:78px;
+      border-radius:6px;
+      background:linear-gradient(135deg,#d8dce5,#f7f8fb);
+      overflow:hidden;
+      position:relative;
+    }
+    .thumb::after{
+      content:"";
+      position:absolute;
+      inset:14px;
+      border-radius:6px;
+      background:rgba(255,255,255,.5);
+    }
+    .article-title{
+      margin:0 0 6px;
+      font-size:13px;
+      font-weight:950;
+      line-height:1.35;
+      display:-webkit-box;
+      -webkit-line-clamp:2;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+    .article-meta{
+      color:#64748b;
+      font-size:11px;
+      line-height:1.35;
+      margin-bottom:6px;
+    }
+    .article-tag{
+      display:inline-flex;
+      border-radius:999px;
+      background:#ffe9f5;
+      color:#f05aaa;
+      padding:3px 8px;
+      font-size:10px;
+      font-weight:900;
+    }
+    .provider{
+      margin-top:12px;
+      padding-top:12px;
+      border-top:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:#64748b;
+      font-size:12px;
+    }
+    .provider strong{color:#03c75a}
+
+    .selected-box{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:#fff;
+      padding:18px;
+      display:grid;
+      grid-template-columns:1fr 320px;
+      gap:20px;
+      align-items:start;
+      margin-bottom:18px;
+    }
+    .selected-box h3{
+      margin:0 0 8px;
+      font-size:16px;
+      font-weight:950;
+    }
+    .selected-box p{
+      margin:0;
+      color:#64748b;
+      font-size:13px;
+      line-height:1.65;
+    }
+    .selected-actions{display:grid;gap:10px}
+    .selected-actions button{margin-top:0}
+
+    /* Editor that appears below */
+    .editor-section{
+      border-top:1px solid #eff2f6;
+      padding-top:18px;
+      margin-top:8px;
+    }
+    .editor-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      margin-bottom:14px;
+    }
+    .editor-head-left h2{
+      margin:0 0 12px;
+      font-size:13px;
+      font-weight:950;
+      color:#334155;
+      letter-spacing:.08em;
+    }
+    .editor-head-left p{
+      margin:0;
+      color:#6b7280;
+      font-size:12px;
+      line-height:1.6;
+    }
+    .zip-btn{
+      background:#111;
+      color:#fff;
+      border-radius:6px;
+      padding:10px 16px;
+      font-size:13px;
+      font-weight:950;
+      white-space:nowrap;
+    }
+    .card-edit-scroll{
+      overflow-x:auto;
+      padding-bottom:12px;
+      scrollbar-color:#8b8b8b #f1f1f1;
+    }
+    .card-edit-grid{
+      display:grid;
+      grid-auto-flow:column;
+      grid-auto-columns:220px;
+      gap:14px;
+      min-width:max-content;
+    }
+    .edit-unit{
+      width:220px;
+    }
+    .card-label{
+      margin:0 0 8px;
+      color:#6b7280;
+      font-size:11px;
+      font-weight:950;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+    }
+
+    .mini-card{
+      width:220px;
+      height:304px;
+      border-radius:6px;
+      background:#0e0e0e;
+      color:#fff;
+      padding:22px 18px;
+      position:relative;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-end;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+    .mini-card::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(to bottom,rgba(255,255,255,.02),rgba(255,255,255,0) 35%,rgba(0,0,0,.30));
+      pointer-events:none;
+    }
+    .mini-card img{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      opacity:.34;
+      filter:saturate(.9) contrast(1.05);
+    }
+    .mini-content{
+      position:relative;
+      z-index:1;
+    }
+    .mini-kicker{
+      color:#ffb0b0;
+      font-size:6px;
+      font-weight:950;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      margin-bottom:12px;
+    }
+    .mini-title{
+      font-size:16px;
+      line-height:1.18;
+      font-weight:950;
+      letter-spacing:-.07em;
+      white-space:pre-line;
+      word-break:keep-all;
+    }
+    .mini-body{
+      margin-top:10px;
+      font-size:7.8px;
+      line-height:1.58;
+      font-weight:850;
+      white-space:pre-line;
+      word-break:keep-all;
+    }
+    .mini-logo{
+      margin-top:18px;
+      color:#e5e7eb;
+      font-size:5.5px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-align:right;
+    }
+
+    .align-row{
+      display:grid;
+      grid-template-columns:1fr 50px 1fr;
+      gap:6px;
+      align-items:center;
+      margin-top:8px;
+    }
+    .align-row button{
+      height:26px;
+      border:1px solid var(--line);
+      border-radius:5px;
+      background:#fff;
+      font-size:14px;
+      font-weight:900;
+    }
+    .align-row span{
+      text-align:center;
+      color:#777;
+      font-size:11px;
+    }
+    .image-change{
+      width:100%;
+      margin-top:6px;
+      height:28px;
+      border:1px solid var(--line);
+      border-radius:5px;
+      background:#fff;
+      display:grid;
+      place-items:center;
+      color:#111;
+      font-size:11px;
+      font-weight:950;
+    }
+    .image-change input{display:none}
+
+    .edit-small{
+      margin-top:8px;
+      border-top:1px solid #edf0f4;
+      padding-top:8px;
+    }
+    .edit-small label{
+      margin:0 0 5px;
+      color:#9ca3af;
+      font-size:10px;
+      font-weight:850;
+    }
+    .edit-small textarea,.edit-small input[type="text"]{
+      padding:8px 9px;
+      font-size:11px;
+      border-radius:5px;
+    }
+    .edit-small textarea{
+      min-height:60px;
+      line-height:1.45;
+    }
+    .control-line{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      margin-top:8px;
+      color:#6b7280;
+      font-size:10px;
+    }
+    .control-line input[type="color"]{
+      width:28px;
+      height:24px;
+      padding:2px;
+    }
+    .scale-control{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      margin-top:6px;
+      color:#6b7280;
+      font-size:10px;
+    }
+    .scale-control button{
+      width:25px;height:25px;
+      border:1px solid var(--line);
+      border-radius:5px;
+      background:#fff;
+      font-weight:950;
+    }
+    .apply-btn{
+      width:100%;
+      height:32px;
+      border-radius:5px;
+      background:#111;
+      color:#fff;
+      font-size:11px;
+      font-weight:950;
+      margin-top:8px;
+    }
+
+    .text-output{
+      margin-top:18px;
+    }
+    .output-row{
+      margin-bottom:12px;
+    }
+    .output-head{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-bottom:7px;
+    }
+    .output-head strong{
+      font-size:12px;
+      color:#475569;
+    }
+    .copy-btn{
+      border:1px solid var(--line);
+      border-radius:5px;
+      background:#fff;
+      padding:5px 10px;
+      font-size:11px;
+      font-weight:900;
+    }
+    .text-output textarea{
+      width:100%;
+      min-height:64px;
+      border:1px solid #777;
+      border-radius:0;
+      padding:10px;
+      color:#111;
+      font-size:12px;
+      line-height:1.65;
+      resize:vertical;
+    }
+
+
+    .manual-panel{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:#fff;
+      padding:18px;
+      margin-bottom:18px;
+    }
+    .manual-panel h3{
+      margin:0 0 8px;
+      font-size:16px;
+      font-weight:950;
+    }
+    .manual-panel p{
+      margin:0 0 14px;
+      color:#64748b;
+      font-size:13px;
+      line-height:1.65;
+    }
+    .manual-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .manual-panel textarea{
+      min-height:150px;
+    }
+    .manual-actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:12px;
+    }
+    @media(max-width:960px){
+      .manual-grid,.manual-actions{grid-template-columns:1fr}
+    }
+
+    .toast{
+      position:fixed;
+      right:22px;
+      bottom:22px;
+      background:#111;
+      color:#fff;
+      border-radius:10px;
+      padding:13px 16px;
+      font-size:13px;
+      font-weight:850;
+      opacity:0;
+      pointer-events:none;
+      transform:translateY(20px);
+      transition:.24s ease;
+      z-index:50;
+      box-shadow:0 18px 45px rgba(15,23,42,.18);
+    }
+    .toast.show{
+      opacity:1;
+      transform:translateY(0);
+    }
+
+    @media(max-width:1180px){
+      .result-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media(max-width:960px){
+      .app{grid-template-columns:1fr}
+      .sidebar{
+        position:static;
+        height:auto;
+        padding:18px;
+      }
+      .steps,.side-foot{display:none}
+      .main{padding:34px 18px}
+      .layout,.selected-box{grid-template-columns:1fr}
+      .keyword-grid{grid-template-columns:1fr}
+      .search-card{
+        height:auto;
+        max-height:none;
+      }
+      .result-area{overflow:visible}
+      .result-grid{grid-template-columns:1fr}
+      .preview-shell{
+        justify-content:start;
+        overflow-x:auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">M</div>
+        <div class="brand-name">MAGAZINIE</div>
+      </div>
+
+      <div>
+        <p class="side-section-title">Make</p>
+        <nav class="nav">
+          <button id="navMagazine" class="active" type="button"><span class="num">①</span> 매거진 설정</button>
+          <button id="navMaker" type="button"><span class="num">②</span> 카드뉴스 만들기</button>
+        </nav>
+      </div>
+
+      <div class="steps">
+        <div class="step-title-row">
+          <strong id="guideTitle">매거진 설정 순서</strong>
+          <span>▾</span>
+        </div>
+        <div class="step-list" id="stepList"></div>
+      </div>
+
+      <div class="side-foot">
+        MAGAZINIE<br />
+        카드뉴스 메이커
+      </div>
+    </aside>
+
+    <main class="main">
+      <section id="magazinePage">
+        <div class="page-top">
+          <div class="eyebrow">매거진 설정</div>
+          <h1>매거진 편집</h1>
+        </div>
+
+        <div class="layout">
+          <div class="form-card">
+            <div class="field">
+              <label>매거진 이름</label>
+              <p class="help">목록·선택 이름이자 마지막 카드 계정명.</p>
+              <input id="magName" type="text" value="와디즈 매거진" />
+            </div>
+
+            <div class="field">
+              <label>첫 카드 로고 이름</label>
+              <p class="help">1번 카드 상단 텍스트. 비우면 표시 안 함.</p>
+              <input id="logoName" type="text" value="what.is.mag" />
+            </div>
+
+            <div class="divider-label">마지막 카드 (CTA)</div>
+
+            <div class="field">
+              <label>로고 이미지</label>
+              <p class="help">원형 표시. 비우면 기본 로고.</p>
+              <div class="upload-row">
+                <div class="logo-preview" id="logoPreview">M</div>
+                <label class="file-btn">로고 업로드<input id="logoUpload" type="file" accept="image/*" /></label>
+                <button class="ghost-btn" id="clearLogo" type="button">삭제</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>멘트 — 헤드라인</label>
+              <p class="help">Enter로 줄바꿈.</p>
+              <textarea id="ctaHeadline">“이거 왜 난리예요?”</textarea>
+            </div>
+
+            <div class="field">
+              <label>멘트 — 카피 1줄</label>
+              <input id="ctaCopy1" type="text" value="복잡한 이슈, 핵심만 쉽게" />
+            </div>
+
+            <div class="field">
+              <label>멘트 — 카피 2줄 (포인트색)</label>
+              <input id="ctaCopy2" type="text" value="한 장씩 넘기면 정리 끝" />
+            </div>
+
+            <div class="field">
+              <label>해시태그 (3개)</label>
+              <p class="help">공백으로 구분. 비우면 기사에서 자동 생성된 태그 사용.</p>
+              <input id="hashtags" type="text" placeholder="예: #트렌드 #이슈정리 #카드뉴스" />
+            </div>
+          </div>
+
+          <div class="preview-panel">
+            <h3>마지막 카드 미리보기</h3>
+            <div class="preview-shell">
+              <div id="lastCardPreview"></div>
+            </div>
+
+            <div class="field" style="margin-top:18px">
+              <label>배경색</label>
+              <p class="help">밝은 색을 고르면 글자색이 자동으로 어두워져요.</p>
+              <div class="color-row">
+                <input id="bgColor" type="color" value="#ffffff" />
+                <input id="bgColorText" type="text" value="#ffffff" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label>포인트색</label>
+              <p class="help">카피 2줄 등 강조 색.</p>
+              <div class="color-row">
+                <input id="pointColor" type="color" value="#e0483b" />
+                <input id="pointColorText" type="text" value="#e0483b" />
+              </div>
+            </div>
+
+            <button class="btn-primary" id="saveMagazine" type="button">저장</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="makerPage" hidden>
+        <div class="page-top">
+          <div class="eyebrow">STEP 3</div>
+          <h1>뷰티·패션 카드뉴스</h1>
+        </div>
+
+        <div class="maker-grid">
+          <div class="mag-select-row">
+            <label>매거진 관리</label>
+            <select id="magSelect"></select>
+          </div>
+
+          <div class="limit-pill">오늘 남은 생성 횟수 <strong>10 / 10회</strong></div>
+
+          <div class="search-card">
+            <div class="search-title">뷰티·패션 리서치 — 키워드 선택 + 직접 추가</div>
+            <div class="search-desc">키워드는 3개 이하로 권장해요. 너무 많으면 검색이 느려지고 주제가 흩어집니다.</div>
+
+            <div class="keyword-grid">
+              <div class="keyword-box active">
+                <div class="keyword-head">
+                  <div>
+                    <div class="keyword-title">뷰티</div>
+                    <div class="keyword-sub">키워드 1개 이상 골라주세요.</div>
+                  </div>
+                  <div class="keyword-count">키워드 <span id="beautyCount">0</span>개</div>
+                </div>
+                <div id="beautyChips" class="chip-row"></div>
+                <div class="add-row">
+                  <input id="beautyInput" type="text" placeholder="+ 키워드 추가" />
+                  <button id="beautyAdd" type="button">추가</button>
+                </div>
+                <button id="beautySearch" class="search-btn" type="button">뷰티 검색</button>
+              </div>
+
+              <div class="keyword-box">
+                <div class="keyword-head">
+                  <div>
+                    <div class="keyword-title">패션</div>
+                    <div class="keyword-sub">키워드 1개 이상 골라주세요.</div>
+                  </div>
+                  <div class="keyword-count">키워드 <span id="fashionCount">0</span>개</div>
+                </div>
+                <div id="fashionChips" class="chip-row"></div>
+                <div class="add-row">
+                  <input id="fashionInput" type="text" placeholder="+ 키워드 추가" />
+                  <button id="fashionAdd" type="button">추가</button>
+                </div>
+                <button id="fashionSearch" class="search-btn disabled" type="button">패션 검색</button>
+              </div>
+            </div>
+
+            <div id="resultArea" class="result-area">
+              <div id="resultGrid" class="result-grid"></div>
+            </div>
+
+            <div class="provider">
+              <span>검색 <b id="resultCount">20건</b> 좁음 · 매칭 <b id="matchCount">20건</b></span>
+              <strong>NAVER</strong>
+              <span>검색 결과를 기반으로 제공됩니다.</span>
+            </div>
+          </div>
+
+          <div class="selected-box">
+            <div>
+              <h3 id="selectedTitle">기사를 선택하면 카드뉴스 편집창이 아래에 생성돼요.</h3>
+              <p id="selectedDesc">위 검색 결과에서 기사 카드를 클릭한 뒤 생성 버튼을 눌러주세요. 카드 미리보기, 이미지 변경, 제목·본문 수정, 캡션·해시태그 복사 영역이 아래에 표시됩니다.</p>
+            </div>
+            <div class="selected-actions">
+              <button class="btn-primary" id="generateCards" type="button">기사 선택 후 카드 생성</button>
+              <button class="btn-secondary" id="downloadAllTop" type="button">전체 ZIP 다운로드</button>
+            </div>
+          </div>
+
+          <section class="manual-panel">
+            <h3>서버 없이 기사 붙여넣기로 카드뉴스 만들기</h3>
+            <p>
+              회사 보안 때문에 API/GAS를 못 쓰는 경우, 네이버 뉴스 검색 결과를 새 탭에서 열고
+              기사 제목과 본문/요약을 아래에 붙여넣어 주세요. 붙여넣은 내용 기준으로 카드가 생성됩니다.
+            </p>
+            <div class="manual-grid">
+              <div>
+                <label>기사 제목</label>
+                <input id="manualTitle" type="text" placeholder="기사 제목을 붙여넣어 주세요" />
+              </div>
+              <div>
+                <label>출처 / 키워드</label>
+                <input id="manualSource" type="text" placeholder="예: 네이버뉴스 / 뷰티" />
+              </div>
+            </div>
+            <div>
+              <label>기사 본문 또는 요약 내용</label>
+              <textarea id="manualContent" placeholder="기사 본문, 리드문, 핵심 문장을 붙여넣어 주세요.&#10;문장이 3개 이상이면 BODY 1~3으로 자동 요약됩니다."></textarea>
+            </div>
+            <div class="manual-actions">
+              <button class="btn-secondary" id="openNaverSearch" type="button">네이버 뉴스 검색 열기</button>
+              <button class="btn-primary" id="generateManualCards" type="button" style="margin-top:0">붙여넣은 내용으로 카드 생성</button>
+            </div>
+          </section>
+
+          <section id="editorSection" class="editor-section" hidden>
+            <div class="editor-head">
+              <div class="editor-head-left">
+                <h2>카드 미리보기 (실제 PNG) — 옆으로 스크롤</h2>
+                <p>사진은 각 카드의 ‘이미지 변경’으로 직접 넣어주세요. 저작권 보호를 위해 기사 사진은 자동으로 넣지 않아요.</p>
+              </div>
+              <button class="zip-btn" id="downloadZip" type="button">⬇ 전체 ZIP 다운로드</button>
+            </div>
+
+            <div class="card-edit-scroll">
+              <div id="cardEditGrid" class="card-edit-grid"></div>
+            </div>
+
+            <div class="text-output">
+              <div class="output-row">
+                <div class="output-head">
+                  <strong>캡션</strong>
+                  <button class="copy-btn" id="copyCaption" type="button">전체 복사</button>
+                </div>
+                <textarea id="captionText"></textarea>
+              </div>
+
+              <div class="output-row">
+                <div class="output-head">
+                  <strong>해시태그</strong>
+                  <button class="copy-btn" id="copyHashtags" type="button">전체 복사</button>
+                </div>
+                <textarea id="hashtagText"></textarea>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast">저장했어요.</div>
+
+<script>
+const $ = (selector) => document.querySelector(selector);
+
+const state = {
+  logoData:"",
+  currentPage:"magazine",
+  selectedArticle:null,
+  activeCategory:"beauty",
+  selectedKeywords:{ beauty:["서촌"], fashion:[] },
+  keywordSets:{
+    beauty:["뷰티","화장품","성화수","라네즈","이니스프리","클리오","롬앤","메디큐브","아누아","올리브영"],
+    fashion:["패션","스트릿패션","K패션","패션위크","데님","무신사","29CM","유니클로","마르디메크르디"]
+  },
+  cards:[]
+};
+
+
+/**
+ * 서버/API 없이 쓰는 단일 HTML 버전입니다.
+ * 검색 버튼은 네이버 뉴스 검색 결과를 새 탭으로 열고,
+ * 사용자가 기사 제목/본문을 붙여넣으면 카드뉴스로 요약합니다.
+ */
+
+const defaultMag = {
+  id:"default",
+  name:"와디즈 매거진",
+  logoName:"what.is.mag",
+  logoData:"",
+  ctaHeadline:"“이거 왜 난리예요?”",
+  ctaCopy1:"복잡한 이슈, 핵심만 쉽게",
+  ctaCopy2:"한 장씩 넘기면 정리 끝",
+  hashtags:"",
+  bgColor:"#ffffff",
+  pointColor:"#e0483b"
+};
+
+const settingSteps = [
+  ["매거진 추가 / 선택","‘+ 매거진 추가하기’로 새로 만들거나, 목록에서 기존 매거진을 골라 편집해요."],
+  ["이름 · 로고","매거진 이름과 1번 카드 로고 이름, 마지막 카드 로고 이미지를 넣어요."],
+  ["멘트 · 해시태그","마지막 카드(CTA)의 헤드라인·카피·기본 해시태그를 정해요."],
+  ["색 정하기","배경색·포인트색을 고르고 오른쪽 미리보기로 확인해요."],
+  ["저장","저장하면 브라우저에 보관돼요. 카드 만들 때 선택해 써요."]
+];
+
+const makerSteps = [
+  ["매거진 선택 후 기사 검색","상단에서 매거진을 고르고, 뷰티·패션 또는 키워드로 기사를 검색해요."],
+  ["기사 선택 → 생성","기사를 클릭하면 AI가 5컷 카드 초안을 생성해요. 약 10~15초."],
+  ["사진 · 제목 편집","각 카드에 이미지 변경으로 사진을 올리고, 제목·재목·색·크기를 다듬어요."],
+  ["다운로드","한 장씩 또는 전체 ZIP으로 저장하고, 캡션·해시태그를 복사해요."]
+];
+
+let sampleArticles = [
+  {
+    title:"빌리지베이비, 광고 크레딧 50만원 지원 및 할인 혜택",
+    source:"what.is.mag",
+    time:"방금",
+    tag:"광고",
+    content:"빌리지베이비가 새로운 고객 광고 프로그램을 발표했어요. 첫 광고 집행 브랜드에 대해 50만원 상당의 광고 크레딧을 즉시 제공하고, 여러 광고 상품 할인 혜택도 동시에 제공한다고 밝혔어요. 브랜드는 더 낮은 초기 비용으로 캠페인을 테스트할 수 있고, 플랫폼은 초기 광고주 유입을 빠르게 늘릴 수 있어요. 이번 혜택은 광고비 부담을 줄이고 브랜드의 마케팅 참여를 끌어내기 위한 전략으로 해석돼요.",
+    points:[
+      "빌리지베이비가 새로운 고객 광고 프로그램을 발표했어요. 첫 광고 집행 브랜드에 대해 50만원 상당의 광고 크레딧을 즉시 제공하기로 했어요.",
+      "이번 광고 혜택은 브랜드의 성공적인 광고 집행을 돕기 위해 마련됐어요. 배너, 카카오 푸시, 메인 팝업 등 다양한 광고 상품을 함께 이용할 수 있어요.",
+      "이 프로그램은 많은 브랜드들이 광고에 대한 투자 부담을 덜 수 있도록 할 거예요. 광고비 절감으로 초기 마케팅에서 더 많은 중소기업이 참여할 수 있어요."
+    ]
+  },
+  {
+    title:"에디셔츠 '아이에도모두 디렉터 초청 첫 트렁크쇼 개최",
+    source:"fashionbiz.co.kr",
+    time:"06. 15. 오전 10:24",
+    tag:"서촌",
+    content:"에디셔츠가 서촌에서 아이에도모두 디렉터를 초청해 첫 트렁크쇼를 열었어요. 브랜드의 셔츠 라인과 스타일링을 직접 보여주고 고객이 제품을 체험할 수 있도록 구성했어요. 오프라인 경험을 통해 브랜드 스토리를 강화하고 구매 전환을 높이려는 전략이에요.",
+    points:[
+      "에디셔츠가 서촌에서 첫 트렁크쇼를 열고 브랜드 경험을 오프라인으로 확장했어요.",
+      "디렉터 초청 형식으로 셔츠 스타일링과 제품 디테일을 직접 설명하는 자리를 만들었어요.",
+      "이번 행사는 단순 판매보다 브랜드 스토리와 취향을 전달하는 체험형 마케팅으로 볼 수 있어요."
+    ]
+  },
+  {
+    title:"기은세 서촌 카페에서 대시한 올블랙 룩",
+    source:"topstarnews.net",
+    time:"06. 14. 오후 09:58",
+    tag:"서촌",
+    content:"기은세가 서촌 카페에서 선보인 올블랙 룩이 관심을 모았어요. 선글라스와 미니멀한 아이템을 활용해 세련된 분위기를 만들었고, 장소성과 스타일이 함께 화제가 됐어요. 카페, 동네, 패션이 함께 소비되는 라이프스타일형 콘텐츠 흐름을 보여줘요.",
+    points:[
+      "기은세의 서촌 카페 올블랙 룩이 SNS와 기사에서 함께 주목받고 있어요.",
+      "선글라스와 블랙 아이템을 중심으로 깔끔하지만 존재감 있는 스타일을 보여줬어요.",
+      "이번 이슈는 패션뿐 아니라 장소와 분위기까지 함께 소비되는 흐름을 보여줘요."
+    ]
+  },
+  {
+    title:"'43세' 기은세, 20대로 착각할 만..서촌 사로잡은 톱스타룩",
+    source:"osen.co.kr",
+    time:"06. 14. 오후 08:33",
+    tag:"서촌",
+    content:"기은세의 서촌 나들이 패션이 화제예요. 자연스러운 스타일링과 세련된 실루엣이 주목받으면서 나이보다 어려 보이는 분위기라는 반응이 이어졌어요. 셀럽의 일상룩은 브랜드 협찬이나 지역 상권 노출과 결합되며 패션 콘텐츠로 확장되고 있어요.",
+    points:[
+      "기은세의 서촌 일상룩이 ‘동안 스타일’ 키워드와 함께 관심을 모았어요.",
+      "자연스러운 실루엣과 선글라스 스타일링이 톱스타 무드를 만든 포인트로 보여요.",
+      "셀럽의 일상 패션은 지역 장소와 함께 노출되며 저장하고 싶은 스타일 콘텐츠가 돼요."
+    ]
+  },
+  {
+    title:"[새로 나온 책] '악견고독 속 살아남았다' 동네 책방 탐사기 등",
+    source:"news.kbs.co.kr",
+    time:"06. 15. 오전 07:43",
+    tag:"서촌",
+    content:"새로 나온 책 소개에서 동네 책방과 지역 문화가 함께 조명됐어요. 독립서점과 골목 기반 콘텐츠는 지역의 취향을 보여주는 매개가 되고 있어요. 특히 서촌처럼 산책과 소비가 연결되는 동네에서는 책방 역시 하나의 방문 목적지가 돼요.",
+    points:[
+      "새 책 소개와 함께 동네 책방을 둘러싼 지역 문화가 다시 주목받고 있어요.",
+      "독립서점은 단순 판매 공간이 아니라 취향과 커뮤니티를 보여주는 장소가 되고 있어요.",
+      "서촌 같은 동네에서는 책방, 카페, 산책 동선이 연결되며 하나의 콘텐츠가 돼요."
+    ]
+  },
+  {
+    title:"힙스터가 찾고 외국인이 완성...상권 흐름 공식 바뀌었다",
+    source:"ktnews.com",
+    time:"06. 14. 오후 11:24",
+    tag:"서촌",
+    content:"상권의 성장 방식이 바뀌고 있어요. 먼저 취향 소비층이 찾는 동네가 되고, 이후 외국인 관광객과 SNS 확산이 더해지면서 상권이 커지는 흐름이에요. 서촌, 성수, 한남처럼 로컬 감성과 글로벌 관심이 만나는 지역이 대표적이에요.",
+    points:[
+      "요즘 상권은 대형 브랜드보다 취향 소비층이 먼저 찾는 동네에서 시작되는 경우가 많아요.",
+      "이후 외국인 방문과 SNS 확산이 더해지면서 상권의 인지도와 매출이 함께 커져요.",
+      "서촌 같은 지역은 로컬 감성과 글로벌 관심이 겹치며 새로운 상권 공식의 사례가 되고 있어요."
+    ]
+  },
+  {
+    title:"[자막뉴스] 보고도 믿기 힘든 폭우...서울 첫 호우특보에 곳곳 침수",
+    source:"ytn.co.kr",
+    time:"06. 14. 오후 06:19",
+    tag:"서촌",
+    content:"서울에 첫 호우특보가 내려지고 곳곳에서 침수 피해가 발생했어요. 갑작스러운 폭우는 이동과 영업에 영향을 주고, 상권과 야외 일정에도 변수가 됐어요. 장마철에는 날씨 정보와 실시간 이동 동선 확인이 중요해요.",
+    points:[
+      "서울에 첫 호우특보가 내려지며 일부 지역에서 침수 피해가 발생했어요.",
+      "갑작스러운 폭우는 이동, 매장 운영, 야외 일정에 직접적인 영향을 줘요.",
+      "장마철에는 방문 전 날씨와 교통 상황을 함께 확인하는 습관이 필요해요."
+    ]
+  },
+  {
+    title:"민감 피부를 위한 여름 스킨케어 루틴 4단계",
+    source:"beautyinsight.kr",
+    time:"06. 13. 오후 04:20",
+    tag:"뷰티",
+    content:"여름철 민감 피부는 과한 각질 관리보다 진정과 수분 유지가 중요해요. 클렌징, 진정 토너, 가벼운 보습, 자외선 차단의 4단계를 단순하게 유지하는 것이 좋아요. 성분이 많은 제품을 겹쳐 바르기보다 피부 반응을 확인하면서 루틴을 줄이는 방향이 추천돼요.",
+    points:[
+      "여름철 민감 피부는 과한 관리보다 진정과 수분 유지가 핵심이에요.",
+      "클렌징, 진정 토너, 가벼운 보습, 자외선 차단의 4단계로 루틴을 단순하게 잡는 게 좋아요.",
+      "제품을 많이 바르기보다 피부 반응을 확인하면서 필요한 단계만 남기는 방식이 추천돼요."
+    ]
+  },
+  {
+    title:"올리브영 세일에서 먼저 품절되는 진정 토너 리스트",
+    source:"dailybeauty.co.kr",
+    time:"06. 13. 오전 09:11",
+    tag:"올리브영",
+    content:"올리브영 세일에서 진정 토너 카테고리가 빠르게 소진되고 있어요. 피부 온도, 장벽 케어, 저자극 성분을 강조한 제품들이 특히 관심을 받고 있어요. 소비자는 가격 할인뿐 아니라 후기, 성분, 피부 타입 적합성을 함께 비교하며 구매해요.",
+    points:[
+      "올리브영 세일에서 진정 토너 제품들이 빠르게 품절되며 관심을 받고 있어요.",
+      "피부 온도, 장벽 케어, 저자극 성분을 강조한 제품이 선택 기준으로 떠오르고 있어요.",
+      "소비자는 할인율뿐 아니라 후기와 성분, 피부 타입 적합성까지 함께 비교하고 있어요."
+    ]
+  },
+  {
+    title:"라네즈·이니스프리, 저자극 보습 라인 강화",
+    source:"cosmeticnews.kr",
+    time:"06. 12. 오후 03:30",
+    tag:"화장품",
+    content:"라네즈와 이니스프리가 저자극 보습 라인을 강화하고 있어요. 뷰티 시장에서 장벽 케어와 민감 피부 키워드가 커지면서 브랜드들이 성분 안정성과 수분 지속력을 전면에 내세우고 있어요. 과한 기능보다 매일 편하게 쓰는 제품 경쟁이 이어질 전망이에요.",
+    points:[
+      "라네즈와 이니스프리가 저자극 보습 라인을 강화하며 민감 피부 수요에 대응하고 있어요.",
+      "장벽 케어와 수분 지속력이 뷰티 시장의 주요 메시지로 커지고 있어요.",
+      "앞으로는 강한 기능보다 매일 편하게 쓸 수 있는 안정적인 제품 경쟁이 이어질 가능성이 높아요."
+    ]
+  }
+].map((item,idx)=>({
+  id:idx+1,
+  title:item.title,
+  source:item.source,
+  time:item.time,
+  tag:item.tag,
+  content:item.content,
+  points:item.points,
+  summary:item.points ? item.points[0] : `${item.tag} 키워드로 확산 중인 이슈입니다. 기사 제목의 핵심을 기준으로 카드뉴스 초안을 구성할 수 있어요.`
+}));
+
+function showToast(message){
+  const toast=$("#toast");
+  toast.textContent=message;
+  toast.classList.add("show");
+  setTimeout(()=>toast.classList.remove("show"),1700);
+}
+
+function escapeHtml(value){
+  return String(value||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function getMags(){
+  const raw=localStorage.getItem("magazinie_mags");
+  if(!raw)return [defaultMag];
+  try{
+    const parsed=JSON.parse(raw);
+    return Array.isArray(parsed)&&parsed.length?parsed:[defaultMag];
+  }catch{
+    return [defaultMag];
+  }
+}
+function saveMags(mags){
+  localStorage.setItem("magazinie_mags",JSON.stringify(mags));
+}
+
+function readFormMag(){
+  return {
+    id:"main",
+    name:$("#magName").value.trim()||"새 매거진",
+    logoName:$("#logoName").value.trim(),
+    logoData:state.logoData,
+    ctaHeadline:$("#ctaHeadline").value.trim(),
+    ctaCopy1:$("#ctaCopy1").value.trim(),
+    ctaCopy2:$("#ctaCopy2").value.trim(),
+    hashtags:$("#hashtags").value.trim(),
+    bgColor:$("#bgColorText").value.trim()||"#ffffff",
+    pointColor:$("#pointColorText").value.trim()||"#e0483b"
+  };
+}
+
+function applyMagToForm(mag){
+  $("#magName").value=mag.name||"";
+  $("#logoName").value=mag.logoName||"";
+  $("#ctaHeadline").value=mag.ctaHeadline||"";
+  $("#ctaCopy1").value=mag.ctaCopy1||"";
+  $("#ctaCopy2").value=mag.ctaCopy2||"";
+  $("#hashtags").value=mag.hashtags||"";
+  $("#bgColor").value=mag.bgColor||"#ffffff";
+  $("#bgColorText").value=mag.bgColor||"#ffffff";
+  $("#pointColor").value=mag.pointColor||"#e0483b";
+  $("#pointColorText").value=mag.pointColor||"#e0483b";
+  state.logoData=mag.logoData||"";
+  renderLogoPreview();
+  renderLastCardPreview();
+}
+
+function renderSteps(){
+  const steps=state.currentPage==="magazine"?settingSteps:makerSteps;
+  $("#guideTitle").textContent=state.currentPage==="magazine"?"매거진 설정 순서":"카드뉴스 만드는 순서";
+  $("#stepList").innerHTML=steps.map((item,index)=>{
+    const active=state.currentPage==="magazine"?index===0:index===1;
+    return `
+      <div class="step-card ${active?"active":""}">
+        <div class="step-badge">${index+1}</div>
+        <div>
+          <strong>${item[0]}</strong>
+          <p>${item[1]}</p>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function setPage(page){
+  state.currentPage=page;
+  $("#magazinePage").hidden=page!=="magazine";
+  $("#makerPage").hidden=page!=="maker";
+  $("#navMagazine").classList.toggle("active",page==="magazine");
+  $("#navMaker").classList.toggle("active",page==="maker");
+  renderSteps();
+  if(page==="maker"){
+    refreshMagSelect();
+    renderKeywords();
+    renderResults();
+  }
+}
+
+function renderLogoPreview(){
+  const box=$("#logoPreview");
+  if(state.logoData){
+    box.innerHTML=`<img src="${state.logoData}" alt="로고" />`;
+  }else{
+    box.textContent="M";
+  }
+}
+
+function getTags(mag,fallbackTitle=""){
+  const raw=(mag.hashtags||"").trim();
+  if(raw)return raw.split(/\s+/).filter(Boolean).slice(0,14);
+  const words=fallbackTitle.replace(/[^\w가-힣\s]/g,"").split(/\s+/).filter(Boolean).slice(0,4);
+  return ["#광고","#마케팅","#브랜드","#비즈니스",...words.map(v=>"#"+v),"#트렌드","#이벤트","#소식","#혜택"].slice(0,14);
+}
+
+function lastCardHtml(mag,title=""){
+  const tags=getTags(mag,title).slice(0,3);
+  const logo=mag.logoData?`<img class="card-logo-img" src="${mag.logoData}" alt="로고" />`:"";
+  return `
+    <div class="news-card" style="background:${mag.bgColor}; --point:${mag.pointColor}">
+      <div style="margin-top:auto">
+        ${logo}
+        <div class="card-title">${escapeHtml(mag.name||"MAGAZINIE")}</div>
+        <div class="card-title" style="margin-top:12px">${escapeHtml(mag.ctaHeadline||"")}</div>
+        <div class="card-sub">${escapeHtml(mag.ctaCopy1||"")}</div>
+        <div class="card-point">${escapeHtml(mag.ctaCopy2||"")}</div>
+        <div class="hashtags">${tags.map(tag=>`<span class="tag">${escapeHtml(tag)}</span>`).join("")}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderLastCardPreview(){
+  $("#lastCardPreview").innerHTML=lastCardHtml(readFormMag());
+}
+
+function syncColors(colorEl,textEl){
+  $(colorEl).addEventListener("input",()=>{
+    $(textEl).value=$(colorEl).value;
+    renderLastCardPreview();
+  });
+  $(textEl).addEventListener("input",()=>{
+    if(/^#[0-9a-fA-F]{6}$/.test($(textEl).value.trim())){
+      $(colorEl).value=$(textEl).value.trim();
+    }
+    renderLastCardPreview();
+  });
+}
+
+function readFileAsDataUrl(file,callback){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>callback(reader.result);
+  reader.readAsDataURL(file);
+}
+
+function refreshMagSelect(){
+  const mags=getMags();
+  $("#magSelect").innerHTML=mags.map((mag,index)=>`<option value="${index}">${escapeHtml(mag.name)}</option>`).join("");
+}
+
+function selectedMag(){
+  const mags=getMags();
+  const index=Number($("#magSelect").value||0);
+  return mags[index]||mags[0]||defaultMag;
+}
+
+function renderKeywords(){
+  ["beauty","fashion"].forEach(category=>{
+    const container=$("#"+category+"Chips");
+    container.innerHTML=state.keywordSets[category].map(keyword=>{
+      const selected=state.selectedKeywords[category].includes(keyword);
+      return `<button class="chip ${selected?"selected":""}" type="button" data-category="${category}" data-keyword="${escapeHtml(keyword)}">${selected?"":"+ "}${escapeHtml(keyword)}${selected?" ×":""}</button>`;
+    }).join("");
+    $("#"+category+"Count").textContent=state.selectedKeywords[category].length;
+    $("#"+category+"Search").classList.toggle("disabled",state.selectedKeywords[category].length===0);
+  });
+
+  document.querySelectorAll(".chip").forEach(chip=>{
+    chip.addEventListener("click",()=>{
+      const category=chip.dataset.category;
+      const keyword=chip.dataset.keyword;
+      const list=state.selectedKeywords[category];
+      if(list.includes(keyword)){
+        state.selectedKeywords[category]=list.filter(v=>v!==keyword);
+      }else if(list.length<3){
+        state.selectedKeywords[category].push(keyword);
+      }else{
+        showToast("키워드는 최대 3개까지 권장해요.");
+      }
+      renderKeywords();
+    });
+  });
+}
+
+function addKeyword(category){
+  const input=$("#"+category+"Input");
+  const value=input.value.trim();
+  if(!value)return;
+  if(!state.keywordSets[category].includes(value))state.keywordSets[category].push(value);
+  if(!state.selectedKeywords[category].includes(value)&&state.selectedKeywords[category].length<3){
+    state.selectedKeywords[category].push(value);
+  }
+  input.value="";
+  renderKeywords();
+  renderResults(category);
+}
+
+
+function cleanText(text){
+  const div=document.createElement("div");
+  div.innerHTML=String(text||"");
+  return div.textContent || div.innerText || "";
+}
+
+function searchQueryFor(category){
+  const keys=state.selectedKeywords[category] || [];
+  if(keys.length) return keys.join(" ");
+  return category==="beauty" ? "뷰티" : "패션";
+}
+
+function performSearch(category=state.activeCategory){
+  state.activeCategory=category;
+  const query=searchQueryFor(category);
+  const url=`https://search.naver.com/search.naver?where=news&query=${encodeURIComponent(query)}&sort=1`;
+  window.open(url,"_blank","noopener,noreferrer");
+  showToast("네이버 뉴스 검색을 새 탭으로 열었어요.");
+}
+
+function renderResults(category=state.activeCategory){
+  state.activeCategory=category;
+  const keywords=state.selectedKeywords[category];
+  const filtered=sampleArticles.filter(article=>{
+    if(!keywords.length)return true;
+    const hay=`${article.title} ${article.tag}`.toLowerCase();
+    return keywords.some(key=>hay.includes(key.toLowerCase()));
+  });
+  const list=filtered.length?filtered:sampleArticles.slice(0,20);
+  $("#resultCount").textContent=`${list.length}건`;
+  $("#matchCount").textContent=`${list.length}건`;
+
+  $("#resultGrid").innerHTML=list.map(article=>{
+    const selected=state.selectedArticle&&state.selectedArticle.id===article.id;
+    return `
+      <article class="article-card ${selected?"selected":""}" data-id="${article.id}">
+        <div class="thumb"></div>
+        <div>
+          <h4 class="article-title">${escapeHtml(article.title)}</h4>
+          <div class="article-meta">${escapeHtml(article.time)} · ${escapeHtml(article.source)}</div>
+          <span class="article-tag">${escapeHtml(article.tag)}</span>
+        </div>
+      </article>
+    `;
+  }).join("");
+
+  document.querySelectorAll(".article-card").forEach(card=>{
+    card.addEventListener("click",()=>selectArticle(Number(card.dataset.id),true));
+  });
+}
+
+function selectArticle(id,autoGenerate=false){
+  state.selectedArticle=sampleArticles.find(item=>item.id===id)||null;
+  if(!state.selectedArticle)return;
+  $("#selectedTitle").textContent=state.selectedArticle.title;
+  $("#selectedDesc").textContent=`${summarizeArticle(state.selectedArticle).body1} 출처: ${state.selectedArticle.source} · ${state.selectedArticle.time}`;
+  renderResults();
+  showToast("기사를 선택했어요.");
+  if(autoGenerate) generateCards();
+}
+
+function splitSentences(text){
+  return String(text||"")
+    .replace(/\s+/g," ")
+    .split(/(?<=[.!?。！？]|요\.|다\.|죠\.|해요\.|어요\.)\s+/)
+    .map(v=>v.trim())
+    .filter(Boolean);
+}
+
+function trimText(text,max=145){
+  const clean=String(text||"").trim();
+  if(clean.length<=max)return clean;
+  return clean.slice(0,max-1).replace(/\s+\S*$/,"") + "…";
+}
+
+function summarizeArticle(article){
+  const title=article.title.replace(/[“”"']/g,"").trim();
+  const sentences=splitSentences(article.content);
+  const points=(article.points&&article.points.length>=3)
+    ? article.points
+    : [
+        sentences[0] || `${article.tag} 관련 이슈가 주목받고 있어요.`,
+        sentences[1] || `핵심은 기사 제목에 드러난 변화와 소비자 반응이에요.`,
+        sentences[2] || `앞으로 이 흐름은 브랜드와 콘텐츠 전략에 영향을 줄 수 있어요.`
+      ];
+
+  return {
+    hook:title,
+    body1:trimText(points[0],170),
+    body2:trimText(points[1],170),
+    body3:trimText(points[2],170),
+    caption:[
+      `⭐ ${title}`,
+      "",
+      `📍 ${trimText(points[0],120)}`,
+      "",
+      `📍 ${trimText(points[1],120)}`,
+      "",
+      `💬 ${trimText(points[2],120)}`
+    ].join("\n")
+  };
+}
+
+function createCardsFromArticle(article){
+  const mag=selectedMag();
+  const summary=summarizeArticle(article);
+
+  return [
+    {
+      role:"HOOK",
+      type:"hook",
+      title:summary.hook,
+      body:"",
+      label:"",
+      bg:"#101010",
+      titleColor:"#ffffff",
+      bodyColor:"#ffffff",
+      labelColor:"#ffb6b6",
+      align:"left",
+      scale:100,
+      image:"",
+      mag
+    },
+    {
+      role:"BODY 1",
+      type:"body",
+      title:"NOW TRENDING",
+      body:summary.body1,
+      label:"NOW TRENDING",
+      bg:"#101010",
+      titleColor:"#ffffff",
+      bodyColor:"#ffffff",
+      labelColor:"#ffb6b6",
+      align:"left",
+      scale:100,
+      image:"",
+      mag
+    },
+    {
+      role:"BODY 2",
+      type:"body",
+      title:"THE TAKEAWAY",
+      body:summary.body2,
+      label:"THE TAKEAWAY",
+      bg:"#101010",
+      titleColor:"#ffffff",
+      bodyColor:"#ffffff",
+      labelColor:"#ffb6b6",
+      align:"left",
+      scale:100,
+      image:"",
+      mag
+    },
+    {
+      role:"BODY 3",
+      type:"body",
+      title:"WHAT'S NEXT",
+      body:summary.body3,
+      label:"WHAT'S NEXT",
+      bg:"#101010",
+      titleColor:"#ffffff",
+      bodyColor:"#ffffff",
+      labelColor:"#ffb6b6",
+      align:"left",
+      scale:100,
+      image:"",
+      mag
+    },
+    {
+      role:"CTA",
+      type:"cta",
+      title:mag.ctaHeadline||"“이거 왜 난리예요?”",
+      body:`${mag.ctaCopy1||"복잡한 이슈, 핵심만 쉽게"}\n${mag.ctaCopy2||"한 장씩 넘기면 정리 끝"}`,
+      label:mag.name,
+      bg:"#101010",
+      titleColor:"#ffffff",
+      bodyColor:"#ffffff",
+      labelColor:mag.pointColor||"#e0483b",
+      align:"left",
+      scale:100,
+      image:"",
+      mag
+    }
+  ];
+}
+
+function generateCards(){
+  if(!state.selectedArticle){
+    selectArticle(sampleArticles[0].id,false);
+  }
+  state.cards=createCardsFromArticle(state.selectedArticle);
+  $("#editorSection").hidden=false;
+  renderEditor();
+  showToast("아래에 카드 편집창을 생성했어요.");
+}
+
+function renderMiniCard(card,index){
+  const alignStyle = card.align === "center" ? "center" : card.align === "right" ? "right" : "left";
+  const justify = card.align === "right" ? "flex-end" : card.align === "center" ? "center" : "flex-start";
+  const titleSize = Math.round(16 * card.scale / 100);
+  const bodySize = Math.max(7, Math.round(7.8 * card.scale / 100));
+  const image = card.image ? `<img src="${card.image}" alt="" />` : "";
+  return `
+    <div class="mini-card" style="background:${card.bg}; text-align:${alignStyle}; align-items:${justify}">
+      ${image}
+      <div class="mini-content">
+        ${card.label ? `<div class="mini-kicker" style="color:${card.labelColor}">${escapeHtml(card.label)}</div>` : ""}
+        <div class="mini-title" style="color:${card.titleColor}; font-size:${titleSize}px">${escapeHtml(card.title)}</div>
+        ${card.body ? `<div class="mini-body" style="color:${card.bodyColor}; font-size:${bodySize}px">${escapeHtml(card.body)}</div>` : ""}
+        ${index===0 ? `<div class="mini-logo">${escapeHtml(card.mag.logoName||"what.is.mag")}</div>` : ""}
+      </div>
+    </div>
+  `;
+}
+
+function renderEditor(){
+  $("#cardEditGrid").innerHTML=state.cards.map((card,index)=>`
+    <div class="edit-unit">
+      <p class="card-label">${escapeHtml(card.role)}</p>
+      <div id="miniWrap${index}">${renderMiniCard(card,index)}</div>
+
+      <div class="align-row">
+        <button type="button" data-action="align" data-index="${index}" data-align="left">◀</button>
+        <span>${card.align==="center"?"중앙":card.align==="right"?"우측":"좌측"}</span>
+        <button type="button" data-action="align" data-index="${index}" data-align="right">▶</button>
+      </div>
+      <button class="align-row" style="display:none"></button>
+      <label class="image-change">이미지 변경<input type="file" accept="image/*" data-action="image" data-index="${index}" /></label>
+
+      <div class="edit-small">
+        <label>${index===0 ? "제목 수정" : "라벨 수정"}</label>
+        <input type="text" value="${escapeHtml(index===0 ? card.title : card.label)}" data-action="${index===0 ? "title" : "label"}" data-index="${index}" />
+      </div>
+
+      ${index!==0 ? `
+        <div class="control-line">
+          <span>라벨 색</span>
+          <input type="color" value="${card.labelColor}" data-action="labelColor" data-index="${index}" />
+        </div>
+      ` : ""}
+
+      <div class="edit-small">
+        <label>${index===0 ? "제목 상세" : "본문 수정"}</label>
+        <textarea data-action="${index===0 ? "hookTitle" : "body"}" data-index="${index}">${escapeHtml(index===0 ? card.title : card.body)}</textarea>
+      </div>
+
+      <div class="control-line">
+        <span>${index===0 ? "윗줄" : "본문"} 글자색</span>
+        <input type="color" value="${index===0 ? card.titleColor : card.bodyColor}" data-action="${index===0 ? "titleColor" : "bodyColor"}" data-index="${index}" />
+        <span>배경</span>
+        <input type="color" value="${card.bg}" data-action="bg" data-index="${index}" />
+      </div>
+
+      <div class="scale-control">
+        <span>크기</span>
+        <button type="button" data-action="scaleDown" data-index="${index}">−</button>
+        <span>${card.scale}%</span>
+        <button type="button" data-action="scaleUp" data-index="${index}">＋</button>
+      </div>
+
+      <button class="apply-btn" type="button" data-action="apply" data-index="${index}">${index===0 ? "제목·색·크기 적용" : "본문·라벨 적용"}</button>
+    </div>
+  `).join("");
+
+  bindEditorEvents();
+  updateCaptionAndTags();
+}
+
+function bindEditorEvents(){
+  document.querySelectorAll("[data-action]").forEach(el=>{
+    const action=el.dataset.action;
+    const index=Number(el.dataset.index);
+    if(action==="image"){
+      el.addEventListener("change",event=>{
+        readFileAsDataUrl(event.target.files[0],data=>{
+          state.cards[index].image=data;
+          renderEditor();
+        });
+      });
+      return;
+    }
+
+    if(["title","label","hookTitle","body","labelColor","titleColor","bodyColor","bg"].includes(action)){
+      el.addEventListener("input",()=>{
+        const card=state.cards[index];
+        if(action==="title"||action==="hookTitle") card.title=el.value;
+        if(action==="label") card.label=el.value;
+        if(action==="body") card.body=el.value;
+        if(action==="labelColor") card.labelColor=el.value;
+        if(action==="titleColor") card.titleColor=el.value;
+        if(action==="bodyColor") card.bodyColor=el.value;
+        if(action==="bg") card.bg=el.value;
+        document.querySelector("#miniWrap"+index).innerHTML=renderMiniCard(card,index);
+        updateCaptionAndTags();
+      });
+      return;
+    }
+
+    if(action==="align"){
+      el.addEventListener("click",()=>{
+        const card=state.cards[index];
+        const next=el.dataset.align;
+        card.align = card.align === next ? "center" : next;
+        renderEditor();
+      });
+      return;
+    }
+
+    if(action==="scaleDown"||action==="scaleUp"){
+      el.addEventListener("click",()=>{
+        const card=state.cards[index];
+        card.scale += action==="scaleUp" ? 5 : -5;
+        card.scale=Math.max(80,Math.min(130,card.scale));
+        renderEditor();
+      });
+      return;
+    }
+
+    if(action==="apply"){
+      el.addEventListener("click",()=>showToast("카드에 적용했어요."));
+    }
+  });
+}
+
+function updateCaptionAndTags(){
+  if(!state.selectedArticle)return;
+  const article=state.selectedArticle;
+  const title=state.cards[0]?.title || article.title;
+  const points=state.cards.slice(1,4).map(card=>`📍 ${card.body}`).join("\n\n");
+  $("#captionText").value = `⭐ ${title}\n\n${points}\n\n💬 저장해두고 필요한 순간 다시 확인해보세요.`;
+  const tags=getTags(selectedMag(),article.title);
+  $("#hashtagText").value=tags.join(" ");
+}
+
+
+function createManualArticle(){
+  const title=$("#manualTitle")?.value.trim();
+  const source=$("#manualSource")?.value.trim() || "직접 입력";
+  const content=$("#manualContent")?.value.trim();
+
+  if(!title || !content){
+    alert("기사 제목과 본문/요약 내용을 먼저 붙여넣어 주세요.");
+    return null;
+  }
+
+  const sentences=splitSentences(content);
+  const points=[
+    sentences[0] || content,
+    sentences[1] || sentences[0] || content,
+    sentences.slice(2).join(" ") || sentences[1] || sentences[0] || content
+  ].map(v=>trimText(v,170));
+
+  return {
+    id:Date.now(),
+    title,
+    source,
+    time:"직접 입력",
+    tag:source.split(/\s+/)[0] || "뉴스",
+    content,
+    points,
+    summary:points[0]
+  };
+}
+
+function generateManualCards(){
+  const article=createManualArticle();
+  if(!article)return;
+  state.selectedArticle=article;
+  $("#selectedTitle").textContent=article.title;
+  $("#selectedDesc").textContent=`${article.summary} 출처: ${article.source}`;
+  generateCards();
+  showToast("붙여넣은 기사 내용으로 카드뉴스를 생성했어요.");
+}
+
+
+function copyText(id){
+  const el=$("#"+id);
+  el.select();
+  document.execCommand("copy");
+  showToast("복사했어요.");
+}
+
+function drawRoundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function loadImage(src){
+  return new Promise(resolve=>{
+    if(!src)return resolve(null);
+    const img=new Image();
+    img.onload=()=>resolve(img);
+    img.onerror=()=>resolve(null);
+    img.src=src;
+  });
+}
+
+function wrapText(ctx,text,x,y,maxWidth,lineHeight){
+  const rawLines=String(text||"").split("\n");
+  let yy=y;
+  rawLines.forEach(raw=>{
+    const chars=raw.split("");
+    let line="";
+    for(let i=0;i<chars.length;i++){
+      const test=line+chars[i];
+      if(ctx.measureText(test).width>maxWidth && i>0){
+        ctx.fillText(line,x,yy);
+        line=chars[i];
+        yy+=lineHeight;
+      }else{
+        line=test;
+      }
+    }
+    ctx.fillText(line,x,yy);
+    yy+=lineHeight;
+  });
+  return yy;
+}
+
+async function drawCardToCanvas(card,index){
+  const canvas=document.createElement("canvas");
+  canvas.width=1080;
+  canvas.height=1350;
+  const ctx=canvas.getContext("2d");
+
+  ctx.fillStyle=card.bg || "#101010";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  const img=await loadImage(card.image);
+  if(img){
+    ctx.save();
+    ctx.globalAlpha=.34;
+    const scale=Math.max(canvas.width/img.width, canvas.height/img.height);
+    const w=img.width*scale;
+    const h=img.height*scale;
+    ctx.drawImage(img,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
+    ctx.restore();
+  }
+
+  const grad=ctx.createLinearGradient(0,0,0,1350);
+  grad.addColorStop(0,"rgba(255,255,255,.02)");
+  grad.addColorStop(.45,"rgba(0,0,0,.05)");
+  grad.addColorStop(1,"rgba(0,0,0,.35)");
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,0,1080,1350);
+
+  const align=card.align || "left";
+  const x=align==="left" ? 105 : align==="right" ? 975 : 540;
+  ctx.textAlign=align;
+  ctx.textBaseline="top";
+
+  let y=index===0 ? 770 : 520;
+
+  if(card.label){
+    ctx.fillStyle=card.labelColor || "#ffb6b6";
+    ctx.font=`950 ${Math.round(28*card.scale/100)}px Pretendard, Arial, sans-serif`;
+    ctx.fillText(card.label.toUpperCase(),x,y);
+    y+=68;
+  }
+
+  ctx.fillStyle=card.titleColor || "#ffffff";
+  ctx.font=`950 ${Math.round((index===0?82:56)*card.scale/100)}px Pretendard, Arial, sans-serif`;
+  y=wrapText(ctx,card.title,x,y,align==="center"?820:850,Math.round((index===0?96:70)*card.scale/100));
+
+  if(card.body){
+    y+=24;
+    ctx.fillStyle=card.bodyColor || "#ffffff";
+    ctx.font=`850 ${Math.round(36*card.scale/100)}px Pretendard, Arial, sans-serif`;
+    wrapText(ctx,card.body,x,y,align==="center"?800:840,58);
+  }
+
+  if(index===0){
+    ctx.fillStyle="#e5e7eb";
+    ctx.font="900 24px Pretendard, Arial, sans-serif";
+    ctx.textAlign="right";
+    ctx.fillText(card.mag.logoName || "what.is.mag",975,1165);
+  }
+
+  return canvas;
+}
+
+function canvasToBlob(canvas){
+  return new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+}
+
+async function downloadCard(index){
+  const card=state.cards[index];
+  if(!card)return;
+  const canvas=await drawCardToCanvas(card,index);
+  const link=document.createElement("a");
+  link.download=`card-news-${String(index+1).padStart(2,"0")}.png`;
+  link.href=canvas.toDataURL("image/png");
+  link.click();
+}
+
+async function downloadZip(){
+  if(!state.cards.length)generateCards();
+  if(typeof JSZip==="undefined"){
+    for(let i=0;i<state.cards.length;i++){
+      await downloadCard(i);
+      await new Promise(resolve=>setTimeout(resolve,250));
+    }
+    showToast("ZIP 라이브러리를 불러오지 못해 개별 저장했어요.");
+    return;
+  }
+
+  const zip=new JSZip();
+  for(let i=0;i<state.cards.length;i++){
+    const canvas=await drawCardToCanvas(state.cards[i],i);
+    const blob=await canvasToBlob(canvas);
+    zip.file(`card-news-${String(i+1).padStart(2,"0")}.png`,blob);
+  }
+  zip.file("caption.txt",$("#captionText").value || "");
+  zip.file("hashtags.txt",$("#hashtagText").value || "");
+  const content=await zip.generateAsync({type:"blob"});
+  const link=document.createElement("a");
+  link.download="card-news.zip";
+  link.href=URL.createObjectURL(content);
+  link.click();
+  setTimeout(()=>URL.revokeObjectURL(link.href),1000);
+  showToast("ZIP 다운로드를 시작했어요.");
+}
+
+window.downloadCard=downloadCard;
+
+$("#navMagazine").addEventListener("click",()=>setPage("magazine"));
+$("#navMaker").addEventListener("click",()=>setPage("maker"));
+
+["magName","logoName","ctaHeadline","ctaCopy1","ctaCopy2","hashtags"].forEach(id=>{
+  $("#"+id).addEventListener("input",renderLastCardPreview);
+});
+
+syncColors("#bgColor","#bgColorText");
+syncColors("#pointColor","#pointColorText");
+
+$("#logoUpload").addEventListener("change",(event)=>{
+  readFileAsDataUrl(event.target.files[0],data=>{
+    state.logoData=data;
+    renderLogoPreview();
+    renderLastCardPreview();
+  });
+});
+
+$("#clearLogo").addEventListener("click",()=>{
+  state.logoData="";
+  $("#logoUpload").value="";
+  renderLogoPreview();
+  renderLastCardPreview();
+});
+
+$("#saveMagazine").addEventListener("click",()=>{
+  const mag=readFormMag();
+  const saved=getMags();
+  const idx=saved.findIndex(item=>item.id==="main"||item.name===mag.name);
+  if(idx>=0)saved[idx]=mag;
+  else saved.unshift(mag);
+  saveMags(saved);
+  refreshMagSelect();
+  showToast("매거진 설정을 저장했어요.");
+});
+
+$("#magSelect").addEventListener("change",()=>{
+  if(state.selectedArticle && !$("#editorSection").hidden) generateCards();
+});
+
+$("#beautyAdd").addEventListener("click",()=>addKeyword("beauty"));
+$("#fashionAdd").addEventListener("click",()=>addKeyword("fashion"));
+$("#beautyInput").addEventListener("keydown",e=>{if(e.key==="Enter")addKeyword("beauty")});
+$("#fashionInput").addEventListener("keydown",e=>{if(e.key==="Enter")addKeyword("fashion")});
+$("#beautySearch").addEventListener("click",()=>performSearch("beauty"));
+$("#fashionSearch").addEventListener("click",()=>performSearch("fashion"));
+$("#generateCards").addEventListener("click",generateCards);
+$("#downloadZip").addEventListener("click",downloadZip);
+$("#downloadAllTop").addEventListener("click",downloadZip);
+$("#copyCaption").addEventListener("click",()=>copyText("captionText"));
+$("#copyHashtags").addEventListener("click",()=>copyText("hashtagText"));
+
+if($("#openNaverSearch")){
+  $("#openNaverSearch").addEventListener("click",()=>performSearch(state.activeCategory));
+}
+if($("#generateManualCards")){
+  $("#generateManualCards").addEventListener("click",generateManualCards);
+}
+
+if(!localStorage.getItem("magazinie_mags"))saveMags([defaultMag]);
+applyMagToForm(getMags()[0]);
+refreshMagSelect();
+renderSteps();
+renderKeywords();
+renderResults();
+</script>
+</body>
+</html>
