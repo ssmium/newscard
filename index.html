@@ -287,7 +287,7 @@ textarea.form-input{resize:vertical;min-height:70px}
 const NAVER_ID  = 'U5if8lC21g_3L95AgqVS';
 const NAVER_SEC = '9qtZj8bb1H';
 
-const DAILY_QUOTA = 10;
+const DAILY_QUOTA = Infinity;
 const TEXT_PALETTE = ['#ffffff','#000000','#e0483b','#2563eb','#f59e0b','#111111'];
 const CARD_NUM_COLORS = {2:'#e0483b',3:'#2563eb',4:'#059669'};
 const BEAUTY_SUGGESTED  = ['뷰티','화장품','설화수','라네즈','이니스프리','클리오','롬앤','메디큐브','아누아','올리브영'];
@@ -301,7 +301,7 @@ let generatedCaption=[], generatedHashtags='';
 // ── Quota ──
 function getQuota(){const t=new Date().toDateString();const s=JSON.parse(localStorage.getItem('cnews_quota')||'{"date":"","count":0}');return s.date!==t?{date:t,count:0}:s;}
 function useQuota(){const q=getQuota();q.count++;localStorage.setItem('cnews_quota',JSON.stringify(q));updateQuotaBadge();}
-function updateQuotaBadge(){const q=getQuota();document.getElementById('quota-badge').textContent=`오늘 생성 횟수 ${q.count} / ${DAILY_QUOTA}회`;}
+function updateQuotaBadge(){document.getElementById('quota-badge').textContent='생성 횟수 제한 없음';} / ${DAILY_QUOTA}회`;}
 
 // ── Init ──
 function init(){
@@ -452,6 +452,8 @@ async function searchNaverHtml(query){
 async function searchNews(type){
   const userTags=type==='beauty'?beautyUserTags:fashionUserTags;
   const q=userTags.length?userTags.join(' '):(type==='beauty'?'뷰티 화장품':'패션 스타일');
+  window.lastSearchQuery=q;
+  window.lastSearchType=type;
   showLoading(`"${q}" 뉴스 검색 중...`);
   try{
     let items=[];
@@ -569,118 +571,190 @@ function inferTopic(title,desc){
   if(t.includes('광고')||t.includes('크레딧')||t.includes('지원'))return '광고';
   return '뉴스';
 }
-function makeHook(title,desc=''){
+function mainKeyword(query,title=''){
+  const q=cleanHtml(query||'').split(/\s+/).filter(Boolean)[0];
+  if(q) return q;
+  const region=extractRegion(title);
+  if(region) return region;
+  return '이슈';
+}
+
+function extractPersonName(text){
+  const clean=cleanHtml(text);
+  const m1=clean.match(/([가-힣]{2,4})(?:이|가|은|는|의)?\s*(?:근황|여행|영상|브이로그|화보|일상|공개|출연|인터뷰)/);
+  if(m1) return m1[1];
+  const m2=clean.match(/^([가-힣]{2,4})\s/);
+  if(m2 && !/(인천|서울|부산|대구|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)/.test(m2[1])) return m2[1];
+  return '';
+}
+
+function shortSubject(title, query=''){
+  let s=cleanLeadNoise(title)
+    .replace(/[“”"]/g,'')
+    .replace(/\[[^\]]+\]/g,'')
+    .replace(/\s*[-|].*$/,'')
+    .replace(/….*$/,'')
+    .replace(/\s+등$/,'')
+    .trim();
+
+  const quoted=(s.match(/'([^']+)'/)||s.match(/‘([^’]+)’/))?.[1];
+  if(quoted && quoted.length<=16) return quoted;
+
+  const kw=mainKeyword(query,s);
+  if(kw && kw!=='이슈' && s.includes(kw)) return kw;
+
+  const words=s.split(/\s+/).filter(Boolean);
+  return words.slice(0,3).join(' ').slice(0,16) || kw || '이슈';
+}
+
+function makeHook(title,desc='',query=''){
   const raw=cleanLeadNoise(title).replace(/[“”"]/g,'').replace(/\s*[-|].*$/,'').replace(/….*$/,'').trim();
   const full=raw+' '+cleanLeadNoise(desc);
   const region=extractRegion(full);
   const count=extractCount(full);
   const topic=inferTopic(raw,desc);
+  const kw=mainKeyword(query,full);
+  const person=extractPersonName(full);
 
+  // 참고 사이트처럼 '기사 제목 복붙'이 아니라 2줄 훅으로 재가공
   if(topic==='물놀이장'){
     if(region&&count)return `${region} 물놀이장 ${count}\n순차적으로 열려요!`;
     if(count)return `물놀이장 ${count}\n순차적으로 열려요!`;
     return `여름 물놀이장\n순차적으로 열려요!`;
   }
-  if(topic==='책방'){
-    const book=(raw.match(/'([^']+)'/)||raw.match(/‘([^’]+)’/))?.[1];
-    if(book)return `${book}\n책방 이야기!`;
-    return `동네 책방 이야기\n새로 나왔어요!`;
+
+  if((full.includes('여행')||full.includes('영상')||full.includes('브이로그')||full.includes('일상')) && person){
+    return `여행 영상 다채롭네?\n${person} 근황 궁금해!`;
   }
+
+  if(topic==='책방'){
+    if(region) return `${region} 책방 이야기\n어떤 곳일까?`;
+    return `동네 책방 탐사기\n어떤 이야기일까?`;
+  }
+
   if(topic==='팝업'){
-    const brand=raw.split(/[,\s]/).find(v=>v.length>=2&&!v.includes('팝업'))||'브랜드';
+    const brand=shortSubject(raw,query).replace(/팝업/g,'').trim()||'브랜드';
     return `${brand} 팝업\n왜 주목받을까?`;
   }
-  if(topic==='카페')return `${region||'요즘'} 카페\n왜 화제일까?`;
-  if(topic==='패션')return `요즘 스타일\n왜 화제일까?`;
-  if(topic==='뷰티')return `뷰티템\n왜 주목받을까?`;
+
+  if(topic==='카페'){
+    return `${region||kw||'요즘'} 카페\n왜 화제일까?`;
+  }
+
+  if(topic==='패션'){
+    return `${kw&&kw!=='이슈'?kw:'요즘'} 스타일\n왜 화제일까?`;
+  }
+
+  if(topic==='뷰티'){
+    return `${kw&&kw!=='이슈'?kw:'뷰티'} 뷰티템\n왜 주목받을까?`;
+  }
+
   if(topic==='광고'){
-    const brand=raw.split(/[,\s]/)[0]||'브랜드';
+    const brand=shortSubject(raw,query)||'브랜드';
     if(full.includes('50만원'))return `${brand} 광고 크레딧\n50만원 지원해요!`;
     return `${brand} 광고 혜택\n확대됐어요!`;
   }
 
-  const words=raw.split(' ');
-  let l1='',l2='';
-  for(const w of words){
-    if((l1+' '+w).trim().length<=13)l1=(l1+' '+w).trim();
-    else l2=(l2+' '+w).trim();
+  if(region && kw && kw!=='이슈'){
+    return `${region} ${kw} 소식\n한눈에 정리!`;
   }
-  if(!l2)return `${l1||raw}\n한눈에 정리!`;
-  return `${l1}\n${l2.slice(0,14)||'한눈에 정리!'}`;
+
+  const subject=shortSubject(raw,query);
+  return `${subject}\n왜 주목받을까?`;
 }
-function usefulSentences(title,desc){
-  const s=splitSentences((desc||title)+' '+(title||''))
-    .map(cleanLeadNoise)
-    .filter(v=>v.length>8)
-    .filter(v=>!/(무단전재|재배포|Copyright|저작권|구독|공유|사진=|제공=)/i.test(v));
-  return s.length?s:[cleanLeadNoise(desc||title)];
+
+function makeSummaryLine(a,b,max=118){
+  return trimText(`${ensureEnd(a)} ${ensureEnd(b)}`.trim(),max);
 }
-function makePoints(title,desc){
+
+function makePoints(title,desc,query=''){
   const topic=inferTopic(title,desc);
   const full=cleanLeadNoise(title+' '+desc);
   const region=extractRegion(full);
   const count=extractCount(full);
   const places=extractPlaces(full);
-  const s=usefulSentences(title,desc);
-  const s0=s[0]||title, s1=s[1]||'', s2=s.slice(2,4).join(' ');
+  const kw=mainKeyword(query,full);
+  const subject=shortSubject(title,query);
+  const person=extractPersonName(full);
+
+  // 핵심 원칙:
+  // BODY 1 = 무엇이 일어났는지
+  // BODY 2 = 왜 의미 있는지
+  // BODY 3 = 앞으로 어떤 영향이 있는지
+  // 원문 문장을 그대로 자르지 않고 카드뉴스 말투로 재구성
 
   if(topic==='물놀이장'){
-    const placeText=places.length?`${places.slice(0,2).join(', ')} 등 주요 장소부터 운영을 시작해요`:'도심 속 피서 공간으로 시민들이 가까이서 이용할 수 있어요';
+    const placeText=places.length?`${places.slice(0,2).join(', ')} 등 주요 장소가 먼저 열려 이용할 수 있어요`:'도심 속 가까운 피서 공간으로 이용할 수 있어요';
     return [
-      twoSent(`${region?region+' 지역의 ':''}${count||'여러 곳의'} 물놀이장이 이번 여름 순차적으로 개장할 예정이에요`,placeText),
-      twoSent('장소마다 운영 기간과 시간이 달라 방문 전 확인이 필요해요','아이들과 함께 이용하는 공간인 만큼 안전 관리와 시설 점검도 중요해요'),
-      twoSent(`${region?region+' ':''}시민들은 여름철 더 시원하고 즐거운 시간을 보낼 수 있을 거예요`,'가족 단위 방문객 증가로 주변 상권에도 긍정적인 효과가 기대돼요')
+      makeSummaryLine(`${region?region+' 지역의 ':''}${count||'여러 곳의'} 물놀이장이 이번 여름 순차적으로 개장할 예정이에요`, placeText),
+      makeSummaryLine(`운영 기간과 시간은 장소마다 달라 방문 전 확인이 필요해요`, `아이들과 함께 이용하는 공간인 만큼 안전 관리도 중요해요`),
+      makeSummaryLine(`${region?region+' ':''}시민들은 여름철 더 즐거운 시간을 보낼 수 있을 거예요`, `가족 단위 방문객 증가로 지역 상권에도 긍정적인 영향이 기대돼요`)
     ];
   }
+
+  if((full.includes('여행')||full.includes('영상')||full.includes('브이로그')||full.includes('일상')) && person){
+    return [
+      makeSummaryLine(`${person}이 최근 여러 매력을 담은 여행 영상을 공개했어요`, `여행지와 일상, 취향이 담긴 장면들이 함께 소개됐어요`),
+      makeSummaryLine(`핵심은 단순한 근황보다 ${person}만의 분위기와 콘텐츠 정체성이 드러난다는 점이에요`, `팬들은 새로운 모습과 감성을 자연스럽게 확인할 수 있어요`),
+      makeSummaryLine(`이런 활동은 팬층을 더 넓히고 긍정적인 반응을 만드는 데 도움이 될 거예요`, `앞으로 공개될 콘텐츠에도 관심이 이어질 것으로 보여요`)
+    ];
+  }
+
   if(topic==='책방'){
     return [
-      twoSent(toEoyo(s0),'동네 책방과 지역 문화가 함께 주목받고 있어요'),
-      twoSent(s1?toEoyo(s1):'책방은 단순히 책을 파는 곳을 넘어 취향과 이야기를 나누는 공간이 되고 있어요','방문 자체가 하나의 콘텐츠가 되는 흐름이에요'),
-      twoSent('앞으로 동네 책방은 지역 산책 코스와 문화 소비를 연결하는 역할을 할 수 있어요','작은 공간의 개성이 독자들의 방문 이유가 될 거예요')
+      makeSummaryLine(`동네 책방과 관련된 이야기가 새롭게 소개됐어요`, `작은 공간이 가진 개성과 지역 문화가 함께 주목받고 있어요`),
+      makeSummaryLine(`핵심은 책방이 단순한 판매 공간을 넘어 취향을 나누는 장소가 되고 있다는 점이에요`, `방문 자체가 하나의 콘텐츠가 되는 흐름이에요`),
+      makeSummaryLine(`앞으로 동네 책방은 산책 코스와 문화 소비를 연결하는 역할을 할 수 있어요`, `공간의 개성이 독자들의 방문 이유가 될 거예요`)
     ];
   }
+
   if(topic==='팝업'){
     return [
-      twoSent(toEoyo(s0),'브랜드는 오프라인 공간에서 제품과 분위기를 직접 경험하게 만들고 있어요'),
-      twoSent(s1?toEoyo(s1):'방문객은 체험, 인증, 구매를 한 번에 경험할 수 있어요','짧은 기간 운영되는 만큼 희소성과 방문 욕구가 함께 커져요'),
-      twoSent('이런 팝업은 단순 홍보를 넘어 브랜드 팬덤을 만드는 접점이 될 수 있어요','SNS 인증과 후기가 더해지면 관심이 더 넓게 확산될 가능성이 커요')
+      makeSummaryLine(`${subject} 관련 팝업 소식이 주목받고 있어요`, `브랜드는 오프라인 공간에서 제품과 분위기를 직접 경험하게 만들고 있어요`),
+      makeSummaryLine(`핵심은 짧은 기간 운영되는 공간이 방문 욕구를 높인다는 점이에요`, `체험, 인증, 구매가 한 번에 이어지는 구조예요`),
+      makeSummaryLine(`이런 팝업은 단순 홍보를 넘어 브랜드 팬덤을 만드는 접점이 될 수 있어요`, `SNS 인증과 후기가 더해지면 관심이 더 넓게 확산될 가능성이 커요`)
     ];
   }
+
   if(topic==='카페'){
     return [
-      twoSent(toEoyo(s0),'공간의 분위기와 지역성이 함께 주목받으며 방문 욕구를 높이고 있어요'),
-      twoSent(s1?toEoyo(s1):'카페는 음료를 마시는 곳을 넘어 취향을 보여주는 장소가 되고 있어요','사진, 동선, 주변 상권까지 함께 소비되는 흐름이에요'),
-      twoSent('앞으로 카페 이슈는 동네 이미지와 SNS 콘텐츠를 함께 움직일 가능성이 높아요','저장하고 방문하는 소비가 이어지며 지역 상권에도 영향을 줄 수 있어요')
+      makeSummaryLine(`${region||kw} 카페 관련 소식이 새롭게 주목받고 있어요`, `공간의 분위기와 지역성이 함께 방문 욕구를 높이고 있어요`),
+      makeSummaryLine(`핵심은 카페가 음료를 마시는 곳을 넘어 취향을 보여주는 장소가 됐다는 점이에요`, `사진, 동선, 주변 상권까지 함께 소비되는 흐름이에요`),
+      makeSummaryLine(`앞으로 카페 이슈는 동네 이미지와 SNS 콘텐츠를 함께 움직일 가능성이 높아요`, `저장하고 방문하는 소비가 이어지며 지역 상권에도 영향을 줄 수 있어요`)
     ];
   }
+
   if(topic==='패션'){
     return [
-      twoSent(toEoyo(s0),'스타일링 포인트가 기사와 SNS를 통해 빠르게 소비되고 있어요'),
-      twoSent(s1?toEoyo(s1):'소비자는 브랜드보다 바로 따라 할 수 있는 조합과 분위기에 반응하고 있어요','룩의 색감, 실루엣, 착용 장소가 함께 저장되는 흐름이에요'),
-      twoSent('이런 패션 이슈는 저장형 콘텐츠로 확산되기 좋아요','비슷한 아이템을 찾거나 따라 입는 소비로 이어질 가능성이 커요')
+      makeSummaryLine(`${kw&&kw!=='이슈'?kw:'패션'} 스타일 이슈가 새롭게 주목받고 있어요`, `룩의 분위기와 스타일링 포인트가 함께 화제가 되고 있어요`),
+      makeSummaryLine(`핵심은 바로 따라 하기 쉬운 조합과 이미지가 소비자 반응을 만든다는 점이에요`, `색감, 실루엣, 착용 장소가 함께 저장되는 흐름이에요`),
+      makeSummaryLine(`이런 패션 이슈는 저장형 콘텐츠로 확산되기 좋아요`, `비슷한 아이템을 찾거나 따라 입는 소비로 이어질 가능성이 커요`)
     ];
   }
+
   if(topic==='뷰티'){
     return [
-      twoSent(toEoyo(s0),'소비자들은 성분과 피부 고민 해결 여부를 함께 살펴보고 있어요'),
-      twoSent(s1?toEoyo(s1):'특히 진정, 보습, 저자극처럼 매일 쓰기 쉬운 키워드가 중요해지고 있어요','후기와 사용감 비교도 구매 결정에 큰 영향을 주고 있어요'),
-      twoSent('앞으로는 단순 유행보다 피부 타입에 맞는 쉬운 루틴 제안이 더 중요해질 거예요','브랜드는 효능뿐 아니라 안심하고 쓸 수 있는 메시지를 강화할 필요가 있어요')
+      makeSummaryLine(`${kw&&kw!=='이슈'?kw:'뷰티'} 관련 제품과 트렌드가 새롭게 주목받고 있어요`, `소비자들은 성분과 사용감, 피부 고민 해결 여부를 함께 살펴보고 있어요`),
+      makeSummaryLine(`핵심은 단순 유행보다 매일 쓰기 쉬운 루틴과 신뢰감이에요`, `후기와 비교 콘텐츠도 구매 결정에 큰 영향을 주고 있어요`),
+      makeSummaryLine(`앞으로는 피부 타입에 맞는 쉬운 루틴 제안이 더 중요해질 거예요`, `브랜드는 효능뿐 아니라 안심하고 쓸 수 있는 메시지를 강화할 필요가 있어요`)
     ];
   }
+
   if(topic==='광고'){
     return [
-      twoSent(toEoyo(s0),'브랜드가 초기 광고를 더 쉽게 시작할 수 있도록 지원하는 내용이에요'),
-      twoSent(s1?toEoyo(s1):'광고비 부담을 낮추면 더 많은 브랜드가 캠페인을 시험해볼 수 있어요','혜택 구조가 명확할수록 신규 광고주의 진입 장벽도 낮아져요'),
-      twoSent('이런 지원은 중소 브랜드의 마케팅 참여를 늘리는 계기가 될 수 있어요','플랫폼 입장에서도 광고 상품 이용과 고객 확보에 긍정적인 효과가 기대돼요')
+      makeSummaryLine(`${subject} 관련 광고 지원 소식이 눈길을 끌고 있어요`, `브랜드가 초기 광고를 더 쉽게 시작할 수 있도록 돕는 내용이에요`),
+      makeSummaryLine(`핵심은 광고비 부담을 낮춰 더 많은 브랜드가 캠페인을 시험해볼 수 있다는 점이에요`, `혜택 구조가 명확할수록 신규 광고주의 진입 장벽도 낮아져요`),
+      makeSummaryLine(`이런 지원은 중소 브랜드의 마케팅 참여를 늘리는 계기가 될 수 있어요`, `플랫폼 입장에서도 광고 상품 이용과 고객 확보에 긍정적인 효과가 기대돼요`)
     ];
   }
 
   return [
-    twoSent(toEoyo(s0),'관련 키워드와 연결되며 독자들의 관심을 받고 있어요'),
-    twoSent(s1?toEoyo(s1):'기사의 핵심은 변화의 이유와 현재 반응을 함께 보는 데 있어요','짧게 정리하면 독자가 이해하기 쉬워요'),
-    twoSent('이번 이슈는 관련 분야의 변화를 보여주는 사례로 볼 수 있어요','앞으로 소비자 반응에 따라 더 넓게 확산될 가능성이 있어요')
+    makeSummaryLine(`${kw&&kw!=='이슈'?kw:subject} 관련 소식이 새롭게 주목받고 있어요`, `기사에서는 ${subject}를 중심으로 최근 흐름을 소개하고 있어요`),
+    makeSummaryLine(`핵심은 단순한 사건보다 변화의 이유와 반응을 함께 보는 데 있어요`, `독자들은 이를 통해 현재 분위기를 더 쉽게 이해할 수 있어요`),
+    makeSummaryLine(`이번 이슈는 관련 분야의 흐름을 보여주는 사례로 볼 수 있어요`, `앞으로 소비자 관심과 현장 반응에 따라 더 넓게 확산될 가능성이 있어요`)
   ];
 }
+
 function makeTags(title,desc,magTags){
   const words=(title+' '+desc).replace(/[^\w가-힣\s]/g,'').split(/\s+/).filter(v=>v.length>=2).slice(0,4).map(v=>'#'+v);
   const base=['#트렌드','#뉴스','#카드뉴스'];
@@ -690,15 +764,14 @@ function makeTags(title,desc,magTags){
 
 function generateFromArticle(idx,e){
   if(e) e.stopPropagation();
-  const q=getQuota();if(q.count>=DAILY_QUOTA){showToast(`오늘 생성 횟수(${DAILY_QUOTA}회)를 다 사용했어요.`);return;}
   const grid=document.getElementById('article-grid');const item=grid._items?.[idx];if(!item)return;
   document.querySelectorAll('.article-item').forEach((el,i)=>el.classList.toggle('selected',i===idx));
   const magId=document.getElementById('card-mag-select').value;
   const mag=magazines.find(x=>x.id===magId);if(!mag){showToast('매거진을 먼저 설정해주세요.');return;}
   showLoading('카드뉴스를 만들고 있어요...');
 
-  const hook=makeHook(item.title,item.desc);
-  const pts=makePoints(item.title,item.desc);
+  const hook=makeHook(item.title,item.desc,window.lastSearchQuery||'');
+  const pts=makePoints(item.title,item.desc,window.lastSearchQuery||'');
   const tags=makeTags(item.title,item.desc,mag.tags);
 
   generatedCards=[
@@ -717,7 +790,7 @@ function generateFromArticle(idx,e){
   generatedHashtags=tags;
   cardImages={}; cardTitleColors={}; cardTitleSizes={};
 
-  useQuota(); renderCardEditArea(mag);
+  renderCardEditArea(mag);
   document.getElementById('card-edit-wrap').style.display='block';
   hideLoading();
   showToast('카드뉴스 생성 완료! ✓');
@@ -759,6 +832,15 @@ function renderCardEditArea(mag){
   document.getElementById('hashtag-box').textContent=generatedHashtags;
 }
 
+
+function renderHookTitle(title,mainColor,accentColor){
+  const lines=String(title||'').split('\n');
+  const first=lines[0]||'';
+  const second=lines.slice(1).join(' ')||'';
+  if(!second) return `<span style="color:${mainColor};">${first}</span>`;
+  return `<span style="color:${mainColor};">${first}</span><br><span style="color:${accentColor};">${second}</span>`;
+}
+
 function buildCardHTML(card,idx,mag){
   const bg=mag.bgColor||'#fff',pt=mag.ptColor||'#e0483b';
   const dark=isColorDark(bg),tc=dark?'#fff':'#111';
@@ -769,7 +851,7 @@ function buildCardHTML(card,idx,mag){
       <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(to top,rgba(0,0,0,.82) 60%,rgba(0,0,0,.08));z-index:1;"></div>
       <div style="position:relative;z-index:2;padding:14px;">
         <div style="font-size:8px;color:rgba(255,255,255,.55);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;">${mag.logoName||mag.name}</div>
-        <div style="font-size:${tSize}px;font-weight:900;color:${tColor};line-height:1.3;white-space:pre-line;">${card.title||''}</div>
+        <div style="font-size:${tSize}px;font-weight:900;line-height:1.3;">${renderHookTitle(card.title||'',tColor,mag.ptColor||'#ffb6b6')}</div>
         ${card.subtitle?`<div style="font-size:9px;color:rgba(255,255,255,.5);margin-top:4px;">${card.subtitle}</div>`:''}
       </div>
     </div>`;
@@ -796,9 +878,8 @@ function buildCardHTML(card,idx,mag){
   return `<div style="width:100%;height:100%;position:relative;overflow:hidden;background:${img?'transparent':bg};">
     ${img?`<img src="${img}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;"><div style="position:absolute;top:0;left:0;width:100%;height:100%;background:${overlayBg};z-index:1;"></div>`:''}
     <div style="position:relative;z-index:2;width:100%;height:100%;padding:14px;display:flex;flex-direction:column;justify-content:center;background:${img?'transparent':bg};">
-      <div style="font-size:8px;font-weight:700;color:${nc};letter-spacing:1px;margin-bottom:4px;text-transform:uppercase;">${card.label||''}</div>
-      <div style="font-size:${tSize}px;font-weight:900;color:${tColor};line-height:1.3;margin-bottom:7px;">${card.title||''}</div>
-      <div style="font-size:9px;line-height:1.7;color:${img?(dark?'rgba(255,255,255,.85)':'rgba(0,0,0,.7)'):(dark?'rgba(255,255,255,.7)':'rgba(0,0,0,.65)')};">${(card.body||'').replace(/\n/g,'<br>')}</div>
+      <div style="font-size:6.5px;font-weight:900;color:${nc};letter-spacing:1px;margin-bottom:8px;text-transform:uppercase;">${card.title||card.label||''}</div>
+      <div style="font-size:9px;font-weight:800;line-height:1.65;color:${img?(dark?'rgba(255,255,255,.88)':'rgba(0,0,0,.78)'):(dark?'rgba(255,255,255,.82)':'rgba(0,0,0,.72)')};">${(card.body||'').replace(/\n/g,'<br>')}</div>
     </div>
   </div>`;
 }
