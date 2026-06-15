@@ -280,7 +280,128 @@ textarea.form-input{resize:vertical;min-height:70px}
 <div class="loading-overlay" id="loading"><div class="spinner"></div><div class="loading-text" id="loading-text">로딩 중...</div></div>
 <div class="toast" id="toast"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js">
+/* ===== keyword add emergency fix ===== */
+function getTagArray(type){
+  if(type==='beauty') return beautyUserTags;
+  return fashionUserTags;
+}
+
+function renderTagArea(type){
+  const userTags = getTagArray(type);
+  const suggested = type==='beauty' ? BEAUTY_SUGGESTED : FASHION_SUGGESTED;
+
+  const userBox = document.getElementById(type+'-user-tags');
+  const suggestBox = document.getElementById(type+'-suggest-tags');
+  const countBox = document.getElementById(type+'-kw-count');
+
+  if(!userBox || !suggestBox || !countBox) return;
+
+  userBox.innerHTML = userTags.map((tag, index) => `
+    <div class="user-tag-chip">
+      ${tag}
+      <span class="user-tag-x" onclick="removeUserTag('${type}', ${index})">×</span>
+    </div>
+  `).join('');
+
+  suggestBox.innerHTML = suggested
+    .filter(tag => !userTags.includes(tag))
+    .map(tag => `
+      <span class="suggest-tag" onclick="addSuggestTag('${type}', '${encodeURIComponent(tag)}')">+ ${tag}</span>
+    `).join('');
+
+  countBox.textContent = `키워드 ${userTags.length}개`;
+}
+
+function addUserTag(type){
+  const input = document.getElementById(type+'-add-input');
+  if(!input) return;
+
+  const value = input.value.trim();
+  if(!value){
+    showToast('키워드를 입력해 주세요.');
+    return;
+  }
+
+  const arr = getTagArray(type);
+
+  // 참고사이트처럼 직접 입력한 키워드를 선택 칩 영역에 바로 반영
+  if(!arr.includes(value)){
+    arr.push(value);
+  }
+
+  input.value = '';
+  renderTagArea(type);
+  showToast(`'${value}' 키워드를 추가했어요.`);
+}
+
+function addSuggestTag(type, encodedValue){
+  const value = decodeURIComponent(encodedValue);
+  const arr = getTagArray(type);
+
+  if(!arr.includes(value)){
+    arr.push(value);
+  }
+
+  renderTagArea(type);
+}
+
+function removeUserTag(type, index){
+  const arr = getTagArray(type);
+  arr.splice(index, 1);
+  renderTagArea(type);
+}
+
+function absorbInputKeyword(type){
+  const input = document.getElementById(type+'-add-input');
+  if(!input) return;
+
+  const value = input.value.trim();
+  if(!value) return;
+
+  const arr = getTagArray(type);
+  if(!arr.includes(value)){
+    arr.push(value);
+  }
+  input.value = '';
+  renderTagArea(type);
+}
+
+// 기존 searchNews를 감싸서, 검색 버튼을 눌렀을 때 입력칸 값도 자동 추가되게 처리
+const originalSearchNewsFixed = searchNews;
+searchNews = function(type){
+  absorbInputKeyword(type);
+  return originalSearchNewsFixed(type);
+};
+
+document.addEventListener('DOMContentLoaded', function(){
+  ['beauty','fashion'].forEach(type => {
+    const input = document.getElementById(type+'-add-input');
+    const btn = input ? input.parentElement.querySelector('button') : null;
+
+    if(input){
+      input.addEventListener('keydown', function(event){
+        if(event.key === 'Enter'){
+          event.preventDefault();
+          addUserTag(type);
+        }
+      });
+    }
+
+    if(btn){
+      btn.onclick = function(event){
+        event.preventDefault();
+        addUserTag(type);
+      };
+    }
+  });
+
+  renderTagArea('beauty');
+  renderTagArea('fashion');
+});
+/* ===== keyword add emergency fix end ===== */
+
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 // 네이버 API 키
