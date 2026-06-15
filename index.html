@@ -54,6 +54,7 @@ h1{font-size:24px;margin:0 0 18px}
 .cards-panel{display:none}
 .download-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .hint{font-size:12px;color:#aaa}
+.status-line{font-size:12px;color:#666;background:#f7f7f7;border-radius:10px;padding:8px 10px;margin-top:10px;line-height:1.5}
 .zip{border:0;background:#111;color:#fff;border-radius:12px;padding:12px 18px;font-family:inherit;font-weight:900;cursor:pointer}
 .card-scroll{overflow-x:auto;padding:14px 6px 12px}
 .card-row{display:flex;gap:18px;min-width:max-content}
@@ -148,6 +149,7 @@ h1{font-size:24px;margin:0 0 18px}
           <div>
             <div class="hint">카드 저장하기 (PNG) — 옆으로 스크롤</div>
             <div class="hint" style="margin-top:8px;">각 카드 하단의 이미지 변경 버튼으로 직접 넣으세요.</div>
+            <div id="article-status" class="status-line">뉴스를 선택하면 기사 제목/요약이 카드에 즉시 반영돼요.</div>
           </div>
           <button class="zip" onclick="downloadAll()">⬇ 전체 ZIP 다운로드</button>
         </div>
@@ -237,7 +239,7 @@ async function searchNews(type){
   if(input) addKeyword(type,input);
   const q=tags[type].length?tags[type].join(' '):(type==='beauty'?'뷰티 화장품':'패션 스타일');
   lastQuery=q;
-  showLoading('"'+q+'" 뉴스 검색 중...');
+  showLoading('\"'+q+'\" 뉴스 검색 중...');
   try{
     let items=[];
     try{items=await searchNaverApi(q)}
@@ -249,8 +251,9 @@ async function searchNews(type){
     showToast('뉴스 '+currentArticles.length+'건을 불러왔어요.');
   }catch(e){
     console.error(e); showToast('검색 실패. 키워드를 바꿔보세요.');
+  }finally{
+    hideLoading();
   }
-  hideLoading();
 }
 
 async function searchNaverApi(q){
@@ -279,29 +282,35 @@ async function searchNaverHtml(q){
   }
   throw new Error('html fail');
 }
+function absolutizeUrl(href){
+  try{return new URL(href, location.href).href}catch(e){return href||''}
+}
+function getHostname(url){
+  try{return new URL(url).hostname.replace(/^www\./,'')}catch(e){return ''}
+}
 function parseNaverHtml(html){
   const doc=new DOMParser().parseFromString(html,'text/html');
   const seen=new Set(), arr=[];
 
   const candidates=[
     ...doc.querySelectorAll('a.news_tit'),
-    ...doc.querySelectorAll('a[href*="news.naver.com"]'),
-    ...doc.querySelectorAll('a[href*="n.news.naver.com"]')
+    ...doc.querySelectorAll('a[href*="n.news.naver.com"]'),
+    ...doc.querySelectorAll('a[href*="news.naver.com"]')
   ];
 
   candidates.forEach(a=>{
-    const href=a.href||a.getAttribute('href')||'';
+    const href=absolutizeUrl(a.getAttribute('href')||a.href||'');
     const title=cleanHtml(a.getAttribute('title')||a.textContent||'');
-    if(title.length<8 || seen.has(href)) return;
+    if(title.length<8 || !href || seen.has(href)) return;
     seen.add(href);
 
-    const box=a.closest('li')||a.closest('.bx')||a.closest('.news_area')||a.parentElement;
+    const box=a.closest('li')||a.closest('.bx')||a.closest('.news_area')||a.closest('.api_subject_bx')||a.parentElement;
     let desc='';
     if(box){
-      const descEl=box.querySelector('.dsc_txt_wrap')||box.querySelector('.news_dsc')||box.querySelector('.api_txt_lines')||box.querySelector('p');
+      const descEl=box.querySelector('.dsc_txt_wrap')||box.querySelector('.news_dsc')||box.querySelector('.api_txt_lines')||box.querySelector('p')||box.querySelector('.desc');
       desc=descEl?cleanHtml(descEl.textContent):'';
     }
-    arr.push({title,description:desc,link:href,originallink:href,pubDate:'',source:'naver'});
+    arr.push({title,description:desc,link:href,originallink:href,pubDate:'',source:getHostname(href)});
   });
 
   return arr.slice(0,20);
@@ -426,10 +435,12 @@ async function readArticleBody(article){
 
 
 function normalizeArticle(it,i,type){
-  const url=it.originallink||it.link||'';
-  let domain=''; try{domain=new URL(url).hostname.replace(/^www\./,'')}catch(e){}
+  const origin=it.originallink||'';
+  const link=it.link||origin||'';
+  const url=absolutizeUrl(link);
+  const domain=getHostname(origin||url);
   const date=it.pubDate?new Date(it.pubDate).toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
-  return {id:i,title:cleanHtml(it.title),desc:cleanHtml(it.description),url:it.link||url,origin:it.originallink||'',domain,date,type};
+  return {id:i,title:cleanHtml(it.title),desc:cleanHtml(it.description),url,origin:absolutizeUrl(origin),domain,date,type};
 }
 function renderArticles(){
   const list=$('article-list'); list.innerHTML='';
@@ -474,20 +485,22 @@ function inferTopic(title,desc){
   if(/(책방|서점|탐사기)/.test(s)) return 'bookstore';
   if(s.includes('팝업')) return 'popup';
   if(s.includes('카페')) return 'cafe';
-  if(/(화장품|뷰티|토너|스킨케어|메디큐브)/.test(s)) return 'beauty';
-  if(/(패션|스타일|룩)/.test(s)) return 'fashion';
+  if(/(화장품|뷰티|토너|스킨케어|메디큐브|올리브영|스킨|앰플|세럼|크림)/.test(s)) return 'beauty';
+  if(/(패션|스타일|룩|룩북|공항패션|데님|무신사|브랜드)/.test(s)) return 'fashion';
   return 'general';
 }
 function end(s){
   s=String(s||'').trim();
   if(!s) return '';
-  s=s.replace(/요요/g,'요').replace(/죠요/g,'죠');
+  s=s.replace(/요요/g,'요').replace(/죠요/g,'죠').replace(/다다/g,'다');
   if(/[.!?]$/.test(s)) return s;
-  if(/(요|죠|다|니다|예요|이에요|거예요|하거든요)$/.test(s)) return s+'.';
+  if(/(요|죠|다|니다|예요|이에요|거예요|하거든요|습니다)$/.test(s)) return s+'.';
   return s+'예요.';
 }
-function two(a,b,max=165){const s=(end(a)+' '+end(b)).replace(/\s+/g,' ').trim(); return s.length>max?s.slice(0,max-1).replace(/\s+\S*$/,'')+'…':s}
-
+function two(a,b,max=165){
+  const s=(end(a)+' '+end(b)).replace(/\s+/g,' ').trim();
+  return s.length>max?s.slice(0,max-1).replace(/\s+\S*$/,'')+'…':s;
+}
 function removePressNoise(title){
   return cleanHtml(title)
     .replace(/\[[^\]]+\]/g,'')
@@ -495,13 +508,27 @@ function removePressNoise(title){
     .replace(/\s*[-|].*$/,'')
     .replace(/….*$/,'')
     .replace(/\s+등$/,'')
+    .replace(/^(단독|종합|속보|포토|영상)\s*/,'')
     .replace(/^\W+/,'')
     .trim();
+}
+function splitSentences(text){
+  return cleanHtml(text)
+    .replace(/([.!?。]|다\.|요\.|죠\.)\s+/g,'$1|')
+    .split('|')
+    .map(v=>cleanHtml(v))
+    .filter(v=>v.length>18)
+    .filter(v=>!/(기자|무단전재|재배포|Copyright|저작권|구독|공유|댓글|사진=|제공=)/i.test(v))
+    .slice(0,8);
+}
+function sentenceOrFallback(sentences,i,fallback){
+  const v=sentences[i]||'';
+  return v.length>18?v:fallback;
 }
 function titleSubject(title,desc){
   const s=removePressNoise(title);
   const quoted=(s.match(/'([^']+)'/)||s.match(/‘([^’]+)’/))?.[1];
-  if(quoted && quoted.length<=14) return quoted;
+  if(quoted && quoted.length<=16) return quoted;
   const name=extractName(title+' '+desc);
   if(name) return name;
   const region=extractRegion(title+' '+desc);
@@ -510,22 +537,21 @@ function titleSubject(title,desc){
   const words=s.split(/\s+/).filter(Boolean);
   let subject=words.slice(0,3).join(' ');
   subject=subject.replace(/(개최|진행|발령|확대|공개|출시|오픈|등장|참석)$/,'').trim();
-  return subject.slice(0,16)||'이슈';
+  return subject.slice(0,18)||'이슈';
 }
-
 function makeHook(title,desc){
   const topic=inferTopic(title,desc), s=title+' '+desc;
-  if(topic==='celeb'){const n=extractName(s)||'셀럽'; return `${n} 포토콜\n비주얼 난리났네!`}
-  if(topic==='water'){const r=extractRegion(s), c=extractCount(s); return `${r||'여름'} 물놀이장 ${c||''}\n순차적으로 열려요!`.replace('  ',' ')}
-  if(topic==='weather'){const r=extractRegion(s)||'전국'; return `${r} 날씨 비상\n우산 꼭 챙겨요!`}
-  if(topic==='bookstore') return `동네 책방 이야기\n어떤 곳일까?`
-  if(topic==='popup') return `요즘 팝업\n왜 주목받을까?`
-  if(topic==='cafe') return `${extractRegion(s)||'요즘'} 카페\n왜 화제일까?`
-  if(topic==='beauty') return `${titleSubject(title,desc)}\n왜 주목받을까?`
-  if(topic==='fashion') return `${titleSubject(title,desc)}\n스타일 화제!`
+  if(topic==='celeb'){const n=extractName(s)||titleSubject(title,desc)||'셀럽'; return `${n} 포토콜\n오늘의 화제`;}
+  if(topic==='water'){const r=extractRegion(s), c=extractCount(s); return `${r||'여름'} 물놀이장 ${c||''}\n순차 개장 소식`.replace('  ',' ');}
+  if(topic==='weather'){const r=extractRegion(s)||'전국'; return `${r} 날씨 비상\n우산 챙겨요`;}
+  if(topic==='bookstore') return `동네 책방 이야기\n한눈에 정리`;
+  if(topic==='popup') return `${titleSubject(title,desc)}\n팝업 소식`;
+  if(topic==='cafe') return `${extractRegion(s)||'요즘'} 카페\n화제의 이유`;
+  if(topic==='beauty') return `${titleSubject(title,desc)}\n뷰티 이슈 정리`;
+  if(topic==='fashion') return `${titleSubject(title,desc)}\n스타일 이슈`;
 
   const subject=titleSubject(title,desc);
-  if(subject.length<=10) return `${subject}\n왜 주목받을까?`;
+  if(subject.length<=10) return `${subject}\n한눈에 정리`;
 
   const words=subject.split(/\s+/); 
   let l1='',l2='';
@@ -533,55 +559,78 @@ function makeHook(title,desc){
     if((l1+' '+w).trim().length<=12) l1=(l1+' '+w).trim();
     else if((l2+' '+w).trim().length<=14) l2=(l2+' '+w).trim();
   });
-  return `${l1||subject.slice(0,12)}\n${l2||'한눈에 정리!'}`;
+  return `${l1||subject.slice(0,12)}\n${l2||'뉴스 정리'}`;
 }
-function makePoints(title,desc){
-  const topic=inferTopic(title,desc), s=title+' '+desc;
+function makePoints(title,sourceText){
+  const source=cleanHtml(sourceText||title);
+  const sentences=splitSentences(source);
+  const subject=titleSubject(title,source);
+  const topic=inferTopic(title,source);
+  const s=title+' '+source;
+
+  // 기사 본문/검색 설명에서 실제 문장을 우선 사용해서 두 번째 뉴스도 확실히 다르게 보이게 함
+  const factual1=sentenceOrFallback(sentences,0,`${subject} 관련 소식이 새롭게 전해졌어요`);
+  const factual2=sentenceOrFallback(sentences,1,`이번 이슈는 ${subject}에 대한 관심이 이어지고 있다는 점에서 주목돼요`);
+  const factual3=sentenceOrFallback(sentences,2,`관련 반응과 후속 소식도 함께 살펴볼 필요가 있어요`);
+
   if(topic==='celeb'){
-    const n=extractName(s)||'장원영', ev=extractEvent(s), loc=extractRegion(s)||'서울';
+    const n=extractName(s)||subject, ev=extractEvent(s), loc=extractRegion(s)||'';
     return [
-      two(`아이브의 ${n}이 ${loc}에서 열린 ‘${ev}’ 포토콜에 등장했어요`, `그녀의 멋진 비주얼이 팬들과 대중의 관심을 집중시켰죠. 많은 사람들이 그녀의 모습에 반하고 말았어요!`),
-      two(`${n}이 주목받는 이유는 단순히 예쁜 비주얼 때문만은 아니에요`, `현장 분위기를 압도하는 자신감과 브랜드 이미지까지 자연스럽게 끌어올리는 힘이 있기 때문이에요`),
-      two(`${n}의 매력은 단순히 외적인 것이 아니라 그녀가 가진 분위기와 자신감이 더해진 결과예요`, `앞으로의 활동도 기대되며 많은 사람들이 계속 그녀를 주목할 것으로 보여요. 영향력은 이미 대단하거든요!`)
+      two(factual1, loc?`${loc} 현장에서 열린 ‘${ev}’ 관련 소식으로 확인돼요`:`‘${ev}’ 관련 소식으로 확인돼요`),
+      two(factual2, `${n}의 현장 참석과 스타일링이 기사 핵심 포인트예요`),
+      two(factual3, `팬 반응과 브랜드 행사 후속 노출까지 이어질 수 있어요`)
+    ];
+  }
+  if(topic==='beauty'){
+    return [
+      two(factual1, `제품·브랜드·행사 맥락을 함께 보면 흐름이 더 잘 보여요`),
+      two(factual2, `뷰티 이슈는 성분, 모델, 팝업, 판매 채널 반응이 같이 움직이는 경우가 많아요`),
+      two(factual3, `후속 기사에서는 소비자 반응과 브랜드 확산 여부를 보면 좋아요`)
+    ];
+  }
+  if(topic==='fashion'){
+    return [
+      two(factual1, `스타일링과 브랜드 노출이 함께 주목되는 흐름이에요`),
+      two(factual2, `패션 이슈는 착장, 행사장, 협업 브랜드가 핵심 포인트가 돼요`),
+      two(factual3, `비슷한 룩이나 아이템 검색으로 관심이 이어질 수 있어요`)
     ];
   }
   if(topic==='weather'){
-    const r=extractRegion(s)||'전국';
+    const r=extractRegion(s)||'해당 지역';
     return [
-      two(`${r}에 강한 소나기와 비 소식이 전해졌어요`, `갑작스러운 날씨 변화로 외출 전 우산과 이동 동선을 확인하는 것이 좋아요`),
-      two(`이번 소식이 중요한 이유는 짧은 시간에도 강한 비가 쏟아질 수 있기 때문이에요`, `출퇴근길과 야외 일정에 바로 영향을 줄 수 있어 시민들의 주의가 필요해요`),
-      two(`당분간 지역별 날씨 변동이 이어질 가능성이 있어요`, `실시간 예보를 확인하고 안전한 이동 계획을 세우는 것이 중요해 보여요`)
+      two(factual1, `${r} 이동 계획에 영향을 줄 수 있는 소식이에요`),
+      two(factual2, `짧은 시간에도 날씨 변화가 클 수 있어 외출 전 확인이 필요해요`),
+      two(factual3, `실시간 예보와 안전 안내를 같이 확인하는 것이 좋아요`)
     ];
   }
   if(topic==='water'){
-    const r=extractRegion(s)||'지역', c=extractCount(s)||'여러 곳의';
     return [
-      two(`${r} ${c} 물놀이장이 이번 여름 순차적으로 개장할 예정이에요`, `시민들이 가까운 공원에서 시원한 피서를 즐길 수 있게 됐어요`),
-      two(`물놀이장이 개장하는 이유는 여름철 더위로 인한 시민들의 수요를 반영한 결과예요`, `안전하게 여름을 즐길 수 있도록 공원이 준비한 장치들 덕분이에요`),
-      two(`이번 개장으로 시민들은 여름철 더 즐겁게 시간을 보낼 수 있을 거예요`, `가족 단위 방문객 증가로 지역 상권에도 긍정적인 영향이 기대돼요`)
+      two(factual1, `여름철 가까운 공간에서 즐길 수 있는 소식이에요`),
+      two(factual2, `운영 일정과 안전 수칙을 함께 확인하는 것이 중요해요`),
+      two(factual3, `가족 단위 방문 수요가 늘어날 가능성이 있어요`)
     ];
   }
-  if(topic==='bookstore'){
-    return [
-      two(`동네 책방과 관련된 이야기가 새롭게 소개됐어요`, `작은 공간이 가진 개성과 지역 문화가 함께 주목받고 있어요`),
-      two(`책방이 의미 있는 이유는 단순한 판매 공간을 넘어 취향을 나누는 장소가 되기 때문이에요`, `방문 자체가 하나의 문화 경험으로 소비되는 흐름이에요`),
-      two(`앞으로 동네 책방은 산책 코스와 문화 소비를 연결하는 역할을 할 수 있어요`, `공간의 개성이 독자들의 방문 이유가 될 거예요`)
-    ];
-  }
-  const base=cleanHtml(desc||title);
-  const subject=titleSubject(title,desc);
+
   return [
-    two(`${subject} 관련 소식이 새롭게 전해졌어요`, `기사의 핵심 흐름을 짧게 정리해볼 수 있어요`),
-    two(`이 소식이 중요한 이유는 단순한 제목보다 그 안에 담긴 변화와 반응을 함께 봐야 하기 때문이에요`, `독자들이 현재 분위기를 더 쉽게 이해할 수 있어요`),
-    two(`앞으로 관련 관심이 이어지며 더 넓게 확산될 가능성이 있어요`, `현장 반응과 후속 소식도 함께 살펴보면 좋아요`)
+    two(factual1, `기사의 핵심 내용을 카드뉴스로 짧게 정리했어요`),
+    two(factual2, `제목만 볼 때보다 배경과 반응을 함께 보면 흐름이 선명해져요`),
+    two(factual3, `이후 관련 반응과 추가 보도를 같이 보면 좋아요`)
   ];
 }
-function makeTags(title,desc){return [...new Set(('#카드뉴스 #뉴스 '+lastQuery.split(/\s+/).map(v=>'#'+v).join(' ')).split(/\s+/))].slice(0,8).join(' ')}
+function makeTags(title,desc){
+  const base=('#카드뉴스 #뉴스 '+lastQuery.split(/\s+/).filter(Boolean).map(v=>'#'+v.replace(/^#/,'')).join(' ')).trim();
+  const subject=titleSubject(title,desc).replace(/\s+/g,'');
+  return [...new Set((base+' #'+subject).split(/\s+/))].slice(0,8).join(' ');
+}
 
-
-function commitGeneratedCards(article,sourceText){
-  const hook=makeHook(article.title,sourceText).replace(/요요/g,'요');
-  const pts=makePoints(article.title,sourceText).map(v=>String(v||'').replace(/요요/g,'요').replace(/죠요/g,'죠'));
+function setArticleStatus(msg){
+  const el=$('article-status');
+  if(el) el.textContent=msg;
+}
+function commitGeneratedCards(article,sourceText,mode='검색 결과 요약 기반'){
+  const safeSource=cleanHtml(sourceText || article.desc || article.title || '');
+  const hook=makeHook(article.title,safeSource).replace(/요요/g,'요');
+  const pts=makePoints(article.title,safeSource).map(v=>String(v||'').replace(/요요/g,'요').replace(/죠요/g,'죠'));
 
   cards=[
     {label:'HOOK',role:'HOOK',title:hook,body:'',subtitle:(article.domain||'')+' · '+(article.date||''),type:'hook'},
@@ -591,19 +640,20 @@ function commitGeneratedCards(article,sourceText){
     {label:'CTA',role:'CTA',title:'"이거 왜 난리예요?"',body:'복잡한 이슈, 핵심만 쉽게\n한 장씩 넘기면 정리 끝',type:'cta'}
   ];
 
-  // 뉴스가 바뀌면 이전 뉴스의 이미지/색상/수정 상태가 섞이지 않도록 초기화
+  // 뉴스가 바뀔 때 이전 뉴스의 이미지/색상/수정 상태가 섞이지 않게 초기화
   cardImages={};
   cardStyles={};
 
   renderCards();
   $('cards-panel').style.display='block';
+  setArticleStatus(`${mode} · 선택 기사: ${removePressNoise(article.title).slice(0,60)}`);
 }
 
 async function generateFromArticle(index){
   hideLoading();
   const token=++generationSeq;
+  const article={...currentArticles[index]};
 
-  const article=currentArticles[index];
   if(!article){
     showToast('기사 정보를 찾지 못했어요.');
     return;
@@ -611,14 +661,14 @@ async function generateFromArticle(index){
 
   document.querySelectorAll('.article').forEach((el,i)=>el.classList.toggle('selected',i===index));
 
-  // 1차: 두 번째 뉴스부터 먹통처럼 보이지 않게, 검색 결과 설명으로 즉시 카드 전체 반영
+  // 1차 즉시 반영: 본문 수집이 실패해도 카드가 반드시 바뀌게 함
   const quickSource=article.desc || article.title || '';
-  commitGeneratedCards(article,quickSource);
+  commitGeneratedCards(article,quickSource,'검색 결과 우선 반영');
 
   setTimeout(()=>$('cards-panel').scrollIntoView({behavior:'smooth',block:'start'}),60);
   showToast('선택한 뉴스가 카드뉴스에 바로 반영됐어요.');
 
-  // 2차: 본문 읽기는 백그라운드에서만 시도. 화면 전체 로딩으로 클릭을 막지 않음.
+  // 2차 본문 수집: 실패해도 화면을 막지 않고, 늦게 도착한 이전 기사 결과가 덮어쓰지 못하게 토큰으로 차단
   let body='';
   try{
     body=await readArticleBody(article);
@@ -627,13 +677,13 @@ async function generateFromArticle(index){
     body='';
   }
 
-  // 그 사이 다른 뉴스를 눌렀으면 이전 뉴스 결과가 뒤늦게 덮어쓰지 않게 차단
   if(token!==generationSeq) return;
 
   if(body && body.length>120){
-    commitGeneratedCards(article,body);
+    commitGeneratedCards(article,body,'기사 본문 기반 업데이트');
     showToast('기사 본문 기반으로 요약을 업데이트했어요.');
   }else{
+    setArticleStatus(`본문 수집 실패 · 검색 결과 설명으로 유지 · 선택 기사: ${removePressNoise(article.title).slice(0,60)}`);
     console.warn('[ARTICLE_BODY_FAIL] 본문 접근 실패. 검색 설명 기반 카드를 유지합니다.');
   }
 }
