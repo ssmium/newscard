@@ -213,7 +213,8 @@ function addKeyword(type,value){
   const input=$(type+'-input');
   const v=(value||input.value||'').trim();
   if(!v){showToast('키워드를 입력해 주세요.');return}
-  if(!tags[type].includes(v)) tags[type].push(v);
+  // 직접 입력/추천 클릭한 키워드는 검색 주제를 명확히 하기 위해 단독 칩으로 반영
+  tags[type]=[v];
   input.value='';
   renderKeywords(type);
 }
@@ -280,18 +281,147 @@ async function searchNaverHtml(q){
 function parseNaverHtml(html){
   const doc=new DOMParser().parseFromString(html,'text/html');
   const seen=new Set(), arr=[];
-  [...doc.querySelectorAll('a')].forEach(a=>{
+
+  const candidates=[
+    ...doc.querySelectorAll('a.news_tit'),
+    ...doc.querySelectorAll('a[href*="news.naver.com"]'),
+    ...doc.querySelectorAll('a[href*="n.news.naver.com"]')
+  ];
+
+  candidates.forEach(a=>{
     const href=a.href||a.getAttribute('href')||'';
     const title=cleanHtml(a.getAttribute('title')||a.textContent||'');
     if(title.length<8 || seen.has(href)) return;
-    if(!(href.includes('news.naver.com')||href.includes('n.news.naver.com')||String(a.className||'').includes('news_tit'))) return;
     seen.add(href);
-    const box=a.closest('li')||a.closest('.bx')||a.parentElement;
-    const descEl=box&&(box.querySelector('.dsc_txt_wrap')||box.querySelector('.news_dsc')||box.querySelector('p'));
-    arr.push({title,description:descEl?cleanHtml(descEl.textContent):'',link:href,originallink:href,pubDate:'',source:'naver'});
+
+    const box=a.closest('li')||a.closest('.bx')||a.closest('.news_area')||a.parentElement;
+    let desc='';
+    if(box){
+      const descEl=box.querySelector('.dsc_txt_wrap')||box.querySelector('.news_dsc')||box.querySelector('.api_txt_lines')||box.querySelector('p');
+      desc=descEl?cleanHtml(descEl.textContent):'';
+    }
+    arr.push({title,description:desc,link:href,originallink:href,pubDate:'',source:'naver'});
   });
+
   return arr.slice(0,20);
 }
+
+function candidateArticleUrls(article){
+  const urls=[article.url,article.origin].filter(Boolean);
+  const extra=[];
+
+  urls.forEach(url=>{
+    try{
+      const u=new URL(url);
+      const oid=u.searchParams.get('oid');
+      const aid=u.searchParams.get('aid');
+      if(oid && aid){
+        extra.push(`https://n.news.naver.com/mnews/article/${oid}/${aid}`);
+        extra.push(`https://n.news.naver.com/article/${oid}/${aid}`);
+      }
+
+      const m=url.match(/\/article\/(\d+)\/(\d+)/);
+      if(m){
+        extra.push(`https://n.news.naver.com/mnews/article/${m[1]}/${m[2]}`);
+      }
+    }catch(e){}
+  });
+
+  return [...new Set([...extra,...urls])];
+}
+
+async function fetchTextProxy(targetUrl){
+  const proxies=[
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
+    `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+  ];
+
+  for(const url of proxies){
+    try{
+      const ctrl=new AbortController();
+      const timer=setTimeout(()=>ctrl.abort(),9000);
+      const res=await fetch(url,{signal:ctrl.signal});
+      clearTimeout(timer);
+      if(!res.ok) continue;
+      const text=await res.text();
+      if(text && text.length>400) return text;
+    }catch(e){
+      console.warn('본문 프록시 실패:', e.message);
+    }
+  }
+
+  return '';
+}
+
+function extractArticleBody(htmlText){
+  const doc=new DOMParser().parseFromString(htmlText,'text/html');
+  doc.querySelectorAll('script,style,iframe,button,nav,aside,form,header,footer,.u_likeit,.media_end_categorize,.byline,.copyright,.promotion,.related_news').forEach(el=>el.remove());
+
+  const selectors=[
+    '#dic_area',
+    '#newsct_article',
+    '#articeBody',
+    '#articleBodyContents',
+    '.go_trans._article_content',
+    '.newsct_article',
+    '.media_end_body',
+    '.article_body',
+    '.article-body',
+    '.article_view',
+    'article'
+  ];
+
+  let best='';
+  selectors.forEach(sel=>{
+    const el=doc.querySelector(sel);
+    if(el){
+      const text=cleanHtml(el.textContent||'');
+      if(text.length>best.length) best=text;
+    }
+  });
+
+  if(best.length<150){
+    const meta=
+      doc.querySelector('meta[property="og:description"]')?.getAttribute('content') ||
+      doc.querySelector('meta[name="description"]')?.getAttribute('content') ||
+      '';
+    if(meta && meta.length>best.length) best=cleanHtml(meta);
+  }
+
+  if(best.length<150){
+    const paragraphs=[...doc.querySelectorAll('p')]
+      .map(p=>cleanHtml(p.textContent||''))
+      .filter(t=>t.length>25)
+      .filter(t=>!/(무단전재|재배포|Copyright|저작권|기자|구독|공유)/i.test(t))
+      .slice(0,12);
+    best=paragraphs.join(' ');
+  }
+
+  return cleanHtml(best)
+    .replace(/본문\s*요약봇.*$/,'')
+    .replace(/무단전재\s*및\s*재배포\s*금지.*$/,'')
+    .trim();
+}
+
+async function readArticleBody(article){
+  const urls=candidateArticleUrls(article);
+  for(const url of urls){
+    const html=await fetchTextProxy(url);
+    if(!html) continue;
+
+    const body=extractArticleBody(html);
+    if(body && body.length>120){
+      console.log('[ARTICLE_BODY_OK]', body.length, url);
+      return body;
+    }
+  }
+
+  console.warn('[ARTICLE_BODY_FAIL] 본문 접근 실패. 검색 결과 설명으로 대체합니다.');
+  return '';
+}
+
+
 function normalizeArticle(it,i,type){
   const url=it.originallink||it.link||'';
   let domain=''; try{domain=new URL(url).hostname.replace(/^www\./,'')}catch(e){}
@@ -345,8 +475,41 @@ function inferTopic(title,desc){
   if(/(패션|스타일|룩)/.test(s)) return 'fashion';
   return 'general';
 }
-function end(s){s=String(s||'').trim(); if(!s) return ''; return /[.!?]$/.test(s)?s:s+'요.'}
+function end(s){
+  s=String(s||'').trim();
+  if(!s) return '';
+  s=s.replace(/요요/g,'요').replace(/죠요/g,'죠');
+  if(/[.!?]$/.test(s)) return s;
+  if(/(요|죠|다|니다|예요|이에요|거예요|하거든요)$/.test(s)) return s+'.';
+  return s+'예요.';
+}
 function two(a,b,max=165){const s=(end(a)+' '+end(b)).replace(/\s+/g,' ').trim(); return s.length>max?s.slice(0,max-1).replace(/\s+\S*$/,'')+'…':s}
+
+function removePressNoise(title){
+  return cleanHtml(title)
+    .replace(/\[[^\]]+\]/g,'')
+    .replace(/[“”"]/g,'')
+    .replace(/\s*[-|].*$/,'')
+    .replace(/….*$/,'')
+    .replace(/\s+등$/,'')
+    .replace(/^\W+/,'')
+    .trim();
+}
+function titleSubject(title,desc){
+  const s=removePressNoise(title);
+  const quoted=(s.match(/'([^']+)'/)||s.match(/‘([^’]+)’/))?.[1];
+  if(quoted && quoted.length<=14) return quoted;
+  const name=extractName(title+' '+desc);
+  if(name) return name;
+  const region=extractRegion(title+' '+desc);
+  const count=extractCount(title+' '+desc);
+  if(region && count) return region+' '+count;
+  const words=s.split(/\s+/).filter(Boolean);
+  let subject=words.slice(0,3).join(' ');
+  subject=subject.replace(/(개최|진행|발령|확대|공개|출시|오픈|등장|참석)$/,'').trim();
+  return subject.slice(0,16)||'이슈';
+}
+
 function makeHook(title,desc){
   const topic=inferTopic(title,desc), s=title+' '+desc;
   if(topic==='celeb'){const n=extractName(s)||'셀럽'; return `${n} 포토콜\n비주얼 난리났네!`}
@@ -355,10 +518,19 @@ function makeHook(title,desc){
   if(topic==='bookstore') return `동네 책방 이야기\n어떤 곳일까?`
   if(topic==='popup') return `요즘 팝업\n왜 주목받을까?`
   if(topic==='cafe') return `${extractRegion(s)||'요즘'} 카페\n왜 화제일까?`
-  const clean=cleanHtml(title).replace(/\[[^\]]+\]/g,'').replace(/[“”"]/g,'').replace(/\s*[-|].*$/,'').trim();
-  const words=clean.split(/\s+/); let l1='',l2='';
-  words.forEach(w=>{if((l1+' '+w).trim().length<=13)l1=(l1+' '+w).trim();else if(l2.length<16)l2=(l2+' '+w).trim()});
-  return `${l1||clean.slice(0,13)}\n${l2||'한눈에 정리!'}`;
+  if(topic==='beauty') return `${titleSubject(title,desc)}\n왜 주목받을까?`
+  if(topic==='fashion') return `${titleSubject(title,desc)}\n스타일 화제!`
+
+  const subject=titleSubject(title,desc);
+  if(subject.length<=10) return `${subject}\n왜 주목받을까?`;
+
+  const words=subject.split(/\s+/); 
+  let l1='',l2='';
+  words.forEach(w=>{
+    if((l1+' '+w).trim().length<=12) l1=(l1+' '+w).trim();
+    else if((l2+' '+w).trim().length<=14) l2=(l2+' '+w).trim();
+  });
+  return `${l1||subject.slice(0,12)}\n${l2||'한눈에 정리!'}`;
 }
 function makePoints(title,desc){
   const topic=inferTopic(title,desc), s=title+' '+desc;
@@ -394,21 +566,34 @@ function makePoints(title,desc){
     ];
   }
   const base=cleanHtml(desc||title);
+  const subject=titleSubject(title,desc);
   return [
-    two(`이번 기사에서는 ${cleanHtml(title).slice(0,26)} 관련 소식이 전해졌어요`, `핵심 내용을 카드뉴스로 빠르게 정리해볼 수 있어요`),
-    two(`이 소식이 중요한 이유는 단순한 사건보다 변화의 배경과 반응을 함께 보여주기 때문이에요`, `독자들이 현재 분위기를 더 쉽게 이해할 수 있어요`),
+    two(`${subject} 관련 소식이 새롭게 전해졌어요`, `기사의 핵심 흐름을 짧게 정리해볼 수 있어요`),
+    two(`이 소식이 중요한 이유는 단순한 제목보다 그 안에 담긴 변화와 반응을 함께 봐야 하기 때문이에요`, `독자들이 현재 분위기를 더 쉽게 이해할 수 있어요`),
     two(`앞으로 관련 관심이 이어지며 더 넓게 확산될 가능성이 있어요`, `현장 반응과 후속 소식도 함께 살펴보면 좋아요`)
   ];
 }
 function makeTags(title,desc){return [...new Set(('#카드뉴스 #뉴스 '+lastQuery.split(/\s+/).map(v=>'#'+v).join(' ')).split(/\s+/))].slice(0,8).join(' ')}
 
-function generateFromArticle(index){
+async function generateFromArticle(index){
   const a=currentArticles[index];
   if(!a){showToast('기사 정보를 찾지 못했어요.');return}
   document.querySelectorAll('.article').forEach((el,i)=>el.classList.toggle('selected',i===index));
 
-  const hook=makeHook(a.title,a.desc);
-  const pts=makePoints(a.title,a.desc);
+  showLoading('기사 본문을 불러오는 중...');
+
+  let body='';
+  try{
+    body=await readArticleBody(a);
+  }catch(e){
+    console.warn('기사 본문 읽기 실패:', e);
+    body='';
+  }
+
+  const sourceText=body || a.desc || a.title;
+
+  const hook=makeHook(a.title,sourceText).replace(/요요/g,'요');
+  const pts=makePoints(a.title,sourceText).map(v=>String(v||'').replace(/요요/g,'요').replace(/죠요/g,'죠'));
   cards=[
     {label:'HOOK',role:'HOOK',title:hook,body:'',subtitle:(a.domain||'')+' · '+(a.date||''),type:'hook'},
     {label:'BODY 1',role:'NOW TRENDING',title:'NOW TRENDING',body:pts[0],type:'body'},
@@ -419,8 +604,15 @@ function generateFromArticle(index){
   cardImages={}; cardStyles={};
   renderCards();
   $('cards-panel').style.display='block';
+  hideLoading();
+
+  if(body){
+    showToast('기사 본문을 읽고 카드뉴스에 반영했어요.');
+  }else{
+    showToast('본문 접근 실패: 검색 설명으로 카드뉴스를 만들었어요.');
+  }
+
   setTimeout(()=>$('cards-panel').scrollIntoView({behavior:'smooth',block:'start'}),80);
-  showToast('선택한 뉴스가 카드뉴스에 반영됐어요.');
 }
 
 function styleOf(i){
