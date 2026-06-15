@@ -3,157 +3,154 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>카드뉴스 메이커</title>
+<title>MAGAZINIE 스타일 카드뉴스 메이커</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Noto Sans KR', sans-serif; background: #f5f5f5; color: #111; font-size: 14px; }
-.app { display: flex; min-height: 100vh; }
-.sidebar { width: 190px; min-width: 190px; background: #fff; border-right: 1px solid #e8e8e8; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 200; overflow-y: auto; }
-.sidebar-logo { padding: 16px 18px 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f0f0f0; }
-.logo-mark { width: 26px; height: 26px; background: #111; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 900; }
-.logo-text { font-size: 12px; font-weight: 700; }
-.sidebar-section { padding: 12px 14px 4px; }
-.sidebar-section-label { font-size: 9px; font-weight: 700; color: #bbb; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
-.nav-item { display: block; padding: 7px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; color: #666; cursor: pointer; transition: all 0.12s; margin-bottom: 2px; }
-.nav-item:hover { background: #f5f5f5; color: #111; }
-.nav-item.active { background: #f0f0f0; color: #111; font-weight: 700; }
-.nav-num { color: #bbb; margin-right: 3px; font-size: 10px; }
-.sidebar-steps { padding: 12px 14px; border-top: 1px solid #f0f0f0; }
-.sidebar-steps-label { font-size: 9px; font-weight: 700; color: #bbb; letter-spacing: 1px; margin-bottom: 10px; }
-.step-item { display: flex; gap: 8px; margin-bottom: 12px; }
-.step-badge { width: 18px; height: 18px; min-width: 18px; border-radius: 50%; background: #111; color: #fff; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-.step-badge.done { background: #22c55e; }
-.step-text-sm { font-size: 10px; color: #777; line-height: 1.5; }
-.step-title-sm { font-weight: 700; color: #111; margin-bottom: 1px; }
-.sidebar-footer { padding: 12px 14px; border-top: 1px solid #f0f0f0; font-size: 10px; color: #bbb; margin-top: auto; }
-.main { margin-left: 190px; flex: 1; padding: 32px 36px; }
-.page { display: none; }
-.page.active { display: block; }
-.page-step { font-size: 11px; color: #aaa; font-weight: 600; margin-bottom: 4px; }
-.page-title { font-size: 22px; font-weight: 700; margin-bottom: 20px; }
-.mag-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-.mag-row label { font-size: 12px; color: #666; font-weight: 600; white-space: nowrap; }
-.mag-select-sm { flex: 1; max-width: 280px; padding: 8px 12px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; background: #fff; cursor: pointer; }
-.quota-badge { font-size: 11px; color: #888; background: #f5f5f5; padding: 4px 10px; border-radius: 12px; }
-.search-panel { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1.5px solid #e8e8e8; }
-.search-panel-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-.search-panel-hint { font-size: 11px; color: #aaa; margin-bottom: 14px; }
-.search-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.tag-section { border: 1.5px solid #e8e8e8; border-radius: 10px; padding: 14px; }
-.tag-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.tag-section-title { font-size: 13px; font-weight: 700; }
-.kw-count-badge { font-size: 10px; color: #888; background: #f5f5f5; padding: 2px 8px; border-radius: 10px; }
-.user-tags-row { display: flex; flex-wrap: wrap; gap: 6px; min-height: 26px; margin-bottom: 10px; }
-.user-tag-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 14px; background: #fff0f3; border: 1.5px solid #e0486a; color: #c0144a; font-size: 11px; font-weight: 700; }
-.user-tag-x { cursor: pointer; opacity: 0.6; font-size: 12px; line-height: 1; }
-.user-tag-x:hover { opacity: 1; }
-.suggest-label { font-size: 10px; color: #aaa; font-weight: 600; margin-bottom: 6px; }
-.suggest-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-.suggest-tag { font-size: 11px; color: #888; cursor: pointer; transition: color 0.12s; }
-.suggest-tag:hover { color: #c0144a; }
-.tag-add-row { display: flex; gap: 6px; margin-bottom: 10px; }
-.tag-add-input { flex: 1; padding: 6px 10px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 11px; font-family: inherit; outline: none; }
-.tag-add-input:focus { border-color: #e0486a; }
-.tag-add-btn { padding: 6px 12px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 11px; cursor: pointer; background: #fff; font-family: inherit; }
-.tag-add-btn:hover { border-color: #e0486a; color: #c0144a; }
-.search-btn { width: 100%; padding: 11px; border-radius: 8px; background: #111; color: #fff; font-size: 13px; font-weight: 700; border: none; cursor: pointer; font-family: inherit; }
-.search-btn:hover { opacity: 0.85; }
-.article-result-panel { display: none; background: #fff; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; border: 1.5px solid #e8e8e8; }
-.article-meta-bar { font-size: 11px; color: #888; margin-bottom: 10px; }
-.naver-logo { color: #03c75a; font-weight: 700; }
-.article-grid { display: flex; flex-direction: column; gap: 6px; max-height: 500px; overflow-y: auto; }
-.article-item { display: flex; gap: 10px; padding: 10px; border-radius: 8px; border: 1.5px solid #f0f0f0; cursor: pointer; background: #fff; transition: all 0.12s; align-items: flex-start; }
-.article-item:hover { border-color: #ccc; background: #fafafa; }
-.article-item.selected { border-color: #111; background: #f5f5f5; }
-.article-thumb { width: 54px; height: 42px; border-radius: 6px; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-.article-info { flex: 1; min-width: 0; }
-.article-title { font-size: 12px; font-weight: 600; line-height: 1.4; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.article-sub { font-size: 10px; color: #aaa; }
-.article-badge { display: inline-block; padding: 1px 6px; border-radius: 5px; font-size: 9px; font-weight: 700; margin-right: 3px; }
-.badge-beauty { background: #fce7f3; color: #be185d; }
-.badge-fashion { background: #e0e7ff; color: #3730a3; }
-.gen-btn-sm { padding: 5px 11px; border-radius: 6px; background: #111; color: #fff; font-size: 10px; font-weight: 700; border: none; cursor: pointer; white-space: nowrap; flex-shrink: 0; font-family: inherit; }
-.gen-btn-sm:hover { opacity: 0.8; }
-.card-edit-wrap { display: none; background: #fff; border-radius: 12px; padding: 20px; border: 1.5px solid #e8e8e8; }
-.dl-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.dl-hint { font-size: 11px; color: #aaa; }
-.dl-all-btn { padding: 9px 18px; border-radius: 8px; background: #111; color: #fff; font-size: 12px; font-weight: 700; border: none; cursor: pointer; font-family: inherit; }
-.card-scroll-area { overflow-x: auto; padding-bottom: 8px; }
-.card-row { display: flex; gap: 14px; min-width: max-content; }
-.card-col { display: flex; flex-direction: column; align-items: center; gap: 7px; }
-.card-col-label { font-size: 9px; font-weight: 700; color: #aaa; letter-spacing: 1px; text-transform: uppercase; }
-.card-canvas-wrap { width: 180px; height: 180px; border-radius: 8px; overflow: hidden; position: relative; background: #1a1a1a; }
-.card-nav-row { display: flex; align-items: center; gap: 6px; }
-.card-nav-btn { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid #e0e0e0; background: #fff; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.card-img-btn-sm { padding: 5px 12px; border: 1.5px solid #e0e0e0; border-radius: 6px; font-size: 11px; cursor: pointer; background: #fff; font-family: inherit; }
-.card-img-btn-sm:hover { border-color: #111; }
-.card-edit-panels { display: flex; gap: 14px; margin-top: 12px; overflow-x: auto; padding-bottom: 6px; }
-.card-edit-panel { min-width: 180px; width: 180px; flex-shrink: 0; }
-.edit-field-label { font-size: 9px; font-weight: 700; color: #aaa; letter-spacing: 0.5px; margin-bottom: 4px; }
-.edit-title-input { width: 100%; padding: 6px 8px; border: 1.5px solid #e0e0e0; border-radius: 6px; font-size: 11px; font-family: inherit; outline: none; resize: none; min-height: 50px; }
-.edit-title-input:focus { border-color: #111; }
-.edit-color-row { display: flex; align-items: center; gap: 5px; margin-top: 5px; }
-.color-dot { width: 15px; height: 15px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
-.color-dot.active { border-color: #111; }
-.size-row { display: flex; align-items: center; gap: 5px; margin-top: 5px; }
-.size-label { font-size: 10px; color: #666; }
-.size-slider { flex: 1; accent-color: #111; }
-.apply-body-btn { width: 100%; padding: 6px; border-radius: 6px; background: #111; color: #fff; font-size: 10px; font-weight: 700; border: none; cursor: pointer; margin-top: 7px; font-family: inherit; }
-.apply-all-title-btn { width: 100%; padding: 9px; border-radius: 8px; background: #fff; color: #111; font-size: 12px; font-weight: 700; border: 2px solid #111; cursor: pointer; margin-top: 12px; font-family: inherit; }
-.apply-all-title-btn:hover { background: #111; color: #fff; }
-.caption-section { margin-top: 18px; background: #f9f9f9; border-radius: 10px; padding: 16px; }
-.caption-title-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 12px; font-weight: 700; color: #666; }
-.caption-row { display: flex; gap: 7px; align-items: flex-start; margin-bottom: 6px; }
-.caption-bullet { width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
-.caption-text-line { font-size: 12px; line-height: 1.6; flex: 1; }
-.copy-btn-inline { padding: 5px 12px; border: 1.5px solid #e0e0e0; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; background: #fff; font-family: inherit; }
-.copy-btn-inline:hover { border-color: #111; }
-.hashtag-box { background: #f0f0f0; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #555; margin-top: 10px; line-height: 1.7; }
-.copy-row { display: flex; gap: 8px; margin-top: 8px; }
-.copy-btn-full { flex: 1; padding: 8px; border-radius: 8px; border: 1.5px solid #e0e0e0; background: #fff; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
-.copy-btn-full:hover { border-color: #111; }
-.two-col { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
-.form-section { background: #fff; border-radius: 12px; padding: 22px; margin-bottom: 16px; }
-.form-group { margin-bottom: 18px; }
-.form-group:last-child { margin-bottom: 0; }
-.form-label { font-size: 12px; font-weight: 600; margin-bottom: 3px; }
-.form-hint { font-size: 10px; color: #aaa; margin-bottom: 6px; }
-.form-input { width: 100%; padding: 9px 12px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; background: #fff; }
-.form-input:focus { border-color: #111; }
-textarea.form-input { resize: vertical; min-height: 70px; }
-.color-row-mag { display: flex; align-items: center; gap: 10px; }
-.color-preview { width: 34px; height: 34px; border-radius: 7px; border: 1.5px solid #e0e0e0; cursor: pointer; overflow: hidden; position: relative; flex-shrink: 0; }
-.color-preview input[type="color"] { position: absolute; top: -6px; left: -6px; width: 48px; height: 48px; opacity: 0; cursor: pointer; }
-.logo-upload-row { display: flex; align-items: center; gap: 12px; }
-.logo-circle { width: 46px; height: 46px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
-.logo-upload-btn { padding: 8px 16px; border: 1.5px solid #e0e0e0; border-radius: 7px; font-size: 12px; cursor: pointer; background: #fff; font-family: inherit; }
-.logo-upload-btn:hover { border-color: #111; }
-.save-btn { width: 100%; padding: 13px; border-radius: 10px; background: #111; color: #fff; font-size: 14px; font-weight: 700; border: none; cursor: pointer; font-family: inherit; }
-.mag-list { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
-.mag-chip { padding: 6px 14px; border-radius: 18px; border: 1.5px solid #e0e0e0; font-size: 12px; cursor: pointer; background: #fff; font-family: inherit; }
-.mag-chip:hover { border-color: #111; }
-.mag-chip.active { background: #111; color: #fff; border-color: #111; }
-.mag-add-btn { padding: 6px 14px; border-radius: 18px; border: 1.5px dashed #ccc; font-size: 12px; cursor: pointer; background: transparent; color: #999; font-family: inherit; }
-.preview-panel { position: sticky; top: 32px; }
-.preview-label { font-size: 10px; color: #999; margin-bottom: 8px; font-weight: 600; }
-.preview-card { border-radius: 10px; overflow: hidden; aspect-ratio: 1/1; display: flex; flex-direction: column; padding: 22px; width: 100%; }
-.loading-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); z-index: 1000; align-items: center; justify-content: center; flex-direction: column; gap: 10px; }
-.loading-overlay.show { display: flex; }
-.spinner { width: 32px; height: 32px; border: 3px solid #e0e0e0; border-top-color: #111; border-radius: 50%; animation: spin 0.7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { font-size: 13px; color: #555; font-weight: 500; }
-.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #111; color: #fff; padding: 9px 18px; border-radius: 8px; font-size: 12px; z-index: 9999; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
-.toast.show { opacity: 1; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:#f5f5f5;color:#111;font-size:14px}
+.app{display:flex;min-height:100vh}
+.sidebar{width:190px;min-width:190px;background:#fff;border-right:1px solid #e8e8e8;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:200;overflow-y:auto}
+.sidebar-logo{padding:16px 18px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0}
+.logo-mark{width:26px;height:26px;background:#111;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:900}
+.logo-text{font-size:12px;font-weight:700}
+.sidebar-section{padding:12px 14px 4px}
+.sidebar-section-label{font-size:9px;font-weight:700;color:#bbb;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.nav-item{display:block;padding:7px 10px;border-radius:6px;font-size:12px;font-weight:500;color:#666;cursor:pointer;transition:all .12s;margin-bottom:2px}
+.nav-item:hover{background:#f5f5f5;color:#111}
+.nav-item.active{background:#f0f0f0;color:#111;font-weight:700}
+.nav-num{color:#bbb;margin-right:3px;font-size:10px}
+.sidebar-steps{padding:12px 14px;border-top:1px solid #f0f0f0}
+.sidebar-steps-label{font-size:9px;font-weight:700;color:#bbb;letter-spacing:1px;margin-bottom:10px}
+.step-item{display:flex;gap:8px;margin-bottom:12px}
+.step-badge{width:18px;height:18px;min-width:18px;border-radius:50%;background:#111;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.step-badge.done{background:#22c55e}
+.step-text-sm{font-size:10px;color:#777;line-height:1.5}
+.step-title-sm{font-weight:700;color:#111;margin-bottom:1px}
+.sidebar-footer{padding:12px 14px;border-top:1px solid #f0f0f0;font-size:10px;color:#bbb;margin-top:auto}
+.main{margin-left:190px;flex:1;padding:32px 36px}
+.page{display:none}
+.page.active{display:block}
+.page-step{font-size:11px;color:#aaa;font-weight:600;margin-bottom:4px}
+.page-title{font-size:22px;font-weight:700;margin-bottom:20px}
+.mag-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.mag-row label{font-size:12px;color:#666;font-weight:600;white-space:nowrap}
+.mag-select-sm{flex:1;max-width:280px;padding:8px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff;cursor:pointer}
+.quota-badge{font-size:11px;color:#888;background:#f5f5f5;padding:4px 10px;border-radius:12px}
+.search-panel{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;border:1.5px solid #e8e8e8}
+.search-panel-title{font-size:13px;font-weight:700;margin-bottom:4px}
+.search-panel-hint{font-size:11px;color:#aaa;margin-bottom:14px}
+.search-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.tag-section{border:1.5px solid #e8e8e8;border-radius:10px;padding:14px}
+.tag-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.tag-section-title{font-size:13px;font-weight:700}
+.kw-count-badge{font-size:10px;color:#888;background:#f5f5f5;padding:2px 8px;border-radius:10px}
+.user-tags-row{display:flex;flex-wrap:wrap;gap:6px;min-height:26px;margin-bottom:10px}
+.user-tag-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:14px;background:#fff0f3;border:1.5px solid #e0486a;color:#c0144a;font-size:11px;font-weight:700}
+.user-tag-x{cursor:pointer;opacity:.6;font-size:12px;line-height:1}
+.user-tag-x:hover{opacity:1}
+.suggest-label{font-size:10px;color:#aaa;font-weight:600;margin-bottom:6px}
+.suggest-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.suggest-tag{font-size:11px;color:#888;cursor:pointer;transition:color .12s}
+.suggest-tag:hover{color:#c0144a}
+.tag-add-row{display:flex;gap:6px;margin-bottom:10px}
+.tag-add-input{flex:1;padding:6px 10px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:11px;font-family:inherit;outline:none}
+.tag-add-input:focus{border-color:#e0486a}
+.tag-add-btn{padding:6px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:11px;cursor:pointer;background:#fff;font-family:inherit}
+.tag-add-btn:hover{border-color:#e0486a;color:#c0144a}
+.search-btn{width:100%;padding:11px;border-radius:8px;background:#111;color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer;font-family:inherit}
+.search-btn:hover{opacity:.85}
+.article-result-panel{display:none;background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:16px;border:1.5px solid #e8e8e8}
+.article-meta-bar{font-size:11px;color:#888;margin-bottom:10px}
+.naver-logo{color:#03c75a;font-weight:700}
+.article-grid{display:flex;flex-direction:column;gap:6px;max-height:500px;overflow-y:auto}
+.article-item{display:flex;gap:10px;padding:10px;border-radius:8px;border:1.5px solid #f0f0f0;cursor:pointer;background:#fff;transition:all .12s;align-items:flex-start}
+.article-item:hover{border-color:#ccc;background:#fafafa}
+.article-item.selected{border-color:#111;background:#f5f5f5}
+.article-thumb{width:54px;height:42px;border-radius:6px;background:#eee;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.article-info{flex:1;min-width:0}
+.article-title{font-size:12px;font-weight:600;line-height:1.4;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.article-sub{font-size:10px;color:#aaa}
+.article-badge{display:inline-block;padding:1px 6px;border-radius:5px;font-size:9px;font-weight:700;margin-right:3px}
+.badge-beauty{background:#fce7f3;color:#be185d}
+.badge-fashion{background:#e0e7ff;color:#3730a3}
+.gen-btn-sm{padding:5px 11px;border-radius:6px;background:#111;color:#fff;font-size:10px;font-weight:700;border:none;cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:inherit}
+.gen-btn-sm:hover{opacity:.8}
+.card-edit-wrap{display:none;background:#fff;border-radius:12px;padding:20px;border:1.5px solid #e8e8e8}
+.dl-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.dl-hint{font-size:11px;color:#aaa}
+.dl-all-btn{padding:9px 18px;border-radius:8px;background:#111;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:inherit}
+.card-scroll-area{overflow-x:auto;padding-bottom:8px}
+.card-row{display:flex;gap:14px;min-width:max-content}
+.card-col{display:flex;flex-direction:column;align-items:center;gap:7px}
+.card-col-label{font-size:9px;font-weight:700;color:#aaa;letter-spacing:1px;text-transform:uppercase}
+.card-canvas-wrap{width:180px;height:180px;border-radius:8px;overflow:hidden;position:relative;background:#1a1a1a}
+.card-nav-row{display:flex;align-items:center;gap:6px}
+.card-nav-btn{width:22px;height:22px;border-radius:50%;border:1.5px solid #e0e0e0;background:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.card-img-btn-sm{padding:5px 12px;border:1.5px solid #e0e0e0;border-radius:6px;font-size:11px;cursor:pointer;background:#fff;font-family:inherit}
+.card-img-btn-sm:hover{border-color:#111}
+.card-edit-panels{display:flex;gap:14px;margin-top:12px;overflow-x:auto;padding-bottom:6px}
+.card-edit-panel{min-width:180px;width:180px;flex-shrink:0}
+.edit-field-label{font-size:9px;font-weight:700;color:#aaa;letter-spacing:.5px;margin-bottom:4px}
+.edit-title-input{width:100%;padding:6px 8px;border:1.5px solid #e0e0e0;border-radius:6px;font-size:11px;font-family:inherit;outline:none;resize:none;min-height:50px}
+.edit-title-input:focus{border-color:#111}
+.edit-color-row{display:flex;align-items:center;gap:5px;margin-top:5px}
+.color-dot{width:15px;height:15px;border-radius:50%;cursor:pointer;border:2px solid transparent}
+.color-dot.active{border-color:#111}
+.size-row{display:flex;align-items:center;gap:5px;margin-top:5px}
+.size-label{font-size:10px;color:#666}
+.size-slider{flex:1;accent-color:#111}
+.apply-body-btn{width:100%;padding:6px;border-radius:6px;background:#111;color:#fff;font-size:10px;font-weight:700;border:none;cursor:pointer;margin-top:7px;font-family:inherit}
+.apply-all-title-btn{width:100%;padding:9px;border-radius:8px;background:#fff;color:#111;font-size:12px;font-weight:700;border:2px solid #111;cursor:pointer;margin-top:12px;font-family:inherit}
+.apply-all-title-btn:hover{background:#111;color:#fff}
+.caption-section{margin-top:18px;background:#f9f9f9;border-radius:10px;padding:16px}
+.caption-title-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:12px;font-weight:700;color:#666}
+.caption-row{display:flex;gap:7px;align-items:flex-start;margin-bottom:6px}
+.caption-bullet{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.caption-text-line{font-size:12px;line-height:1.6;flex:1}
+.copy-btn-inline{padding:5px 12px;border:1.5px solid #e0e0e0;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;font-family:inherit}
+.copy-btn-inline:hover{border-color:#111}
+.hashtag-box{background:#f0f0f0;border-radius:8px;padding:10px 12px;font-size:12px;color:#555;margin-top:10px;line-height:1.7}
+.copy-row{display:flex;gap:8px;margin-top:8px}
+.copy-btn-full{flex:1;padding:8px;border-radius:8px;border:1.5px solid #e0e0e0;background:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
+.copy-btn-full:hover{border-color:#111}
+.two-col{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start}
+.form-section{background:#fff;border-radius:12px;padding:22px;margin-bottom:16px}
+.form-group{margin-bottom:18px}
+.form-group:last-child{margin-bottom:0}
+.form-label{font-size:12px;font-weight:600;margin-bottom:3px}
+.form-hint{font-size:10px;color:#aaa;margin-bottom:6px}
+.form-input{width:100%;padding:9px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff}
+.form-input:focus{border-color:#111}
+textarea.form-input{resize:vertical;min-height:70px}
+.color-row-mag{display:flex;align-items:center;gap:10px}
+.color-preview{width:34px;height:34px;border-radius:7px;border:1.5px solid #e0e0e0;cursor:pointer;overflow:hidden;position:relative;flex-shrink:0}
+.color-preview input[type="color"]{position:absolute;top:-6px;left:-6px;width:48px;height:48px;opacity:0;cursor:pointer}
+.logo-upload-row{display:flex;align-items:center;gap:12px}
+.logo-circle{width:46px;height:46px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+.logo-upload-btn{padding:8px 16px;border:1.5px solid #e0e0e0;border-radius:7px;font-size:12px;cursor:pointer;background:#fff;font-family:inherit}
+.logo-upload-btn:hover{border-color:#111}
+.save-btn{width:100%;padding:13px;border-radius:10px;background:#111;color:#fff;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:inherit}
+.mag-list{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.mag-chip{padding:6px 14px;border-radius:18px;border:1.5px solid #e0e0e0;font-size:12px;cursor:pointer;background:#fff;font-family:inherit}
+.mag-chip:hover{border-color:#111}
+.mag-chip.active{background:#111;color:#fff;border-color:#111}
+.mag-add-btn{padding:6px 14px;border-radius:18px;border:1.5px dashed #ccc;font-size:12px;cursor:pointer;background:transparent;color:#999;font-family:inherit}
+.preview-panel{position:sticky;top:32px}
+.preview-label{font-size:10px;color:#999;margin-bottom:8px;font-weight:600}
+.preview-card{border-radius:10px;overflow:hidden;aspect-ratio:1/1;display:flex;flex-direction:column;padding:22px;width:100%}
+.loading-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,.9);z-index:1000;align-items:center;justify-content:center;flex-direction:column;gap:10px}
+.loading-overlay.show{display:flex}
+.spinner{width:32px;height:32px;border:3px solid #e0e0e0;border-top-color:#111;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:13px;color:#555;font-weight:500}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:9px 18px;border-radius:8px;font-size:12px;z-index:9999;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
 </style>
 </head>
 <body>
 <div class="app">
 <aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-mark">M</div>
-    <span class="logo-text">CARDNEWS</span>
-  </div>
+  <div class="sidebar-logo"><div class="logo-mark">M</div><span class="logo-text">CARDNEWS</span></div>
   <div class="sidebar-section">
     <div class="sidebar-section-label">Make</div>
     <div class="nav-item" id="nav-mag" onclick="showPage('mag')"><span class="nav-num">①</span>매거진 설정</div>
@@ -170,7 +167,7 @@ textarea.form-input { resize: vertical; min-height: 70px; }
   <div class="sidebar-steps" id="steps-card">
     <div class="sidebar-steps-label">카드뉴스 만드는 순서 ▸</div>
     <div class="step-item"><div class="step-badge done">✓</div><div class="step-text-sm"><div class="step-title-sm">매거진 선택 후 기사 검색</div>키워드로 기사를 검색해요.</div></div>
-    <div class="step-item"><div class="step-badge">2</div><div class="step-text-sm"><div class="step-title-sm">기사 선택 → 생성</div>생성 버튼 클릭하면 AI가 5컷 카드를 만들어요.</div></div>
+    <div class="step-item"><div class="step-badge">2</div><div class="step-text-sm"><div class="step-title-sm">기사 클릭 → 카드 생성</div>생성 버튼을 누르면 5컷 카드가 자동으로 만들어져요.</div></div>
     <div class="step-item"><div class="step-badge">3</div><div class="step-text-sm"><div class="step-title-sm">사진 · 제목 편집</div>이미지를 올리고 제목·색·크기를 다듬어요.</div></div>
     <div class="step-item"><div class="step-badge">4</div><div class="step-text-sm"><div class="step-title-sm">다운로드</div>한 장씩/전체 ZIP으로 저장, 캡션 복사.</div></div>
   </div>
@@ -178,7 +175,7 @@ textarea.form-input { resize: vertical; min-height: 70px; }
 </aside>
 
 <main class="main">
-  <!-- ===== MAGAZINE PAGE ===== -->
+  <!-- MAGAZINE PAGE -->
   <div class="page" id="page-mag">
     <div class="page-step">매거진 설정</div>
     <div class="page-title">매거진 편집</div>
@@ -186,16 +183,8 @@ textarea.form-input { resize: vertical; min-height: 70px; }
     <div class="two-col">
       <div>
         <div class="form-section">
-          <div class="form-group">
-            <div class="form-label">매거진 이름</div>
-            <div class="form-hint">목록·선택 이름이자 마지막 카드 계정명.</div>
-            <input class="form-input" id="mag-name" type="text" placeholder="예: 와디즈 매거진">
-          </div>
-          <div class="form-group">
-            <div class="form-label">첫 카드 로고 이름</div>
-            <div class="form-hint">1번 카드 하단 텍스트.</div>
-            <input class="form-input" id="mag-logo-name" type="text" placeholder="예: what.is.mag">
-          </div>
+          <div class="form-group"><div class="form-label">매거진 이름</div><div class="form-hint">목록·선택 이름이자 마지막 카드 계정명.</div><input class="form-input" id="mag-name" type="text" placeholder="예: 와디즈 매거진"></div>
+          <div class="form-group"><div class="form-label">첫 카드 로고 이름</div><div class="form-hint">1번 카드 하단 텍스트.</div><input class="form-input" id="mag-logo-name" type="text" placeholder="예: what.is.mag"></div>
         </div>
         <div class="form-section">
           <div class="form-group"><div class="form-label">마지막 카드 (CTA)</div></div>
@@ -207,47 +196,23 @@ textarea.form-input { resize: vertical; min-height: 70px; }
               <input type="file" id="logo-file" style="display:none" accept="image/*" onchange="handleLogoUpload(this)">
             </div>
           </div>
-          <div class="form-group">
-            <div class="form-label">멘트 — 헤드라인</div>
-            <textarea class="form-input" id="mag-headline" placeholder='"이거 왜 난리예요?"'></textarea>
-          </div>
-          <div class="form-group">
-            <div class="form-label">멘트 — 카피 1줄</div>
-            <input class="form-input" id="mag-copy1" type="text" placeholder="복잡한 이슈, 핵심만 쉽게">
-          </div>
-          <div class="form-group">
-            <div class="form-label">멘트 — 카피 2줄 (포인트색)</div>
-            <input class="form-input" id="mag-copy2" type="text" placeholder="한 장씩 넘기면 정리 끝">
-          </div>
-          <div class="form-group">
-            <div class="form-label">해시태그</div>
-            <input class="form-input" id="mag-tags" type="text" placeholder="#트렌드 #이슈정리 #카드뉴스">
-          </div>
+          <div class="form-group"><div class="form-label">멘트 — 헤드라인</div><textarea class="form-input" id="mag-headline" placeholder='"이거 왜 난리예요?"'></textarea></div>
+          <div class="form-group"><div class="form-label">멘트 — 카피 1줄</div><input class="form-input" id="mag-copy1" type="text" placeholder="복잡한 이슈, 핵심만 쉽게"></div>
+          <div class="form-group"><div class="form-label">멘트 — 카피 2줄 (포인트색)</div><input class="form-input" id="mag-copy2" type="text" placeholder="한 장씩 넘기면 정리 끝"></div>
+          <div class="form-group"><div class="form-label">해시태그</div><input class="form-input" id="mag-tags" type="text" placeholder="#트렌드 #이슈정리 #카드뉴스"></div>
         </div>
         <div class="form-section">
-          <div class="form-group">
-            <div class="form-label">배경색</div>
-            <div class="color-row-mag">
-              <div class="color-preview" id="bg-preview" style="background:#ffffff"><input type="color" id="bg-color" value="#ffffff" oninput="updateColorPreview()"></div>
-              <input class="form-input" id="bg-hex" type="text" value="#ffffff" oninput="syncColorFromHex('bg')">
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="form-label">포인트색</div>
-            <div class="color-row-mag">
-              <div class="color-preview" id="pt-preview" style="background:#e0483b"><input type="color" id="pt-color" value="#e0483b" oninput="updateColorPreview()"></div>
-              <input class="form-input" id="pt-hex" type="text" value="#e0483b" oninput="syncColorFromHex('pt')">
-            </div>
-          </div>
+          <div class="form-group"><div class="form-label">배경색</div><div class="color-row-mag"><div class="color-preview" id="bg-preview" style="background:#ffffff"><input type="color" id="bg-color" value="#ffffff" oninput="updateColorPreview()"></div><input class="form-input" id="bg-hex" type="text" value="#ffffff" oninput="syncColorFromHex('bg')"></div></div>
+          <div class="form-group"><div class="form-label">포인트색</div><div class="color-row-mag"><div class="color-preview" id="pt-preview" style="background:#e0483b"><input type="color" id="pt-color" value="#e0483b" oninput="updateColorPreview()"></div><input class="form-input" id="pt-hex" type="text" value="#e0483b" oninput="syncColorFromHex('pt')"></div></div>
         </div>
         <button class="save-btn" onclick="saveMagazine()">저장</button>
       </div>
       <div class="preview-panel">
         <div class="preview-label">마지막 카드 미리보기</div>
         <div class="preview-card" id="preview-card" style="background:#ffffff;color:#111;">
-          <div id="pv-mag-name" style="font-size:10px;font-weight:700;opacity:0.45;margin-bottom:12px;"></div>
+          <div id="pv-mag-name" style="font-size:10px;font-weight:700;opacity:.45;margin-bottom:12px;"></div>
           <div id="pv-headline" style="font-size:17px;font-weight:900;line-height:1.3;margin-bottom:9px;"></div>
-          <div id="pv-copy1" style="font-size:11px;opacity:0.65;margin-bottom:3px;"></div>
+          <div id="pv-copy1" style="font-size:11px;opacity:.65;margin-bottom:3px;"></div>
           <div id="pv-copy2" style="font-size:11px;font-weight:700;margin-bottom:14px;color:#e0483b;"></div>
           <div id="pv-tags" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
           <div style="margin-top:auto;padding-top:16px;display:flex;align-items:center;gap:7px;">
@@ -259,7 +224,7 @@ textarea.form-input { resize: vertical; min-height: 70px; }
     </div>
   </div>
 
-  <!-- ===== CARD NEWS PAGE ===== -->
+  <!-- CARD NEWS PAGE -->
   <div class="page active" id="page-card">
     <div class="page-step">Step 3</div>
     <div class="page-title">뷰티·패션 카드뉴스</div>
@@ -267,112 +232,78 @@ textarea.form-input { resize: vertical; min-height: 70px; }
       <label>매거진</label>
       <select class="mag-select-sm" id="card-mag-select"></select>
       <a style="font-size:11px;color:#888;text-decoration:underline;cursor:pointer;" onclick="showPage('mag')">관리</a>
-      <span class="quota-badge" id="quota-badge">오늘 남은 생성 횟수 0 / 10회</span>
+      <span class="quota-badge" id="quota-badge">오늘 생성 횟수 0 / 10회</span>
     </div>
     <div class="search-panel">
       <div class="search-panel-title">뷰티·패션 리서치 — 키워드 선택 + 직접 추가</div>
       <div class="search-panel-hint">키워드는 3개 이하를 권장해요. 너무 많으면 검색이 느려지고 주제가 흩어집니다.</div>
       <div class="search-cols">
         <div class="tag-section">
-          <div class="tag-section-header">
-            <span class="tag-section-title">뷰티</span>
-            <span class="kw-count-badge" id="beauty-kw-count">키워드 0개</span>
-          </div>
+          <div class="tag-section-header"><span class="tag-section-title">뷰티</span><span class="kw-count-badge" id="beauty-kw-count">키워드 0개</span></div>
           <div class="user-tags-row" id="beauty-user-tags"></div>
           <div class="suggest-label">추천:</div>
           <div class="suggest-row" id="beauty-suggest-tags"></div>
-          <div class="tag-add-row">
-            <input class="tag-add-input" id="beauty-add-input" placeholder="+ 키워드 추가" onkeydown="if(event.key==='Enter')addUserTag('beauty')">
-            <button class="tag-add-btn" onclick="addUserTag('beauty')">추가</button>
-          </div>
+          <div class="tag-add-row"><input class="tag-add-input" id="beauty-add-input" placeholder="+ 키워드 추가" onkeydown="if(event.key==='Enter')addUserTag('beauty')"><button class="tag-add-btn" onclick="addUserTag('beauty')">추가</button></div>
           <button class="search-btn" onclick="searchNews('beauty')">뷰티 검색</button>
         </div>
         <div class="tag-section">
-          <div class="tag-section-header">
-            <span class="tag-section-title">패션</span>
-            <span class="kw-count-badge" id="fashion-kw-count">키워드 0개</span>
-          </div>
+          <div class="tag-section-header"><span class="tag-section-title">패션</span><span class="kw-count-badge" id="fashion-kw-count">키워드 0개</span></div>
           <div class="user-tags-row" id="fashion-user-tags"></div>
           <div class="suggest-label">추천:</div>
           <div class="suggest-row" id="fashion-suggest-tags"></div>
-          <div class="tag-add-row">
-            <input class="tag-add-input" id="fashion-add-input" placeholder="+ 키워드 추가" onkeydown="if(event.key==='Enter')addUserTag('fashion')">
-            <button class="tag-add-btn" onclick="addUserTag('fashion')">추가</button>
-          </div>
+          <div class="tag-add-row"><input class="tag-add-input" id="fashion-add-input" placeholder="+ 키워드 추가" onkeydown="if(event.key==='Enter')addUserTag('fashion')"><button class="tag-add-btn" onclick="addUserTag('fashion')">추가</button></div>
           <button class="search-btn" onclick="searchNews('fashion')">패션 검색</button>
         </div>
       </div>
     </div>
-
-    <!-- 기사 목록 (search-panel 밖) -->
     <div class="article-result-panel" id="article-result-panel">
-      <div class="article-meta-bar">
-        전체 <span id="article-total">0</span>건 · 최근 <span id="article-shown">0</span>건 표시
-        <span class="naver-logo"> NAVER 검색 결과로 제공됩니다.</span>
-      </div>
+      <div class="article-meta-bar">전체 <span id="article-total">0</span>건 · <span id="article-shown">0</span>건 표시 <span class="naver-logo"> NAVER 검색 결과로 제공됩니다.</span></div>
       <div class="article-grid" id="article-grid"></div>
     </div>
-
-    <!-- 카드 편집 영역 -->
     <div class="card-edit-wrap" id="card-edit-wrap">
-      <div class="dl-bar">
-        <div class="dl-hint">카드 저장하기 (파일 PNG) — 왼쪽으로 스크롤</div>
-        <button class="dl-all-btn" onclick="downloadAll()">⬇ 전체 ZIP 다운로드</button>
-      </div>
+      <div class="dl-bar"><div class="dl-hint">카드 저장하기 (PNG) — 옆으로 스크롤</div><button class="dl-all-btn" onclick="downloadAll()">⬇ 전체 ZIP 다운로드</button></div>
       <div style="font-size:11px;color:#aaa;margin-bottom:10px;">각 카드 하단의 '이미지 변경'버튼으로 직접 넣으세요.</div>
-      <div class="card-scroll-area">
-        <div class="card-row" id="card-row"></div>
-      </div>
+      <div class="card-scroll-area"><div class="card-row" id="card-row"></div></div>
       <div class="card-edit-panels" id="card-edit-panels"></div>
       <button class="apply-all-title-btn" onclick="applyTitleStyleAll()">제목 · 색 크기 적용</button>
       <div class="caption-section">
-        <div class="caption-title-bar">
-          <span>캡션</span>
-          <button class="copy-btn-inline" onclick="copyCaption()">전체 복사</button>
-        </div>
+        <div class="caption-title-bar"><span>캡션</span><button class="copy-btn-inline" onclick="copyCaption()">전체 복사</button></div>
         <div id="caption-rows"></div>
       </div>
       <div class="hashtag-box" id="hashtag-box"></div>
-      <div class="copy-row">
-        <button class="copy-btn-full" onclick="copyAll()">메시지 · 전체 복사</button>
-      </div>
+      <div class="copy-row"><button class="copy-btn-full" onclick="copyAll()">메시지 · 전체 복사</button></div>
     </div>
   </div>
 </main>
 </div>
 
-<div class="loading-overlay" id="loading">
-  <div class="spinner"></div>
-  <div class="loading-text" id="loading-text">로딩 중...</div>
-</div>
+<div class="loading-overlay" id="loading"><div class="spinner"></div><div class="loading-text" id="loading-text">로딩 중...</div></div>
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-// ══════════════════════════════
-// 네이버 API 키 (Worker 경유 or 직접)
-const NAVER_CLIENT_ID     = 'U5if8lC21g_3L95AgqVS';
-const NAVER_CLIENT_SECRET = '9qtZj8bb1H';
-// Cloudflare Worker URL (AI 카드생성용)
-const CLAUDE_PROXY = 'https://purple-snow-ddbd.yjuio9603.workers.dev/claude';
-// ══════════════════════════════
+// 네이버 API 키
+const NAVER_ID  = 'U5if8lC21g_3L95AgqVS';
+const NAVER_SEC = '9qtZj8bb1H';
 
 const DAILY_QUOTA = 10;
 const TEXT_PALETTE = ['#ffffff','#000000','#e0483b','#2563eb','#f59e0b','#111111'];
-const CARD_NUM_COLORS = { 2:'#e0483b', 3:'#2563eb', 4:'#059669' };
-const BEAUTY_SUGGESTED  = ['뷰티','화장품','설화수','라네즈','이니스프리','글리오','롬앤','메디큐브','아누아','올리브영'];
-const FASHION_SUGGESTED = ['패션','소호패션','K패션','무신사','데님','헤드라인','패딩','29CM','유니클로','마뗑킴'];
+const CARD_NUM_COLORS = {2:'#e0483b',3:'#2563eb',4:'#059669'};
+const BEAUTY_SUGGESTED  = ['뷰티','화장품','설화수','라네즈','이니스프리','클리오','롬앤','메디큐브','아누아','올리브영'];
+const FASHION_SUGGESTED = ['패션','스트릿패션','K패션','무신사','데님','헤드라인','패딩','29CM','유니클로','마뗑킴'];
 
 let magazines=[], currentMagId=null, logoDataUrl=null;
 let beautyUserTags=[], fashionUserTags=[];
 let generatedCards=[], cardImages={}, cardTitleColors={}, cardTitleSizes={};
 let generatedCaption=[], generatedHashtags='';
 
+// ── Quota ──
 function getQuota(){const t=new Date().toDateString();const s=JSON.parse(localStorage.getItem('cnews_quota')||'{"date":"","count":0}');return s.date!==t?{date:t,count:0}:s;}
 function useQuota(){const q=getQuota();q.count++;localStorage.setItem('cnews_quota',JSON.stringify(q));updateQuotaBadge();}
-function updateQuotaBadge(){const q=getQuota();document.getElementById('quota-badge').textContent=`오늘 남은 생성 횟수 ${q.count} / ${DAILY_QUOTA}회`;}
+function updateQuotaBadge(){const q=getQuota();document.getElementById('quota-badge').textContent=`오늘 생성 횟수 ${q.count} / ${DAILY_QUOTA}회`;}
 
+// ── Init ──
 function init(){
   const saved=localStorage.getItem('cnews_mags_v4');
   if(saved) magazines=JSON.parse(saved);
@@ -393,13 +324,11 @@ function showPage(p){
   if(p==='card') populateCardMagSelect();
 }
 
+// ── Magazine ──
 function renderMagList(){
   const el=document.getElementById('mag-list'); el.innerHTML='';
-  magazines.forEach(m=>{
-    const btn=document.createElement('button'); btn.className='mag-chip'+(m.id===currentMagId?' active':''); btn.textContent=m.name;
-    btn.onclick=()=>{currentMagId=m.id;renderMagList();loadMagToForm(m.id);updatePreview();}; el.appendChild(btn);
-  });
-  const add=document.createElement('button'); add.className='mag-add-btn'; add.textContent='+ 매거진 추가하기';
+  magazines.forEach(m=>{const btn=document.createElement('button');btn.className='mag-chip'+(m.id===currentMagId?' active':'');btn.textContent=m.name;btn.onclick=()=>{currentMagId=m.id;renderMagList();loadMagToForm(m.id);updatePreview();};el.appendChild(btn);});
+  const add=document.createElement('button');add.className='mag-add-btn';add.textContent='+ 매거진 추가하기';
   add.onclick=()=>{const id='mag_'+Date.now();magazines.push({id,name:'새 매거진',logoName:'',logoImg:null,headline:'',copy1:'',copy2:'',tags:'',bgColor:'#ffffff',ptColor:'#e0483b'});currentMagId=id;saveMags();renderMagList();loadMagToForm(id);updatePreview();};
   el.appendChild(add);
 }
@@ -411,8 +340,7 @@ function loadMagToForm(id){
   document.getElementById('mag-copy1').value=m.copy1;
   document.getElementById('mag-copy2').value=m.copy2;
   document.getElementById('mag-tags').value=m.tags;
-  document.getElementById('bg-color').value=m.bgColor; document.getElementById('bg-hex').value=m.bgColor; document.getElementById('bg-preview').style.background=m.bgColor;
-  document.getElementById('pt-color').value=m.ptColor; document.getElementById('pt-hex').value=m.ptColor; document.getElementById('pt-preview').style.background=m.ptColor;
+  ['bg','pt'].forEach(t=>{document.getElementById(t+'-color').value=m[t==='bg'?'bgColor':'ptColor'];document.getElementById(t+'-hex').value=m[t==='bg'?'bgColor':'ptColor'];document.getElementById(t+'-preview').style.background=m[t==='bg'?'bgColor':'ptColor'];});
   logoDataUrl=m.logoImg; updateLogoPreview();
 }
 function saveMagazine(){
@@ -434,146 +362,89 @@ function populateCardMagSelect(){
   sel.innerHTML=magazines.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
   if(currentMagId) sel.value=currentMagId;
 }
-function handleLogoUpload(input){
-  const file=input.files[0]; if(!file) return;
-  const r=new FileReader(); r.onload=e=>{logoDataUrl=e.target.result;updateLogoPreview();updatePreview();}; r.readAsDataURL(file);
-}
-function updateLogoPreview(){
-  document.getElementById('logo-preview').innerHTML=logoDataUrl
-    ?`<img src="${logoDataUrl}" style="width:100%;height:100%;object-fit:cover;">`
-    :`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="12" cy="10" r="3"/><path d="M6 21v-1a6 6 0 0 1 12 0v1"/></svg>`;
-}
-function updateColorPreview(){
-  const bg=document.getElementById('bg-color').value,pt=document.getElementById('pt-color').value;
-  document.getElementById('bg-preview').style.background=bg; document.getElementById('bg-hex').value=bg;
-  document.getElementById('pt-preview').style.background=pt; document.getElementById('pt-hex').value=pt;
-  updatePreview();
-}
-function syncColorFromHex(t){
-  const val=document.getElementById(t+'-hex').value;
-  if(/^#[0-9a-fA-F]{6}$/.test(val)){document.getElementById(t+'-color').value=val;document.getElementById(t+'-preview').style.background=val;updatePreview();}
-}
-function isColorDark(hex){
-  if(!/^#[0-9a-fA-F]{6}$/.test(hex)) return false;
-  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
-  return (r*0.299+g*0.587+b*0.114)<128;
-}
+function handleLogoUpload(input){const file=input.files[0];if(!file)return;const r=new FileReader();r.onload=e=>{logoDataUrl=e.target.result;updateLogoPreview();updatePreview();};r.readAsDataURL(file);}
+function updateLogoPreview(){document.getElementById('logo-preview').innerHTML=logoDataUrl?`<img src="${logoDataUrl}" style="width:100%;height:100%;object-fit:cover;">`:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="12" cy="10" r="3"/><path d="M6 21v-1a6 6 0 0 1 12 0v1"/></svg>`;}
+function updateColorPreview(){const bg=document.getElementById('bg-color').value,pt=document.getElementById('pt-color').value;document.getElementById('bg-preview').style.background=bg;document.getElementById('bg-hex').value=bg;document.getElementById('pt-preview').style.background=pt;document.getElementById('pt-hex').value=pt;updatePreview();}
+function syncColorFromHex(t){const val=document.getElementById(t+'-hex').value;if(/^#[0-9a-fA-F]{6}$/.test(val)){document.getElementById(t+'-color').value=val;document.getElementById(t+'-preview').style.background=val;updatePreview();}}
+function isColorDark(hex){if(!/^#[0-9a-fA-F]{6}$/.test(hex))return false;const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return(r*0.299+g*0.587+b*0.114)<128;}
 function updatePreview(){
   const name=document.getElementById('mag-name').value||'',hl=document.getElementById('mag-headline').value||'';
   const c1=document.getElementById('mag-copy1').value||'',c2v=document.getElementById('mag-copy2').value||'';
   const tRaw=document.getElementById('mag-tags').value||'',bg=document.getElementById('bg-hex').value||'#ffffff',pt=document.getElementById('pt-hex').value||'#e0483b';
   const dark=isColorDark(bg),tc=dark?'#fff':'#111';
-  const card=document.getElementById('preview-card'); card.style.background=bg; card.style.color=tc;
+  const card=document.getElementById('preview-card');card.style.background=bg;card.style.color=tc;
   document.getElementById('pv-mag-name').textContent=name;
   document.getElementById('pv-headline').textContent=hl;
   document.getElementById('pv-copy1').textContent=c1;
-  const c2el=document.getElementById('pv-copy2'); c2el.textContent=c2v; c2el.style.color=pt;
+  const c2el=document.getElementById('pv-copy2');c2el.textContent=c2v;c2el.style.color=pt;
   document.getElementById('pv-tags').innerHTML=tRaw.trim().split(/\s+/).filter(Boolean).map(t=>`<span style="padding:2px 7px;border-radius:10px;border:1px solid ${dark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.13)'};font-size:9px;">${t}</span>`).join('');
   document.getElementById('pv-logo-name').textContent=document.getElementById('mag-logo-name').value||'';
   const pvLogo=document.getElementById('pv-logo-img');
-  if(logoDataUrl) pvLogo.innerHTML=`<img src="${logoDataUrl}" style="width:100%;height:100%;object-fit:cover;">`;
-  else { pvLogo.innerHTML=''; pvLogo.style.background=dark?'rgba(255,255,255,0.15)':'#eee'; }
+  if(logoDataUrl)pvLogo.innerHTML=`<img src="${logoDataUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+  else{pvLogo.innerHTML='';pvLogo.style.background=dark?'rgba(255,255,255,0.15)':'#eee';}
 }
 
 // ── Tags ──
 function renderTagArea(type){
   const userTags=type==='beauty'?beautyUserTags:fashionUserTags;
   const suggested=type==='beauty'?BEAUTY_SUGGESTED:FASHION_SUGGESTED;
-  document.getElementById(type+'-user-tags').innerHTML=userTags.map((t,i)=>
-    `<div class="user-tag-chip">${t} <span class="user-tag-x" onclick="removeUserTag('${type}',${i})">×</span></div>`
-  ).join('');
-  document.getElementById(type+'-suggest-tags').innerHTML=suggested
-    .filter(t=>!userTags.includes(t))
-    .map(t=>`<span class="suggest-tag" onclick="addSuggestTag('${type}','${encodeURIComponent(t)}')">+ ${t}</span>`)
-    .join('');
+  document.getElementById(type+'-user-tags').innerHTML=userTags.map((t,i)=>`<div class="user-tag-chip">${t} <span class="user-tag-x" onclick="removeUserTag('${type}',${i})">×</span></div>`).join('');
+  document.getElementById(type+'-suggest-tags').innerHTML=suggested.filter(t=>!userTags.includes(t)).map(t=>`<span class="suggest-tag" onclick="addSuggestTag('${type}','${encodeURIComponent(t)}')">+ ${t}</span>`).join('');
   document.getElementById(type+'-kw-count').textContent=`키워드 ${userTags.length}개`;
 }
-function addUserTag(type){
-  const inp=document.getElementById(type+'-add-input'),val=inp.value.trim(); if(!val) return;
-  const arr=type==='beauty'?beautyUserTags:fashionUserTags;
-  if(!arr.includes(val)) arr.push(val); renderTagArea(type); inp.value='';
-}
-function addSuggestTag(type,enc){
-  const val=decodeURIComponent(enc),arr=type==='beauty'?beautyUserTags:fashionUserTags;
-  if(!arr.includes(val)){arr.push(val);renderTagArea(type);}
-}
-function removeUserTag(type,idx){
-  if(type==='beauty') beautyUserTags.splice(idx,1); else fashionUserTags.splice(idx,1);
-  renderTagArea(type);
+function addUserTag(type){const inp=document.getElementById(type+'-add-input'),val=inp.value.trim();if(!val)return;const arr=type==='beauty'?beautyUserTags:fashionUserTags;if(!arr.includes(val))arr.push(val);renderTagArea(type);inp.value='';}
+function addSuggestTag(type,enc){const val=decodeURIComponent(enc),arr=type==='beauty'?beautyUserTags:fashionUserTags;if(!arr.includes(val)){arr.push(val);renderTagArea(type);}}
+function removeUserTag(type,idx){if(type==='beauty')beautyUserTags.splice(idx,1);else fashionUserTags.splice(idx,1);renderTagArea(type);}
+
+// ── Naver 검색 (다중 프록시 순차 시도) ──
+function cleanHtml(h){const d=document.createElement('div');d.innerHTML=h;return(d.textContent||'').replace(/\s+/g,' ').trim();}
+
+async function fetchWithTimeout(url,options={},timeout=9000){
+  const ctrl=new AbortController();const id=setTimeout(()=>ctrl.abort(),timeout);
+  try{const res=await fetch(url,{...options,signal:ctrl.signal});const text=await res.text();let data;try{data=JSON.parse(text);}catch(e){throw new Error('JSON 아님');}if(data.errorCode||data.errorMessage)throw new Error(data.errorMessage||'API 오류');return data;}
+  finally{clearTimeout(id);}
 }
 
-// ── Naver Search — 다중 프록시 순차 시도 (ChatGPT 방식 이식) ──
-function stripHtml(h){const d=document.createElement('div');d.innerHTML=h;return d.textContent||'';}
-
-async function fetchWithTimeout(url, options={}, timeout=10000){
-  const ctrl=new AbortController();
-  const id=setTimeout(()=>ctrl.abort(), timeout);
-  try{
-    const res=await fetch(url,{...options, signal:ctrl.signal});
-    const text=await res.text();
-    let data;
-    try{ data=JSON.parse(text); } catch(e){ throw new Error('JSON 아님: '+text.slice(0,60)); }
-    if(data.errorCode||data.errorMessage) throw new Error(data.errorMessage||'API 오류');
-    return data;
-  } finally { clearTimeout(id); }
-}
-
-async function searchNaverOpenApi(query, type){
+async function searchNaverApi(query){
   const target=`https://openapi.naver.com/v1/search/news.json?query=${encodeURIComponent(query)}&display=20&sort=date`;
-  const headers={'X-Naver-Client-Id':NAVER_CLIENT_ID,'X-Naver-Client-Secret':NAVER_CLIENT_SECRET};
-
-  // 순차 시도: 여러 공개 CORS 프록시
+  const headers={'X-Naver-Client-Id':NAVER_ID,'X-Naver-Client-Secret':NAVER_SEC};
   const attempts=[
-    {name:'corsproxy.io',   url:`https://corsproxy.io/?${encodeURIComponent(target)}`,   opt:{headers}},
-    {name:'allorigins',     url:`https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`, opt:{}},
-    {name:'thingproxy',     url:`https://thingproxy.freeboard.io/fetch/${target}`,        opt:{headers}},
-    {name:'codetabs',       url:`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(target)}`, opt:{}},
-    {name:'direct',         url:target,                                                   opt:{headers}},
+    {name:'corsproxy.io',  url:`https://corsproxy.io/?${encodeURIComponent(target)}`,  opt:{headers}},
+    {name:'allorigins',    url:`https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`, opt:{}},
+    {name:'thingproxy',    url:`https://thingproxy.freeboard.io/fetch/${target}`,       opt:{headers}},
+    {name:'codetabs',      url:`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(target)}`, opt:{}},
+    {name:'direct',        url:target,                                                  opt:{headers}},
   ];
-
   for(const a of attempts){
-    try{
-      const data=await fetchWithTimeout(a.url, a.opt, 9000);
-      if(data.items && Array.isArray(data.items)) return data.items;
-    } catch(e){ console.warn(a.name+' 실패:', e.message); }
+    try{const data=await fetchWithTimeout(a.url,a.opt);if(data.items&&Array.isArray(data.items))return data.items;}
+    catch(e){console.warn(a.name+' 실패:',e.message);}
   }
   throw new Error('모든 프록시 실패');
 }
 
-function parseNaverHtml(html, query, type){
+function parseNaverHtml(html,query){
   const doc=new DOMParser().parseFromString(html,'text/html');
-  const seen=new Set(); const result=[];
+  const seen=new Set();const result=[];
   doc.querySelectorAll('a').forEach(a=>{
     const href=a.href||'';
     const text=(a.getAttribute('title')||a.textContent||'').trim().replace(/\s+/g,' ');
     const isNews=href.includes('n.news.naver.com')||href.includes('news.naver.com')||String(a.className||'').includes('news_tit');
-    if(!isNews||text.length<8||seen.has(href)) return;
+    if(!isNews||text.length<8||seen.has(href))return;
     seen.add(href);
     const box=a.closest('li')||a.closest('.bx')||a.parentElement;
     const descEl=box&&(box.querySelector('.dsc_txt_wrap')||box.querySelector('.news_dsc')||box.querySelector('p'));
     const desc=descEl?(descEl.textContent||'').trim().replace(/\s+/g,' '):'';
-    result.push({title:text,description:desc,link:href,originallink:href,pubDate:'',source:new URL(href).hostname.replace('www.','')});
+    result.push({title:text,description:desc,link:href,originallink:href,pubDate:'',source:(()=>{try{return new URL(href).hostname.replace('www.','')}catch(e){return'naver'}})()});
   });
   return result.slice(0,20);
 }
 
-async function searchNaverHtmlFallback(query, type){
+async function searchNaverHtml(query){
   const target=`https://search.naver.com/search.naver?where=news&sm=tab_jum&query=${encodeURIComponent(query)}&sort=1`;
-  const proxies=[
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(target)}`,
-    `https://corsproxy.io/?${encodeURIComponent(target)}`,
-  ];
+  const proxies=[`https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`,`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(target)}`,`https://corsproxy.io/?${encodeURIComponent(target)}`];
   for(const p of proxies){
-    try{
-      const res=await fetch(p);
-      if(!res.ok) continue;
-      const html=await res.text();
-      if(html.length>100){
-        const items=parseNaverHtml(html, query, type);
-        if(items.length) return items;
-      }
-    } catch(e){ console.warn('HTML fallback 실패:', e.message); }
+    try{const res=await fetch(p);if(!res.ok)continue;const html=await res.text();if(html.length>100){const items=parseNaverHtml(html,query);if(items.length)return items;}}
+    catch(e){console.warn('HTML fallback 실패:',e.message);}
   }
   throw new Error('HTML 검색도 실패');
 }
@@ -584,40 +455,28 @@ async function searchNews(type){
   showLoading(`"${q}" 뉴스 검색 중...`);
   try{
     let items=[];
-    try{
-      items=await searchNaverOpenApi(q, type);
-    } catch(e){
-      console.warn('OpenAPI 방식 전부 실패, HTML 검색으로 재시도:', e.message);
-      showLoading(`"${q}" 검색 재시도 중...`);
-      items=await searchNaverHtmlFallback(q, type);
-    }
-
-    if(!items.length){ showToast('검색 결과가 없어요. 키워드를 바꿔보세요.'); hideLoading(); return; }
-
-    renderArticleList(items, type);
+    try{items=await searchNaverApi(q);}
+    catch(e){console.warn('API 방식 전부 실패, HTML 검색 시도');showLoading(`"${q}" 재시도 중...`);items=await searchNaverHtml(q);}
+    if(!items.length){showToast('검색 결과가 없어요. 키워드를 바꿔보세요.');hideLoading();return;}
+    renderArticleList(items,type);
     document.getElementById('article-result-panel').style.display='block';
     document.getElementById('article-total').textContent=items.length;
     document.getElementById('article-shown').textContent=items.length;
-    document.getElementById(type+'-kw-count').textContent=`카드: ${items.length}개`;
     setTimeout(()=>document.getElementById('article-result-panel').scrollIntoView({behavior:'smooth',block:'start'}),100);
-    showToast(`뉴스 ${items.length}건을 불러왔어요 ✓`);
-  } catch(e){
-    console.error(e);
-    showToast('검색에 실패했어요. 잠시 후 다시 시도해주세요.');
-  }
+    showToast(`뉴스 ${items.length}건 불러왔어요 ✓`);
+  }catch(e){console.error(e);showToast('검색에 실패했어요. 잠시 후 다시 시도해주세요.');}
   hideLoading();
 }
 
-function renderArticleList(items, type){
-  const grid=document.getElementById('article-grid'); grid._items=[]; grid.innerHTML='';
-  const bc=type==='beauty'?'badge-beauty':'badge-fashion', bt=type==='beauty'?'뷰티':'패션';
+function renderArticleList(items,type){
+  const grid=document.getElementById('article-grid');grid._items=[];grid.innerHTML='';
+  const bc=type==='beauty'?'badge-beauty':'badge-fashion',bt=type==='beauty'?'뷰티':'패션';
   items.forEach((item,i)=>{
-    const title=stripHtml(item.title||''), desc=stripHtml(item.description||'');
-    const src=item.originallink||item.link||''; let domain='';
-    try{domain=new URL(src).hostname.replace('www.','');}catch(e){}
+    const title=cleanHtml(item.title||''),desc=cleanHtml(item.description||'');
+    const src=item.originallink||item.link||'';let domain='';try{domain=new URL(src).hostname.replace('www.','');}catch(e){}
     const date=item.pubDate?new Date(item.pubDate).toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
     grid._items[i]={title,desc,url:item.link,date,domain};
-    const el=document.createElement('div'); el.className='article-item';
+    const el=document.createElement('div');el.className='article-item';
     el.innerHTML=`<div class="article-thumb">🗞️</div>
       <div class="article-info">
         <div class="article-title">${title}</div>
@@ -630,170 +489,329 @@ function renderArticleList(items, type){
   });
 }
 
-// ── AI 카드 생성 (Worker /claude 경유) ──
-async function generateFromArticle(idx,e){
-  if(e) e.stopPropagation();
-  const q=getQuota(); if(q.count>=DAILY_QUOTA){showToast(`오늘 생성 횟수(${DAILY_QUOTA}회)를 다 사용했어요.`);return;}
-  const grid=document.getElementById('article-grid'); const item=grid._items?.[idx]; if(!item) return;
-  document.querySelectorAll('.article-item').forEach((el,i)=>el.classList.toggle('selected',i===idx));
-  const magId=document.getElementById('card-mag-select').value;
-  const mag=magazines.find(x=>x.id===magId); if(!mag){showToast('매거진을 먼저 설정해주세요.');return;}
-  showLoading('AI가 5컷 카드뉴스를 만들고 있어요... (약 10~15초)');
-  try{
-    const prompt=`당신은 인스타그램 카드뉴스 전문 에디터입니다.
-아래 뉴스 기사를 읽고 인스타그램용 5컷 카드뉴스를 만들어주세요.
-매거진명: ${mag.name}
-[기사 제목] ${item.title}
-[기사 요약] ${item.desc}
-[출처] ${item.domain}
-JSON 형식으로만 응답 (마크다운 없이):
-{"cards":[
-{"cardNum":1,"label":"HOOK","title":"메인 헤드라인 (20자 이내)","subtitle":"서브타이틀"},
-{"cardNum":2,"label":"BODY 1","title":"핵심 포인트1 (15자 이내)","body":"2~3줄 설명"},
-{"cardNum":3,"label":"BODY 2","title":"핵심 포인트2 (15자 이내)","body":"2~3줄 설명"},
-{"cardNum":4,"label":"BODY 3","title":"결론 (15자 이내)","body":"2~3줄 설명"},
-{"cardNum":5,"label":"CTA","isCtaCard":true}
-],"caption":["첫째줄 캡션","둘째줄 캡션","셋째줄 캡션"],"tags":"#태그1 #태그2 #태그3 #태그4 #태그5 #태그6"}`;
+// ── 카드 생성 (로컬 요약 — API 불필요) ──
+function splitSentences(text){
+  return String(text||'')
+    .replace(/\s+/g,' ')
+    .split(/(?<=[.!?。！？]|요\.|다\.|죠\.)\s+/)
+    .map(v=>v.trim())
+    .filter(v=>v.length>8);
+}
+function cleanLeadNoise(text){
+  return cleanHtml(text||'')
+    .replace(/\[[^\]]+\]/g,'')
+    .replace(/\([^)]*기자[^)]*\)/g,'')
+    .replace(/[가-힣]{2,4}\s*기자\s*=?/g,'')
+    .replace(/무단전재.*$/,'')
+    .replace(/재배포.*$/,'')
+    .replace(/Copyright.*$/i,'')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+function trimText(text,max=118){
+  const s=String(text||'').replace(/\s+/g,' ').trim();
+  if(s.length<=max)return s;
+  const cut=s.slice(0,max);
+  const last=Math.max(cut.lastIndexOf('.'),cut.lastIndexOf('요'),cut.lastIndexOf('다'));
+  if(last>45)return cut.slice(0,last+1).replace(/다$/,'다.');
+  return cut.replace(/\s+\S*$/,'')+'…';
+}
+function ensureEnd(text){
+  let s=String(text||'').trim();
+  if(!s)return '';
+  if(/[.!?。！？]$/.test(s))return s;
+  if(/[요다]$/.test(s))return s+'.';
+  return s+'이에요.';
+}
+function twoSent(a,b,max=118){
+  return trimText(`${ensureEnd(a)} ${ensureEnd(b)}`.trim(),max);
+}
+function toEoyo(s){
+  return cleanLeadNoise(s)
+    .replace(/다고\s*(밝혔다|전했다|설명했다|말했다|덧붙였다)\.?$/,'다고 해요.')
+    .replace(/라고\s*(밝혔다|전했다|설명했다|말했다|덧붙였다)\.?$/,'라고 해요.')
+    .replace(/개장한다고 해요\.?$/,'개장할 예정이에요.')
+    .replace(/운영한다고 해요\.?$/,'운영할 예정이에요.')
+    .replace(/진행한다고 해요\.?$/,'진행할 예정이에요.')
+    .replace(/출시한다고 해요\.?$/,'출시할 예정이에요.')
+    .replace(/ 밝혔다\.?$/,' 밝혔어요.')
+    .replace(/ 전했다\.?$/,' 전했어요.')
+    .replace(/ 설명했다\.?$/,' 설명했어요.')
+    .replace(/ 말했다\.?$/,' 말했어요.')
+    .replace(/ 예정이다\.?$/,' 예정이에요.')
+    .replace(/ 있다\.?$/,' 있어요.')
+    .replace(/ 했다\.?$/,' 했어요.')
+    .replace(/ 됐다\.?$/,' 됐어요.')
+    .replace(/ 한다\.?$/,' 해요.')
+    .replace(/ 이다\.?$/,'이에요.')
+    .replace(/다\.?$/,'어요.');
+}
+function extractRegion(text){
+  const m=cleanHtml(text).match(/(서울|인천|부산|대구|대전|광주|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)/);
+  return m?m[1]:'';
+}
+function extractCount(text){
+  const m=cleanHtml(text).match(/([0-9]+)\s*(곳|개|명|종|건|회|개소)/);
+  return m?m[0]:'';
+}
+function extractPlaces(text){
+  return [...cleanHtml(text).matchAll(/([가-힣A-Za-z0-9·]+(?:공원|놀이터|광장|카페|매장|브랜드|센터|해수욕장|시장|거리|팝업|행사장|서점|책방))/g)]
+    .map(m=>m[1]).filter((v,i,a)=>a.indexOf(v)===i).slice(0,3);
+}
+function inferTopic(title,desc){
+  const t=(title+' '+desc);
+  if(t.includes('물놀이장'))return '물놀이장';
+  if(t.includes('책방')||t.includes('서점')||t.includes('탐사기'))return '책방';
+  if(t.includes('팝업'))return '팝업';
+  if(t.includes('카페'))return '카페';
+  if(t.includes('룩')||t.includes('패션')||t.includes('스타일'))return '패션';
+  if(t.includes('화장품')||t.includes('토너')||t.includes('스킨케어')||t.includes('뷰티'))return '뷰티';
+  if(t.includes('광고')||t.includes('크레딧')||t.includes('지원'))return '광고';
+  return '뉴스';
+}
+function makeHook(title,desc=''){
+  const raw=cleanLeadNoise(title).replace(/[“”"]/g,'').replace(/\s*[-|].*$/,'').replace(/….*$/,'').trim();
+  const full=raw+' '+cleanLeadNoise(desc);
+  const region=extractRegion(full);
+  const count=extractCount(full);
+  const topic=inferTopic(raw,desc);
 
-    const resp=await fetch(CLAUDE_PROXY,{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})
-    });
-    const data=await resp.json(); if(data.error) throw new Error(data.error.message);
-    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-    const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());
-    generatedCards=parsed.cards;
-    generatedCaption=Array.isArray(parsed.caption)?parsed.caption:[parsed.caption];
-    generatedHashtags=(parsed.tags||'')+(mag.tags?' '+mag.tags:'');
-    cardImages={}; cardTitleColors={}; cardTitleSizes={};
-    useQuota(); renderCardEditArea(mag);
-    document.getElementById('card-edit-wrap').style.display='block';
-    showToast('카드뉴스 생성 완료! ✓');
-    setTimeout(()=>document.getElementById('card-edit-wrap').scrollIntoView({behavior:'smooth',block:'start'}),100);
-  } catch(err){ console.error(err); showToast('생성 중 오류가 발생했어요.'); }
-  hideLoading();
+  if(topic==='물놀이장'){
+    if(region&&count)return `${region} 물놀이장 ${count}\n순차적으로 열려요!`;
+    if(count)return `물놀이장 ${count}\n순차적으로 열려요!`;
+    return `여름 물놀이장\n순차적으로 열려요!`;
+  }
+  if(topic==='책방'){
+    const book=(raw.match(/'([^']+)'/)||raw.match(/‘([^’]+)’/))?.[1];
+    if(book)return `${book}\n책방 이야기!`;
+    return `동네 책방 이야기\n새로 나왔어요!`;
+  }
+  if(topic==='팝업'){
+    const brand=raw.split(/[,\s]/).find(v=>v.length>=2&&!v.includes('팝업'))||'브랜드';
+    return `${brand} 팝업\n왜 주목받을까?`;
+  }
+  if(topic==='카페')return `${region||'요즘'} 카페\n왜 화제일까?`;
+  if(topic==='패션')return `요즘 스타일\n왜 화제일까?`;
+  if(topic==='뷰티')return `뷰티템\n왜 주목받을까?`;
+  if(topic==='광고'){
+    const brand=raw.split(/[,\s]/)[0]||'브랜드';
+    if(full.includes('50만원'))return `${brand} 광고 크레딧\n50만원 지원해요!`;
+    return `${brand} 광고 혜택\n확대됐어요!`;
+  }
+
+  const words=raw.split(' ');
+  let l1='',l2='';
+  for(const w of words){
+    if((l1+' '+w).trim().length<=13)l1=(l1+' '+w).trim();
+    else l2=(l2+' '+w).trim();
+  }
+  if(!l2)return `${l1||raw}\n한눈에 정리!`;
+  return `${l1}\n${l2.slice(0,14)||'한눈에 정리!'}`;
+}
+function usefulSentences(title,desc){
+  const s=splitSentences((desc||title)+' '+(title||''))
+    .map(cleanLeadNoise)
+    .filter(v=>v.length>8)
+    .filter(v=>!/(무단전재|재배포|Copyright|저작권|구독|공유|사진=|제공=)/i.test(v));
+  return s.length?s:[cleanLeadNoise(desc||title)];
+}
+function makePoints(title,desc){
+  const topic=inferTopic(title,desc);
+  const full=cleanLeadNoise(title+' '+desc);
+  const region=extractRegion(full);
+  const count=extractCount(full);
+  const places=extractPlaces(full);
+  const s=usefulSentences(title,desc);
+  const s0=s[0]||title, s1=s[1]||'', s2=s.slice(2,4).join(' ');
+
+  if(topic==='물놀이장'){
+    const placeText=places.length?`${places.slice(0,2).join(', ')} 등 주요 장소부터 운영을 시작해요`:'도심 속 피서 공간으로 시민들이 가까이서 이용할 수 있어요';
+    return [
+      twoSent(`${region?region+' 지역의 ':''}${count||'여러 곳의'} 물놀이장이 이번 여름 순차적으로 개장할 예정이에요`,placeText),
+      twoSent('장소마다 운영 기간과 시간이 달라 방문 전 확인이 필요해요','아이들과 함께 이용하는 공간인 만큼 안전 관리와 시설 점검도 중요해요'),
+      twoSent(`${region?region+' ':''}시민들은 여름철 더 시원하고 즐거운 시간을 보낼 수 있을 거예요`,'가족 단위 방문객 증가로 주변 상권에도 긍정적인 효과가 기대돼요')
+    ];
+  }
+  if(topic==='책방'){
+    return [
+      twoSent(toEoyo(s0),'동네 책방과 지역 문화가 함께 주목받고 있어요'),
+      twoSent(s1?toEoyo(s1):'책방은 단순히 책을 파는 곳을 넘어 취향과 이야기를 나누는 공간이 되고 있어요','방문 자체가 하나의 콘텐츠가 되는 흐름이에요'),
+      twoSent('앞으로 동네 책방은 지역 산책 코스와 문화 소비를 연결하는 역할을 할 수 있어요','작은 공간의 개성이 독자들의 방문 이유가 될 거예요')
+    ];
+  }
+  if(topic==='팝업'){
+    return [
+      twoSent(toEoyo(s0),'브랜드는 오프라인 공간에서 제품과 분위기를 직접 경험하게 만들고 있어요'),
+      twoSent(s1?toEoyo(s1):'방문객은 체험, 인증, 구매를 한 번에 경험할 수 있어요','짧은 기간 운영되는 만큼 희소성과 방문 욕구가 함께 커져요'),
+      twoSent('이런 팝업은 단순 홍보를 넘어 브랜드 팬덤을 만드는 접점이 될 수 있어요','SNS 인증과 후기가 더해지면 관심이 더 넓게 확산될 가능성이 커요')
+    ];
+  }
+  if(topic==='카페'){
+    return [
+      twoSent(toEoyo(s0),'공간의 분위기와 지역성이 함께 주목받으며 방문 욕구를 높이고 있어요'),
+      twoSent(s1?toEoyo(s1):'카페는 음료를 마시는 곳을 넘어 취향을 보여주는 장소가 되고 있어요','사진, 동선, 주변 상권까지 함께 소비되는 흐름이에요'),
+      twoSent('앞으로 카페 이슈는 동네 이미지와 SNS 콘텐츠를 함께 움직일 가능성이 높아요','저장하고 방문하는 소비가 이어지며 지역 상권에도 영향을 줄 수 있어요')
+    ];
+  }
+  if(topic==='패션'){
+    return [
+      twoSent(toEoyo(s0),'스타일링 포인트가 기사와 SNS를 통해 빠르게 소비되고 있어요'),
+      twoSent(s1?toEoyo(s1):'소비자는 브랜드보다 바로 따라 할 수 있는 조합과 분위기에 반응하고 있어요','룩의 색감, 실루엣, 착용 장소가 함께 저장되는 흐름이에요'),
+      twoSent('이런 패션 이슈는 저장형 콘텐츠로 확산되기 좋아요','비슷한 아이템을 찾거나 따라 입는 소비로 이어질 가능성이 커요')
+    ];
+  }
+  if(topic==='뷰티'){
+    return [
+      twoSent(toEoyo(s0),'소비자들은 성분과 피부 고민 해결 여부를 함께 살펴보고 있어요'),
+      twoSent(s1?toEoyo(s1):'특히 진정, 보습, 저자극처럼 매일 쓰기 쉬운 키워드가 중요해지고 있어요','후기와 사용감 비교도 구매 결정에 큰 영향을 주고 있어요'),
+      twoSent('앞으로는 단순 유행보다 피부 타입에 맞는 쉬운 루틴 제안이 더 중요해질 거예요','브랜드는 효능뿐 아니라 안심하고 쓸 수 있는 메시지를 강화할 필요가 있어요')
+    ];
+  }
+  if(topic==='광고'){
+    return [
+      twoSent(toEoyo(s0),'브랜드가 초기 광고를 더 쉽게 시작할 수 있도록 지원하는 내용이에요'),
+      twoSent(s1?toEoyo(s1):'광고비 부담을 낮추면 더 많은 브랜드가 캠페인을 시험해볼 수 있어요','혜택 구조가 명확할수록 신규 광고주의 진입 장벽도 낮아져요'),
+      twoSent('이런 지원은 중소 브랜드의 마케팅 참여를 늘리는 계기가 될 수 있어요','플랫폼 입장에서도 광고 상품 이용과 고객 확보에 긍정적인 효과가 기대돼요')
+    ];
+  }
+
+  return [
+    twoSent(toEoyo(s0),'관련 키워드와 연결되며 독자들의 관심을 받고 있어요'),
+    twoSent(s1?toEoyo(s1):'기사의 핵심은 변화의 이유와 현재 반응을 함께 보는 데 있어요','짧게 정리하면 독자가 이해하기 쉬워요'),
+    twoSent('이번 이슈는 관련 분야의 변화를 보여주는 사례로 볼 수 있어요','앞으로 소비자 반응에 따라 더 넓게 확산될 가능성이 있어요')
+  ];
+}
+function makeTags(title,desc,magTags){
+  const words=(title+' '+desc).replace(/[^\w가-힣\s]/g,'').split(/\s+/).filter(v=>v.length>=2).slice(0,4).map(v=>'#'+v);
+  const base=['#트렌드','#뉴스','#카드뉴스'];
+  const all=[...new Set([...words,...base])].slice(0,7);
+  return (magTags?magTags+' ':'')+all.join(' ');
 }
 
+function generateFromArticle(idx,e){
+  if(e) e.stopPropagation();
+  const q=getQuota();if(q.count>=DAILY_QUOTA){showToast(`오늘 생성 횟수(${DAILY_QUOTA}회)를 다 사용했어요.`);return;}
+  const grid=document.getElementById('article-grid');const item=grid._items?.[idx];if(!item)return;
+  document.querySelectorAll('.article-item').forEach((el,i)=>el.classList.toggle('selected',i===idx));
+  const magId=document.getElementById('card-mag-select').value;
+  const mag=magazines.find(x=>x.id===magId);if(!mag){showToast('매거진을 먼저 설정해주세요.');return;}
+  showLoading('카드뉴스를 만들고 있어요...');
+
+  const hook=makeHook(item.title,item.desc);
+  const pts=makePoints(item.title,item.desc);
+  const tags=makeTags(item.title,item.desc,mag.tags);
+
+  generatedCards=[
+    {cardNum:1,label:'HOOK',title:hook,subtitle:item.domain+' · '+item.date,isCtaCard:false},
+    {cardNum:2,label:'BODY 1',title:'NOW TRENDING',body:pts[0],isCtaCard:false},
+    {cardNum:3,label:'BODY 2',title:'THE TAKEAWAY',body:pts[1],isCtaCard:false},
+    {cardNum:4,label:'BODY 3',title:"WHAT'S NEXT",body:pts[2],isCtaCard:false},
+    {cardNum:5,label:'CTA',isCtaCard:true},
+  ];
+  generatedCaption=[
+    `⭐ ${hook.replace('\n',' ')}`,
+    `📍 ${pts[0]}`,
+    `📍 ${pts[1]}`,
+    `💬 ${pts[2]}`,
+  ];
+  generatedHashtags=tags;
+  cardImages={}; cardTitleColors={}; cardTitleSizes={};
+
+  useQuota(); renderCardEditArea(mag);
+  document.getElementById('card-edit-wrap').style.display='block';
+  hideLoading();
+  showToast('카드뉴스 생성 완료! ✓');
+  setTimeout(()=>document.getElementById('card-edit-wrap').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+// ── 카드 렌더 ──
 function renderCardEditArea(mag){
-  const row=document.getElementById('card-row'), panels=document.getElementById('card-edit-panels');
-  row.innerHTML=''; panels.innerHTML='';
+  const row=document.getElementById('card-row'),panels=document.getElementById('card-edit-panels');
+  row.innerHTML='';panels.innerHTML='';
   generatedCards.forEach((card,i)=>{
-    if(!cardTitleColors[i]) cardTitleColors[i]=card.isCtaCard?(isColorDark(mag.bgColor)?'#fff':'#111'):'#ffffff';
-    if(!cardTitleSizes[i]) cardTitleSizes[i]=14;
-    const col=document.createElement('div'); col.className='card-col';
+    if(!cardTitleColors[i])cardTitleColors[i]=card.isCtaCard?(isColorDark(mag.bgColor)?'#fff':'#111'):'#ffffff';
+    if(!cardTitleSizes[i])cardTitleSizes[i]=14;
+    const col=document.createElement('div');col.className='card-col';
     col.innerHTML=`
       <div class="card-col-label">${card.label||''}</div>
       <div class="card-canvas-wrap" id="cw-${i}">${buildCardHTML(card,i,mag)}</div>
-      <div class="card-nav-row">
-        <button class="card-nav-btn">◀</button>
-        <span style="font-size:10px;color:#888;">${card.label||i+1}</span>
-        <button class="card-nav-btn">▶</button>
-      </div>
+      <div class="card-nav-row"><button class="card-nav-btn">◀</button><span style="font-size:10px;color:#888;">${card.label||i+1}</span><button class="card-nav-btn">▶</button></div>
       <input type="file" id="ci-${i}" style="display:none" accept="image/*" onchange="handleCardImg(${i},this)">
       <button class="card-img-btn-sm" onclick="document.getElementById('ci-${i}').click()">이미지 변경</button>`;
     row.appendChild(col);
-    const panel=document.createElement('div'); panel.className='card-edit-panel';
+    const panel=document.createElement('div');panel.className='card-edit-panel';
     if(card.isCtaCard){
       panel.innerHTML=`<div style="padding:8px;font-size:11px;color:#aaa;text-align:center;">매거진 설정에서<br>CTA 카드를 편집하세요</div>`;
     }else{
       panel.innerHTML=`
         <div class="edit-field-label">제목 수정</div>
         <textarea class="edit-title-input" id="ti-${i}" rows="3">${card.title||''}</textarea>
-        <div class="edit-color-row">
-          <span style="font-size:10px;color:#aaa;margin-right:2px;">색</span>
-          <div id="pal-${i}" style="display:flex;gap:4px;">
-            ${TEXT_PALETTE.map((c,ci)=>`<div class="color-dot${ci===0?' active':''}" style="background:${c};" onclick="setTitleColor(${i},${ci},'${c}')"></div>`).join('')}
-          </div>
+        <div class="edit-color-row"><span style="font-size:10px;color:#aaa;margin-right:2px;">색</span>
+          <div id="pal-${i}" style="display:flex;gap:4px;">${TEXT_PALETTE.map((c,ci)=>`<div class="color-dot${ci===0?' active':''}" style="background:${c};" onclick="setTitleColor(${i},${ci},'${c}')"></div>`).join('')}</div>
         </div>
-        <div class="size-row">
-          <span class="size-label">크기</span>
-          <input type="range" class="size-slider" min="10" max="22" value="14" id="sz-${i}" oninput="setTitleSize(${i},this.value)">
-          <span style="font-size:10px;color:#888;" id="szv-${i}">100%</span>
-        </div>
+        <div class="size-row"><span class="size-label">크기</span><input type="range" class="size-slider" min="10" max="22" value="14" id="sz-${i}" oninput="setTitleSize(${i},this.value)"><span style="font-size:10px;color:#888;" id="szv-${i}">100%</span></div>
         <button class="apply-body-btn" onclick="applyTitle(${i})">본문·라벨 적용</button>`;
     }
     panels.appendChild(panel);
   });
-  const capRows=document.getElementById('caption-rows'), pt=mag.ptColor||'#e0483b';
-  capRows.innerHTML=generatedCaption.map((line,i)=>`
-    <div class="caption-row">
-      <div class="caption-bullet" style="background:${i===1?pt:'#ddd'};"></div>
-      <div class="caption-text-line">${line}</div>
-    </div>`).join('');
+  const capRows=document.getElementById('caption-rows'),pt=mag.ptColor||'#e0483b';
+  capRows.innerHTML=generatedCaption.map((line,i)=>`<div class="caption-row"><div class="caption-bullet" style="background:${i===1?pt:'#ddd'};"></div><div class="caption-text-line">${line}</div></div>`).join('');
   document.getElementById('hashtag-box').textContent=generatedHashtags;
 }
 
 function buildCardHTML(card,idx,mag){
-  const bg=mag.bgColor||'#fff', pt=mag.ptColor||'#e0483b';
-  const dark=isColorDark(bg), tc=dark?'#fff':'#111';
-  const img=cardImages[idx], tColor=cardTitleColors[idx]||(card.isCtaCard?tc:'#ffffff'), tSize=cardTitleSizes[idx]||14;
+  const bg=mag.bgColor||'#fff',pt=mag.ptColor||'#e0483b';
+  const dark=isColorDark(bg),tc=dark?'#fff':'#111';
+  const img=cardImages[idx],tColor=cardTitleColors[idx]||(card.isCtaCard?tc:'#ffffff'),tSize=cardTitleSizes[idx]||14;
   if(card.cardNum===1){
     return `<div style="width:100%;height:100%;position:relative;overflow:hidden;background:#1a1a1a;display:flex;flex-direction:column;justify-content:flex-end;">
       ${img?`<img src="${img}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;">`:`<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a1a1a,#3a3a3a);"></div>`}
-      <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(to top,rgba(0,0,0,0.82) 60%,rgba(0,0,0,0.08));z-index:1;"></div>
+      <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(to top,rgba(0,0,0,.82) 60%,rgba(0,0,0,.08));z-index:1;"></div>
       <div style="position:relative;z-index:2;padding:14px;">
-        <div style="font-size:8px;color:rgba(255,255,255,0.55);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;">${mag.logoName||mag.name}</div>
-        <div style="font-size:${tSize}px;font-weight:900;color:${tColor};line-height:1.3;">${card.title||''}</div>
-        ${card.subtitle?`<div style="font-size:9px;color:rgba(255,255,255,0.5);margin-top:4px;">${card.subtitle}</div>`:''}
+        <div style="font-size:8px;color:rgba(255,255,255,.55);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;">${mag.logoName||mag.name}</div>
+        <div style="font-size:${tSize}px;font-weight:900;color:${tColor};line-height:1.3;white-space:pre-line;">${card.title||''}</div>
+        ${card.subtitle?`<div style="font-size:9px;color:rgba(255,255,255,.5);margin-top:4px;">${card.subtitle}</div>`:''}
       </div>
     </div>`;
   }
   if(card.isCtaCard){
     const tags=(mag.tags||'').trim().split(/\s+/).filter(Boolean);
     return `<div style="width:100%;height:100%;background:${bg};color:${tc};display:flex;flex-direction:column;padding:14px;position:relative;overflow:hidden;">
-      ${img?`<img src="${img}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:0.07;">`:''}
+      ${img?`<img src="${img}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:.07;">`:''}
       <div style="position:relative;z-index:1;flex:1;display:flex;flex-direction:column;">
-        <div style="font-size:8px;font-weight:700;opacity:0.35;margin-bottom:10px;">${mag.name}</div>
-        <div style="font-size:14px;font-weight:900;line-height:1.3;margin-bottom:7px;">${mag.headline||''}</div>
-        <div style="font-size:9px;opacity:0.6;margin-bottom:3px;">${mag.copy1||''}</div>
+        <div style="font-size:8px;font-weight:700;opacity:.35;margin-bottom:10px;">${mag.name}</div>
+        <div style="font-size:14px;font-weight:900;line-height:1.3;margin-bottom:7px;white-space:pre-line;">${mag.headline||''}</div>
+        <div style="font-size:9px;opacity:.6;margin-bottom:3px;">${mag.copy1||''}</div>
         <div style="font-size:9px;font-weight:700;color:${pt};margin-bottom:12px;">${mag.copy2||''}</div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap;">${tags.map(t=>`<span style="padding:2px 6px;border-radius:8px;border:1px solid ${dark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.13)'};font-size:8px;">${t}</span>`).join('')}</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">${tags.map(t=>`<span style="padding:2px 6px;border-radius:8px;border:1px solid ${dark?'rgba(255,255,255,.25)':'rgba(0,0,0,.13)'};font-size:8px;">${t}</span>`).join('')}</div>
         <div style="margin-top:auto;padding-top:10px;display:flex;align-items:center;gap:6px;">
-          ${mag.logoImg?`<img src="${mag.logoImg}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">`:`<div style="width:20px;height:20px;border-radius:50%;background:${dark?'rgba(255,255,255,0.15)':'#e8e8e8'};"></div>`}
+          ${mag.logoImg?`<img src="${mag.logoImg}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">`:`<div style="width:20px;height:20px;border-radius:50%;background:${dark?'rgba(255,255,255,.15)':'#e8e8e8'};"></div>`}
           <span style="font-size:9px;font-weight:700;">${mag.logoName||mag.name}</span>
         </div>
       </div>
     </div>`;
   }
   const nc=CARD_NUM_COLORS[card.cardNum]||pt;
-  const overlayBg=dark?'rgba(0,0,0,0.65)':'rgba(255,255,255,0.88)';
+  const overlayBg=dark?'rgba(0,0,0,.65)':'rgba(255,255,255,.88)';
   return `<div style="width:100%;height:100%;position:relative;overflow:hidden;background:${img?'transparent':bg};">
     ${img?`<img src="${img}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;"><div style="position:absolute;top:0;left:0;width:100%;height:100%;background:${overlayBg};z-index:1;"></div>`:''}
     <div style="position:relative;z-index:2;width:100%;height:100%;padding:14px;display:flex;flex-direction:column;justify-content:center;background:${img?'transparent':bg};">
       <div style="font-size:8px;font-weight:700;color:${nc};letter-spacing:1px;margin-bottom:4px;text-transform:uppercase;">${card.label||''}</div>
       <div style="font-size:${tSize}px;font-weight:900;color:${tColor};line-height:1.3;margin-bottom:7px;">${card.title||''}</div>
-      <div style="font-size:9px;line-height:1.7;color:${img?(dark?'rgba(255,255,255,0.85)':'rgba(0,0,0,0.7)'):(dark?'rgba(255,255,255,0.7)':'rgba(0,0,0,0.65)')};">${(card.body||'').replace(/\n/g,'<br>')}</div>
+      <div style="font-size:9px;line-height:1.7;color:${img?(dark?'rgba(255,255,255,.85)':'rgba(0,0,0,.7)'):(dark?'rgba(255,255,255,.7)':'rgba(0,0,0,.65)')};">${(card.body||'').replace(/\n/g,'<br>')}</div>
     </div>
   </div>`;
 }
 
-function refreshCard(idx){
-  const mag=magazines.find(x=>x.id===document.getElementById('card-mag-select').value); if(!mag) return;
-  const cw=document.getElementById(`cw-${idx}`); if(cw) cw.innerHTML=buildCardHTML(generatedCards[idx],idx,mag);
-}
+function refreshCard(idx){const mag=magazines.find(x=>x.id===document.getElementById('card-mag-select').value);if(!mag)return;const cw=document.getElementById(`cw-${idx}`);if(cw)cw.innerHTML=buildCardHTML(generatedCards[idx],idx,mag);}
 function applyTitle(idx){const inp=document.getElementById(`ti-${idx}`);if(inp)generatedCards[idx].title=inp.value;refreshCard(idx);}
-function setTitleColor(idx,pi,color){
-  cardTitleColors[idx]=color;
-  document.querySelectorAll(`#pal-${idx} .color-dot`).forEach((d,i)=>d.classList.toggle('active',i===pi));
-  refreshCard(idx);
-}
-function setTitleSize(idx,val){
-  cardTitleSizes[idx]=Number(val);
-  document.getElementById(`szv-${idx}`).textContent=Math.round(val/14*100)+'%';
-  refreshCard(idx);
-}
-function applyTitleStyleAll(){
-  const c=cardTitleColors[0]||'#fff', s=cardTitleSizes[0]||14;
-  generatedCards.forEach((_,i)=>{if(!generatedCards[i].isCtaCard){cardTitleColors[i]=c;cardTitleSizes[i]=s;}});
-  generatedCards.forEach((_,i)=>refreshCard(i)); showToast('전체 카드에 적용됐어요 ✓');
-}
-function handleCardImg(idx,input){
-  const file=input.files[0]; if(!file) return;
-  const r=new FileReader(); r.onload=e=>{cardImages[idx]=e.target.result;refreshCard(idx);}; r.readAsDataURL(file);
-}
+function setTitleColor(idx,pi,color){cardTitleColors[idx]=color;document.querySelectorAll(`#pal-${idx} .color-dot`).forEach((d,i)=>d.classList.toggle('active',i===pi));refreshCard(idx);}
+function setTitleSize(idx,val){cardTitleSizes[idx]=Number(val);document.getElementById(`szv-${idx}`).textContent=Math.round(val/14*100)+'%';refreshCard(idx);}
+function applyTitleStyleAll(){const c=cardTitleColors[0]||'#fff',s=cardTitleSizes[0]||14;generatedCards.forEach((_,i)=>{if(!generatedCards[i].isCtaCard){cardTitleColors[i]=c;cardTitleSizes[i]=s;}});generatedCards.forEach((_,i)=>refreshCard(i));showToast('전체 카드에 적용됐어요 ✓');}
+function handleCardImg(idx,input){const file=input.files[0];if(!file)return;const r=new FileReader();r.onload=e=>{cardImages[idx]=e.target.result;refreshCard(idx);};r.readAsDataURL(file);}
 
 async function downloadAll(){
-  if(!generatedCards.length) return; showLoading('이미지 생성 중...');
+  if(!generatedCards.length)return;showLoading('이미지 생성 중...');
   try{
     const zip=new JSZip();
     for(let i=0;i<generatedCards.length;i++){
@@ -804,9 +822,9 @@ async function downloadAll(){
     }
     zip.file('caption.txt',generatedCaption.join('\n')+'\n\n'+generatedHashtags);
     const content=await zip.generateAsync({type:'blob'});
-    const a=document.createElement('a'); a.download='cardnews.zip'; a.href=URL.createObjectURL(content); a.click();
+    const a=document.createElement('a');a.download='cardnews.zip';a.href=URL.createObjectURL(content);a.click();
     showToast('ZIP 다운로드 완료!');
-  } catch(e){ showToast('다운로드 중 오류가 발생했어요.'); console.error(e); }
+  }catch(e){showToast('다운로드 중 오류가 발생했어요.');console.error(e);}
   hideLoading();
 }
 function copyCaption(){navigator.clipboard.writeText(generatedCaption.join('\n')).then(()=>showToast('캡션 복사됨 ✓'));}
