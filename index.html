@@ -1205,7 +1205,7 @@ const state = {
   currentPage:"magazine",
   selectedArticle:null,
   activeCategory:"beauty",
-  selectedKeywords:{ beauty:["서촌"], fashion:[] },
+  selectedKeywords:{ beauty:[], fashion:[] },
   keywordSets:{
     beauty:["뷰티","화장품","성화수","라네즈","이니스프리","클리오","롬앤","메디큐브","아누아","올리브영"],
     fashion:["패션","스트릿패션","K패션","패션위크","데님","무신사","29CM","유니클로","마르디메크르디"]
@@ -1551,7 +1551,7 @@ function renderKeywords(){
       return `<button class="chip ${selected?"selected":""}" type="button" data-category="${category}" data-keyword="${escapeHtml(keyword)}">${selected?"":"+ "}${escapeHtml(keyword)}${selected?" ×":""}</button>`;
     }).join("");
     $("#"+category+"Count").textContent=state.selectedKeywords[category].length;
-    $("#"+category+"Search").classList.toggle("disabled",state.selectedKeywords[category].length===0);
+    $("#"+category+"Search").classList.remove("disabled");
   });
 
   document.querySelectorAll(".chip").forEach(chip=>{
@@ -1575,10 +1575,15 @@ function addKeyword(category){
   const input=$("#"+category+"Input");
   const value=input.value.trim();
   if(!value)return;
-  if(!state.keywordSets[category].includes(value))state.keywordSets[category].push(value);
-  if(!state.selectedKeywords[category].includes(value)&&state.selectedKeywords[category].length<3){
-    state.selectedKeywords[category].push(value);
+
+  if(!state.keywordSets[category].includes(value)){
+    state.keywordSets[category].push(value);
   }
+
+  // 직접 추가한 키워드는 빨간박스 안 선택 칩으로 즉시 표시합니다.
+  state.selectedKeywords[category]=[value];
+  state.activeCategory=category;
+
   input.value="";
   renderKeywords();
   renderResults(category);
@@ -1592,8 +1597,24 @@ function cleanText(text){
 }
 
 function searchQueryFor(category){
+  const directInput=$("#"+category+"Input");
+  const directValue=directInput ? directInput.value.trim() : "";
+
+  // 입력칸에 키워드가 남아 있으면, 추가 버튼을 누르지 않아도
+  // 검색 순간 선택 칩으로 반영합니다.
+  if(directValue){
+    if(!state.keywordSets[category].includes(directValue)){
+      state.keywordSets[category].push(directValue);
+    }
+    state.selectedKeywords[category]=[directValue];
+    directInput.value="";
+    renderKeywords();
+    return directValue;
+  }
+
   const keys=state.selectedKeywords[category] || [];
   if(keys.length) return keys.join(" ");
+
   return category==="beauty" ? "뷰티" : "패션";
 }
 
@@ -1626,10 +1647,22 @@ function stripNaverHtml(value=""){
 
 function makeArticlePoints(title,description,query,category){
   const keyword=query || (category==="fashion" ? "패션" : "뷰티");
+  const cleanTitle=cleanText(title);
+  const cleanDesc=cleanText(description);
+  const sourceText=cleanDesc || cleanTitle;
+
+  const sentences=splitSentences(sourceText)
+    .map(v=>v.replace(/\.\.\.$/,"").trim())
+    .filter(v=>v.length>6);
+
+  const first=sentences[0] || sourceText || `${keyword} 관련 최신 뉴스가 검색 결과에서 확인됐어요.`;
+  const second=sentences[1] || `기사의 핵심은 '${cleanTitle.slice(0,32)}' 이슈가 ${keyword} 키워드와 연결되고 있다는 점이에요.`;
+  const third=sentences[2] || `정리하면 ${keyword} 관련 흐름을 짧게 저장하고 공유하기 좋은 뉴스로 볼 수 있어요.`;
+
   return [
-    description || `${keyword} 관련 최신 뉴스가 검색 결과에서 확인됐어요.`,
-    `이 이슈의 핵심은 '${title.slice(0,28)}' 흐름이 지금 소비자 관심과 연결되고 있다는 점이에요.`,
-    `${keyword} 키워드는 카드뉴스로 정리했을 때 저장·공유하기 좋은 트렌드형 콘텐츠로 활용할 수 있어요.`
+    trimText(first,170),
+    trimText(second,170),
+    trimText(third,170)
   ];
 }
 
@@ -1805,6 +1838,98 @@ async function searchNaverHtmlFallback(query,category){
   return articles;
 }
 
+
+function extractArticleTextFromHtml(htmlText){
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(htmlText,"text/html");
+
+  const metaDesc =
+    doc.querySelector('meta[property="og:description"]')?.getAttribute("content") ||
+    doc.querySelector('meta[name="description"]')?.getAttribute("content") ||
+    "";
+
+  const title =
+    doc.querySelector('meta[property="og:title"]')?.getAttribute("content") ||
+    doc.querySelector("title")?.textContent ||
+    "";
+
+  const articleSelectors=[
+    "#dic_area",
+    "#newsct_article",
+    "#articeBody",
+    "#articleBodyContents",
+    ".newsct_article",
+    ".article_body",
+    ".article-body",
+    "article"
+  ];
+
+  let bodyText="";
+  for(const selector of articleSelectors){
+    const el=doc.querySelector(selector);
+    if(el){
+      bodyText=cleanText(el.textContent);
+      if(bodyText.length>80) break;
+    }
+  }
+
+  if(!bodyText){
+    const paragraphs=[...doc.querySelectorAll("p")]
+      .map(p=>cleanText(p.textContent))
+      .filter(t=>t.length>25)
+      .slice(0,8);
+    bodyText=paragraphs.join(" ");
+  }
+
+  return cleanText([title, metaDesc, bodyText].filter(Boolean).join(" "));
+}
+
+function summarizeTextToPoints(title,content,keyword){
+  const cleanTitle=cleanText(title);
+  const cleanContent=cleanText(content);
+  const key=keyword || "뉴스";
+
+  const sentences=splitSentences(cleanContent)
+    .map(v=>v.replace(/\[[^\]]+\]/g,"").trim())
+    .filter(v=>v.length>10)
+    .filter(v=>!/(무단전재|재배포|기자|Copyright|저작권|구독|공유|사진=|제공=)/i.test(v));
+
+  const who = cleanTitle.split(/[,.…·\-]/)[0].slice(0,22);
+  const s1 = sentences[0] || cleanContent || cleanTitle;
+  const s2 = sentences[1] || sentences[0] || cleanTitle;
+  const s3 = sentences.slice(2,4).join(" ") || sentences[1] || sentences[0] || cleanTitle;
+
+  return [
+    trimText(`${s1}`, 155),
+    trimText(`${s2}`, 155),
+    trimText(`${s3}`, 155)
+  ];
+}
+
+async function enrichArticleBeforeSummary(article){
+  if(!article || article.fullLoaded || !article.link) return article;
+
+  try{
+    const htmlText=await fetchTextThroughProxy(article.link);
+    const fullText=extractArticleTextFromHtml(htmlText);
+
+    if(fullText && fullText.length>80){
+      article.content=fullText;
+      article.points=summarizeTextToPoints(article.title,fullText,article.tag);
+      article.summary=article.points[0];
+      article.fullLoaded=true;
+    }
+  }catch(error){
+    console.warn("본문 불러오기 실패, 검색 설명으로 요약합니다.",error);
+    article.points=summarizeTextToPoints(article.title,article.content || article.summary || article.title,article.tag);
+    article.summary=article.points[0];
+    article.fullLoaded=true;
+  }
+
+  return article;
+}
+
+
 async function performSearch(category=state.activeCategory){
   state.activeCategory=category;
   const query=searchQueryFor(category);
@@ -1843,12 +1968,14 @@ async function performSearch(category=state.activeCategory){
 
 function renderResults(category=state.activeCategory){
   state.activeCategory=category;
-  const keywords=state.selectedKeywords[category];
+  const keywords=state.selectedKeywords[category] || [];
   const filtered=sampleArticles.filter(article=>{
     if(!keywords.length)return true;
-    const hay=`${article.title} ${article.tag}`.toLowerCase();
-    return keywords.some(key=>hay.includes(key.toLowerCase()));
+    const hay=`${article.title} ${article.tag} ${article.summary || ""} ${article.content || ""}`.toLowerCase();
+    return keywords.some(key=>hay.includes(String(key).toLowerCase()));
   });
+  // 검색 직후에는 네이버에서 받은 결과 전체를 보여주는 것이 맞으므로,
+  // 필터가 0건이면 기존 샘플을 섞지 않고 현재 검색 결과 전체를 보여줍니다.
   const list=filtered.length ? filtered : sampleArticles.slice(0,20);
   $("#resultCount").textContent=`${list.length}건`;
   $("#matchCount").textContent=`${list.length}건`;
@@ -1882,13 +2009,21 @@ function renderResults(category=state.activeCategory){
   });
 }
 
-function selectArticle(id,autoGenerate=false){
+async function selectArticle(id,autoGenerate=false){
   state.selectedArticle=sampleArticles.find(item=>item.id===id)||null;
   if(!state.selectedArticle)return;
+
+  $("#selectedTitle").textContent=state.selectedArticle.title;
+  $("#selectedDesc").textContent="기사 내용을 불러와 요약하는 중이에요...";
+  renderResults();
+
+  await enrichArticleBeforeSummary(state.selectedArticle);
+
   $("#selectedTitle").textContent=state.selectedArticle.title;
   $("#selectedDesc").textContent=`${summarizeArticle(state.selectedArticle).body1} 출처: ${state.selectedArticle.source} · ${state.selectedArticle.time}`;
   renderResults();
-  showToast("기사를 선택했어요.");
+
+  showToast("기사를 요약했어요.");
   if(autoGenerate) generateCards();
 }
 
@@ -1906,30 +2041,54 @@ function trimText(text,max=145){
   return clean.slice(0,max-1).replace(/\s+\S*$/,"") + "…";
 }
 
+function makeHookTitle(title,keyword){
+  const clean=cleanText(title)
+    .replace(/\[[^\]]+\]/g,"")
+    .replace(/["“”]/g,"")
+    .replace(/\s+/g," ")
+    .trim();
+
+  // 기사 제목을 카드뉴스 첫 장에 맞게 짧고 궁금증 있게 변환
+  if(/[?？]$/.test(clean)) return trimText(clean,34);
+
+  const cut=clean
+    .replace(/^\[.*?\]\s*/,"")
+    .replace(/\s*[-|].*$/,"")
+    .replace(/….*$/,"")
+    .slice(0,28)
+    .trim();
+
+  if(keyword && !cut.includes(keyword) && cut.length < 18){
+    return trimText(`${keyword}, 지금 왜 주목받을까?`,34);
+  }
+
+  return trimText(`${cut}`,34);
+}
+
 function summarizeArticle(article){
-  const title=article.title.replace(/[“”"']/g,"").trim();
-  const sentences=splitSentences(article.content);
-  const points=(article.points&&article.points.length>=3)
-    ? article.points
-    : [
-        sentences[0] || `${article.tag} 관련 이슈가 주목받고 있어요.`,
-        sentences[1] || `핵심은 기사 제목에 드러난 변화와 소비자 반응이에요.`,
-        sentences[2] || `앞으로 이 흐름은 브랜드와 콘텐츠 전략에 영향을 줄 수 있어요.`
-      ];
+  const title=cleanText(article.title || "").replace(/[“”"']/g,"").trim();
+  const keyword=article.tag || "뉴스";
+  const content=cleanText(article.content || article.summary || article.description || title);
+
+  const basePoints = article.points && article.points.length >= 3
+    ? article.points.map(v=>trimText(cleanText(v),155))
+    : summarizeTextToPoints(title, content, keyword);
+
+  const hook = makeHookTitle(title, keyword);
 
   return {
-    hook:title,
-    body1:trimText(points[0],170),
-    body2:trimText(points[1],170),
-    body3:trimText(points[2],170),
+    hook,
+    body1:basePoints[0],
+    body2:basePoints[1],
+    body3:basePoints[2],
     caption:[
-      `⭐ ${title}`,
+      `⭐ ${hook}`,
       "",
-      `📍 ${trimText(points[0],120)}`,
+      `📍 ${basePoints[0]}`,
       "",
-      `📍 ${trimText(points[1],120)}`,
+      `📍 ${basePoints[1]}`,
       "",
-      `💬 ${trimText(points[2],120)}`
+      `💬 ${basePoints[2]}`
     ].join("\n")
   };
 }
@@ -2017,10 +2176,15 @@ function createCardsFromArticle(article){
   ];
 }
 
-function generateCards(){
+async function generateCards(){
   if(!state.selectedArticle){
-    selectArticle(sampleArticles[0].id,false);
+    await selectArticle(sampleArticles[0].id,false);
   }
+
+  if(state.selectedArticle){
+    await enrichArticleBeforeSummary(state.selectedArticle);
+  }
+
   state.cards=createCardsFromArticle(state.selectedArticle);
   $("#editorSection").hidden=false;
   renderEditor();
