@@ -1135,10 +1135,9 @@
           </div>
 
           <section class="manual-panel">
-            <h3>서버 없이 기사 붙여넣기로 카드뉴스 만들기</h3>
+            <h3>기사 직접 추가</h3>
             <p>
-              회사 보안 때문에 API/GAS를 못 쓰는 경우, 네이버 뉴스 검색 결과를 새 탭에서 열고
-              기사 제목과 본문/요약을 아래에 붙여넣어 주세요. 붙여넣은 내용 기준으로 카드가 생성됩니다.
+              회사 보안 때문에 외부 API 호출이 막힌 경우, 기사 제목과 본문/요약을 아래에 붙여넣어 주세요. 추가한 기사는 위 검색 결과 목록에 바로 표시되고, 클릭하면 카드뉴스가 생성됩니다.
             </p>
             <div class="manual-grid">
               <div>
@@ -1155,8 +1154,8 @@
               <textarea id="manualContent" placeholder="기사 본문, 리드문, 핵심 문장을 붙여넣어 주세요.&#10;문장이 3개 이상이면 BODY 1~3으로 자동 요약됩니다."></textarea>
             </div>
             <div class="manual-actions">
-              <button class="btn-secondary" id="openNaverSearch" type="button">네이버 뉴스 검색 열기</button>
-              <button class="btn-primary" id="generateManualCards" type="button" style="margin-top:0">붙여넣은 내용으로 카드 생성</button>
+              <button class="btn-secondary" id="openNaverSearch" type="button">현재 목록 검색 갱신</button>
+              <button class="btn-primary" id="generateManualCards" type="button" style="margin-top:0">기사 목록에 추가</button>
             </div>
           </section>
 
@@ -1597,10 +1596,8 @@ function searchQueryFor(category){
 
 function performSearch(category=state.activeCategory){
   state.activeCategory=category;
-  const query=searchQueryFor(category);
-  const url=`https://search.naver.com/search.naver?where=news&query=${encodeURIComponent(query)}&sort=1`;
-  window.open(url,"_blank","noopener,noreferrer");
-  showToast("네이버 뉴스 검색을 새 탭으로 열었어요.");
+  renderResults(category);
+  showToast("현재 화면 안에서 검색 결과를 갱신했어요.");
 }
 
 function renderResults(category=state.activeCategory){
@@ -1611,9 +1608,19 @@ function renderResults(category=state.activeCategory){
     const hay=`${article.title} ${article.tag}`.toLowerCase();
     return keywords.some(key=>hay.includes(key.toLowerCase()));
   });
-  const list=filtered.length?filtered:sampleArticles.slice(0,20);
+  const list=filtered;
   $("#resultCount").textContent=`${list.length}건`;
   $("#matchCount").textContent=`${list.length}건`;
+
+  if(!list.length){
+    $("#resultGrid").innerHTML=`
+      <div class="empty" style="grid-column:1/-1">
+        현재 조건에 맞는 화면 내 결과가 없어요.<br>
+        아래 ‘기사 직접 추가’에 제목과 본문을 붙여넣으면 이 목록에 바로 추가됩니다.
+      </div>
+    `;
+    return;
+  }
 
   $("#resultGrid").innerHTML=list.map(article=>{
     const selected=state.selectedArticle&&state.selectedArticle.id===article.id;
@@ -1950,11 +1957,23 @@ function createManualArticle(){
 function generateManualCards(){
   const article=createManualArticle();
   if(!article)return;
+
+  sampleArticles.unshift(article);
+  state.selectedKeywords.beauty = [];
+  state.selectedKeywords.fashion = [];
+  renderKeywords();
+  renderResults(state.activeCategory);
+
   state.selectedArticle=article;
   $("#selectedTitle").textContent=article.title;
   $("#selectedDesc").textContent=`${article.summary} 출처: ${article.source}`;
   generateCards();
-  showToast("붙여넣은 기사 내용으로 카드뉴스를 생성했어요.");
+
+  $("#manualTitle").value="";
+  $("#manualSource").value="";
+  $("#manualContent").value="";
+
+  showToast("기사 목록에 추가하고 카드뉴스를 생성했어요.");
 }
 
 
