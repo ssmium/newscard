@@ -530,22 +530,59 @@ async function searchNews(type){
 }
 
 function renderArticleList(items,type){
-  const grid=document.getElementById('article-grid');grid._items=[];grid.innerHTML='';
-  const bc=type==='beauty'?'badge-beauty':'badge-fashion',bt=type==='beauty'?'뷰티':'패션';
+  const grid=document.getElementById('article-grid');
+  grid._items=[];
+  grid.innerHTML='';
+
+  const bc=type==='beauty'?'badge-beauty':'badge-fashion';
+  const bt=type==='beauty'?'뷰티':'패션';
+
   items.forEach((item,i)=>{
-    const title=cleanHtml(item.title||''),desc=cleanHtml(item.description||'');
-    const src=item.originallink||item.link||'';let domain='';try{domain=new URL(src).hostname.replace('www.','');}catch(e){}
-    const date=item.pubDate?new Date(item.pubDate).toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
-    grid._items[i]={title,desc,url:item.link,origin:item.originallink||'',date,domain};
-    const el=document.createElement('div');el.className='article-item';
-    el.innerHTML=`<div class="article-thumb">🗞️</div>
+    const title=cleanHtml(item.title||'');
+    const desc=cleanHtml(item.description||'');
+    const src=item.originallink||item.link||'';
+
+    let domain='';
+    try{domain=new URL(src).hostname.replace('www.','');}catch(e){domain='';}
+
+    const date=item.pubDate
+      ? new Date(item.pubDate).toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})
+      : '';
+
+    grid._items[i]={
+      title,
+      desc,
+      url:item.link||src,
+      origin:item.originallink||'',
+      date,
+      domain
+    };
+
+    const el=document.createElement('div');
+    el.className='article-item';
+    el.dataset.index=String(i);
+    el.innerHTML=`
+      <div class="article-thumb">🗞️</div>
       <div class="article-info">
         <div class="article-title">${title}</div>
         <div class="article-sub"><span class="article-badge ${bc}">${bt}</span>${date} · ${domain}</div>
-        <div style="font-size:10px;color:#bbb;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${desc.slice(0,60)}...</div>
+        <div style="font-size:10px;color:#bbb;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${desc.slice(0,80)}...</div>
       </div>
-      <button class="gen-btn-sm" onclick="generateFromArticle(${i},event)">생성</button>`;
-    el.onclick=e=>{if(e.target.tagName!=='BUTTON')generateFromArticle(i,e);};
+      <button type="button" class="gen-btn-sm" data-index="${i}">생성</button>`;
+
+    el.addEventListener('click', async function(event){
+      const idx=Number(this.dataset.index);
+      await generateFromArticle(idx,event);
+    });
+
+    const btn=el.querySelector('.gen-btn-sm');
+    btn.addEventListener('click', async function(event){
+      event.preventDefault();
+      event.stopPropagation();
+      const idx=Number(this.dataset.index);
+      await generateFromArticle(idx,event);
+    });
+
     grid.appendChild(el);
   });
 }
@@ -1099,25 +1136,42 @@ function makeTags(title,desc,magTags){
 }
 
 async function generateFromArticle(idx,e){
-  if(e) e.stopPropagation();
-  const grid=document.getElementById('article-grid');
-  const item=grid._items?.[idx];
-  if(!item) return;
+  if(e){
+    e.preventDefault?.();
+    e.stopPropagation?.();
+  }
 
-  document.querySelectorAll('.article-item').forEach((el,i)=>el.classList.toggle('selected',i===idx));
+  const grid=document.getElementById('article-grid');
+  const item=grid && grid._items ? grid._items[idx] : null;
+
+  if(!item){
+    showToast('기사 정보를 찾지 못했어요. 다시 검색해 주세요.');
+    return;
+  }
+
+  document.querySelectorAll('.article-item').forEach((el,i)=>{
+    el.classList.toggle('selected',i===idx);
+  });
 
   const magId=document.getElementById('card-mag-select').value;
   const mag=magazines.find(x=>x.id===magId);
+
   if(!mag){
     showToast('매거진을 먼저 설정해주세요.');
     return;
   }
 
-  showLoading('기사 본문을 읽고 있어요...');
+  showLoading('기사 내용을 카드뉴스로 반영하는 중...');
 
-  // 핵심 수정: 이제 제목/검색 설명만 쓰지 않고 기사 URL 본문을 먼저 읽습니다.
-  const articleBody = await readArticleBody(item);
-  const sourceText = articleBody || item.desc || item.title;
+  let articleBody='';
+  try{
+    articleBody=await readArticleBody(item);
+  }catch(error){
+    console.warn('기사 본문 읽기 실패, 검색 설명으로 생성합니다.',error);
+    articleBody='';
+  }
+
+  const sourceText = articleBody || item.desc || item.title || '';
 
   window.lastArticleContext={
     title:item.title || '',
@@ -1127,25 +1181,38 @@ async function generateFromArticle(idx,e){
     query:window.lastSearchQuery || ''
   };
 
-  showLoading(articleBody ? '기사 본문 기반으로 요약 중...' : '본문을 못 읽어 검색 설명으로 요약 중...');
+  let hook='';
+  let pts=[];
+  let tags='';
 
-  const hook=makeHook(item.title,sourceText,window.lastSearchQuery||'');
-  const pts=makePoints(item.title,sourceText,window.lastSearchQuery||'');
-  const tags=makeTags(item.title,sourceText,mag.tags);
+  try{
+    hook=makeHook(item.title,sourceText,window.lastSearchQuery||'');
+    pts=makePoints(item.title,sourceText,window.lastSearchQuery||'');
+    tags=makeTags(item.title,sourceText,mag.tags);
+  }catch(error){
+    console.error('요약 생성 실패, 기본 문구로 대체합니다.',error);
+    hook=(item.title||'카드뉴스').slice(0,24);
+    pts=[
+      item.desc || item.title || '기사 내용을 불러왔어요.',
+      '이 소식의 핵심 포인트를 카드뉴스로 정리해볼 수 있어요.',
+      '앞으로의 반응과 관련 흐름도 함께 살펴보면 좋아요.'
+    ];
+    tags=mag.tags || '#카드뉴스 #뉴스';
+  }
 
   generatedCards=[
     {cardNum:1,label:'HOOK',title:hook,subtitle:item.domain+' · '+item.date,isCtaCard:false},
-    {cardNum:2,label:'BODY 1',title:'NOW TRENDING',body:pts[0],isCtaCard:false},
-    {cardNum:3,label:'BODY 2',title:'THE TAKEAWAY',body:pts[1],isCtaCard:false},
-    {cardNum:4,label:'BODY 3',title:"WHAT'S NEXT",body:pts[2],isCtaCard:false},
+    {cardNum:2,label:'BODY 1',title:'NOW TRENDING',body:pts[0]||'',isCtaCard:false},
+    {cardNum:3,label:'BODY 2',title:'THE TAKEAWAY',body:pts[1]||'',isCtaCard:false},
+    {cardNum:4,label:'BODY 3',title:"WHAT'S NEXT",body:pts[2]||'',isCtaCard:false},
     {cardNum:5,label:'CTA',isCtaCard:true},
   ];
 
   generatedCaption=[
-    `⭐ ${hook.replace('\n',' ')}`,
-    `📍 ${pts[0]}`,
-    `📍 ${pts[1]}`,
-    `💬 ${pts[2]}`,
+    `⭐ ${(hook||'').replace('\n',' ')}`,
+    `📍 ${pts[0]||''}`,
+    `📍 ${pts[1]||''}`,
+    `💬 ${pts[2]||''}`,
   ];
 
   generatedHashtags=tags;
@@ -1157,11 +1224,19 @@ async function generateFromArticle(idx,e){
   cardAccentColors={};
 
   renderCardEditArea(mag);
-  document.getElementById('card-edit-wrap').style.display='block';
-  hideLoading();
 
-  showToast(articleBody ? '기사 본문을 읽고 카드뉴스를 만들었어요 ✓' : '본문 접근 실패: 검색 설명으로 만들었어요');
-  setTimeout(()=>document.getElementById('card-edit-wrap').scrollIntoView({behavior:'smooth',block:'start'}),100);
+  const wrap=document.getElementById('card-edit-wrap');
+  if(wrap){
+    wrap.style.display='block';
+    wrap.hidden=false;
+  }
+
+  hideLoading();
+  showToast(articleBody ? '기사 본문을 읽고 카드뉴스에 반영했어요 ✓' : '검색 설명으로 카드뉴스에 반영했어요 ✓');
+
+  setTimeout(()=>{
+    document.getElementById('card-edit-wrap')?.scrollIntoView({behavior:'smooth',block:'start'});
+  },100);
 }
 
 // ── 카드 렌더 ──
@@ -1482,6 +1557,25 @@ function copyAll(){navigator.clipboard.writeText(generatedCaption.join('\n')+'\n
 function showLoading(msg){document.getElementById('loading-text').textContent=msg||'로딩 중...';document.getElementById('loading').classList.add('show');}
 function hideLoading(){document.getElementById('loading').classList.remove('show');}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+
+
+/* ===== article click safety patch ===== */
+document.addEventListener('click', function(event){
+  const btn=event.target.closest && event.target.closest('.gen-btn-sm');
+  if(btn && btn.dataset && btn.dataset.index !== undefined){
+    event.preventDefault();
+    event.stopPropagation();
+    generateFromArticle(Number(btn.dataset.index),event);
+    return;
+  }
+
+  const article=event.target.closest && event.target.closest('.article-item');
+  if(article && article.dataset && article.dataset.index !== undefined){
+    event.preventDefault();
+    generateFromArticle(Number(article.dataset.index),event);
+  }
+});
+/* ===== article click safety patch end ===== */
 
 window.addEventListener('DOMContentLoaded',init);
 </script>
