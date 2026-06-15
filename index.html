@@ -2067,7 +2067,7 @@ function inferTopicFromTitle(title, keyword){
   return keyword || "이슈";
 }
 
-function makeAbstractivePoints(title, content, keyword){
+function makeAbstractivePoints(title,content,keyword){
   const cleanTitle=cleanLeadNoise(title);
   const cleanContent=cleanLeadNoise(content || title);
   const topic=inferTopicFromTitle(cleanTitle, keyword);
@@ -2078,26 +2078,87 @@ function makeAbstractivePoints(title, content, keyword){
     .filter(v=>v.length>8)
     .filter(v=>!/(무단전재|재배포|Copyright|저작권|구독|공유|사진=|제공=)/i.test(v));
 
-  // 물놀이장 기사처럼 참고 사이트 스타일에 가깝게 재구성
-  if(topic==="물놀이장" && count){
-    const region=(cleanTitle.match(/(서울|인천|부산|대구|대전|광주|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)/)||cleanContent.match(/(서울|인천|부산|대구|대전|광주|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)/)||["",""])[1];
-    const placeText=places.length ? `${places.slice(0,2).join(", ")} 등 주요 장소가 먼저 열려서 시민들이 이용할 수 있을 거예요.` : `도심 속에서 시원한 물놀이를 즐길 수 있도록 순차적으로 운영될 예정이에요.`;
+  const regionMatch =
+    cleanTitle.match(/(서울|인천|부산|대구|대전|광주|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)/) ||
+    cleanContent.match(/(서울|인천|부산|대구|대전|광주|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)/);
+  const region=regionMatch ? regionMatch[1] : "";
+
+  // 카드별 역할을 분리합니다.
+  // BODY 1: 무슨 일이 일어났는지
+  // BODY 2: 핵심 내용/운영 방식
+  // BODY 3: 앞으로의 의미/영향
+  if(topic==="물놀이장"){
+    const placeText=places.length
+      ? `${places.slice(0,2).join(", ")} 등 주요 장소가 먼저 열려 시민들이 이용할 수 있을 거예요.`
+      : `도심 속에서 시원한 물놀이를 즐길 수 있도록 순차적으로 운영될 예정이에요.`;
+
+    const body1=trimText(
+      `${region ? region + " 지역의 " : ""}${count || "여러 곳의"} 물놀이장이 이번 여름 순차적으로 개장할 예정이에요. ${placeText}`,
+      170
+    );
+
+    const body2=trimText(
+      sentences[1]
+        ? toFriendlyEnding(sentences[1])
+        : `공원별 운영 기간과 시간은 다를 수 있어 방문 전 가까운 물놀이장 일정을 확인하는 것이 좋아요.`,
+      170
+    );
+
+    const body3=trimText(
+      `이번 물놀이장 개장으로 인해 ${region ? region + " " : ""}시민들은 여름철 더욱 즐겁게 시간을 보낼 수 있을 거예요. 특히 가족 단위 방문객들이 많을 것으로 예상되며, 지역 상권에도 긍정적인 영향을 줄 수 있어요.`,
+      190
+    );
+
+    return [body1, body2, body3];
+  }
+
+  if(topic==="팝업"){
     return [
-      trimText(`${region ? region + " 지역의 " : ""}${count} ${topic}이 이번 여름 순차적으로 개장할 예정이에요. ${placeText}`,170),
-      trimText(sentences[1] ? toFriendlyEnding(sentences[1]) : `가족 단위 방문객들이 가까운 공원에서 여름철 피서를 즐길 수 있도록 준비하고 있어요.`,170),
-      trimText(sentences[2] ? toFriendlyEnding(sentences[2]) : `운영 기간과 장소별 일정은 지역별로 다를 수 있어서 방문 전 확인이 필요해요.`,170)
+      trimText(toFriendlyEnding(sentences[0] || cleanContent || cleanTitle),170),
+      trimText(sentences[1] ? toFriendlyEnding(sentences[1]) : `브랜드는 오프라인 공간을 통해 제품을 직접 경험하게 만들고 있어요.`,170),
+      trimText(`이런 팝업 흐름은 단순 홍보를 넘어 브랜드 팬덤을 만들고, 방문 인증과 공유를 통해 더 큰 관심으로 이어질 가능성이 있어요.`,190)
     ];
   }
 
-  // 일반 기사: 원문을 그대로 복붙하지 않고 핵심을 자연스럽게 재문장화
+  if(topic==="카페"){
+    return [
+      trimText(toFriendlyEnding(sentences[0] || cleanContent || cleanTitle),170),
+      trimText(sentences[1] ? toFriendlyEnding(sentences[1]) : `카페와 지역 분위기가 함께 주목받으면서 방문 욕구를 높이고 있어요.`,170),
+      trimText(`앞으로도 카페는 단순한 휴식 공간을 넘어 스타일, 동네 이미지, SNS 콘텐츠가 함께 소비되는 장소로 더 주목받을 거예요.`,190)
+    ];
+  }
+
+  if(topic==="패션"){
+    return [
+      trimText(toFriendlyEnding(sentences[0] || cleanContent || cleanTitle),170),
+      trimText(sentences[1] ? toFriendlyEnding(sentences[1]) : `스타일링 포인트와 브랜드 이미지가 함께 화제가 되고 있어요.`,170),
+      trimText(`이런 패션 이슈는 소비자들이 바로 따라 해보고 저장할 수 있는 스타일 콘텐츠로 확산될 가능성이 높아요.`,190)
+    ];
+  }
+
+  if(topic==="화장품" || topic==="토너"){
+    return [
+      trimText(toFriendlyEnding(sentences[0] || cleanContent || cleanTitle),170),
+      trimText(sentences[1] ? toFriendlyEnding(sentences[1]) : `소비자들은 성분, 후기, 피부 타입 적합성을 함께 비교하고 있어요.`,170),
+      trimText(`앞으로는 단순한 유행 제품보다 피부 고민을 구체적으로 해결해주는 제품과 쉬운 루틴 제안이 더 중요해질 거예요.`,190)
+    ];
+  }
+
+  if(topic==="광고"){
+    return [
+      trimText(toFriendlyEnding(sentences[0] || cleanContent || cleanTitle),170),
+      trimText(sentences[1] ? toFriendlyEnding(sentences[1]) : `브랜드의 초기 광고 부담을 줄이는 혜택이 핵심이에요.`,170),
+      trimText(`이런 지원은 중소 브랜드가 마케팅을 더 쉽게 시작하게 만들고, 플랫폼 입장에서도 신규 광고주를 늘리는 계기가 될 수 있어요.`,190)
+    ];
+  }
+
+  // 일반 기사 기본값: 3번째 카드는 원문 세부사항이 아니라 의미/전망을 만듭니다.
   const first=sentences[0] || cleanContent || cleanTitle;
   const second=sentences[1] || "";
-  const third=sentences.slice(2,4).join(" ");
-
   return [
     trimText(toFriendlyEnding(first),170),
     trimText(second ? toFriendlyEnding(second) : `${topic} 관련 소식이 ${keyword || "관련"} 키워드와 함께 관심을 받고 있어요.`,170),
-    trimText(third ? toFriendlyEnding(third) : `이번 흐름은 카드뉴스로 정리했을 때 핵심만 빠르게 전달하기 좋은 이슈예요.`,170)
+    trimText(`이번 이슈는 관련 분야의 흐름을 보여주는 사례로 볼 수 있어요. 앞으로 소비자 관심과 현장 반응에 따라 더 넓게 확산될 가능성이 있어요.`,190)
   ];
 }
 
