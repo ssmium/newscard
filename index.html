@@ -59,8 +59,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #f5f5f5; color: #111
 .tag-add-btn:hover { border-color: #e0486a; color: #c0144a; }
 .search-btn { width: 100%; padding: 11px; border-radius: 8px; background: #111; color: #fff; font-size: 13px; font-weight: 700; border: none; cursor: pointer; font-family: inherit; }
 .search-btn:hover { opacity: 0.85; }
-
-/* 기사 목록 — search-panel 밖, 독립 패널 */
 .article-result-panel { display: none; background: #fff; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; border: 1.5px solid #e8e8e8; }
 .article-meta-bar { font-size: 11px; color: #888; margin-bottom: 10px; }
 .naver-logo { color: #03c75a; font-weight: 700; }
@@ -77,8 +75,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #f5f5f5; color: #111
 .badge-fashion { background: #e0e7ff; color: #3730a3; }
 .gen-btn-sm { padding: 5px 11px; border-radius: 6px; background: #111; color: #fff; font-size: 10px; font-weight: 700; border: none; cursor: pointer; white-space: nowrap; flex-shrink: 0; font-family: inherit; }
 .gen-btn-sm:hover { opacity: 0.8; }
-
-/* Card edit */
 .card-edit-wrap { display: none; background: #fff; border-radius: 12px; padding: 20px; border: 1.5px solid #e8e8e8; }
 .dl-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .dl-hint { font-size: 11px; color: #aaa; }
@@ -117,8 +113,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #f5f5f5; color: #111
 .copy-row { display: flex; gap: 8px; margin-top: 8px; }
 .copy-btn-full { flex: 1; padding: 8px; border-radius: 8px; border: 1.5px solid #e0e0e0; background: #fff; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .copy-btn-full:hover { border-color: #111; }
-
-/* Magazine settings */
 .two-col { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
 .form-section { background: #fff; border-radius: 12px; padding: 22px; margin-bottom: 16px; }
 .form-group { margin-bottom: 18px; }
@@ -184,7 +178,6 @@ textarea.form-input { resize: vertical; min-height: 70px; }
 </aside>
 
 <main class="main">
-
   <!-- ===== MAGAZINE PAGE ===== -->
   <div class="page" id="page-mag">
     <div class="page-step">매거진 설정</div>
@@ -270,15 +263,12 @@ textarea.form-input { resize: vertical; min-height: 70px; }
   <div class="page active" id="page-card">
     <div class="page-step">Step 3</div>
     <div class="page-title">뷰티·패션 카드뉴스</div>
-
     <div class="mag-row">
       <label>매거진</label>
       <select class="mag-select-sm" id="card-mag-select"></select>
       <a style="font-size:11px;color:#888;text-decoration:underline;cursor:pointer;" onclick="showPage('mag')">관리</a>
       <span class="quota-badge" id="quota-badge">오늘 남은 생성 횟수 0 / 10회</span>
     </div>
-
-    <!-- 검색 패널 -->
     <div class="search-panel">
       <div class="search-panel-title">뷰티·패션 리서치 — 키워드 선택 + 직접 추가</div>
       <div class="search-panel-hint">키워드는 3개 이하를 권장해요. 너무 많으면 검색이 느려지고 주제가 흩어집니다.</div>
@@ -314,7 +304,7 @@ textarea.form-input { resize: vertical; min-height: 70px; }
       </div>
     </div>
 
-    <!-- 기사 목록 (search-panel 완전 밖) -->
+    <!-- 기사 목록 (search-panel 밖) -->
     <div class="article-result-panel" id="article-result-panel">
       <div class="article-meta-bar">
         전체 <span id="article-total">0</span>건 · 최근 <span id="article-shown">0</span>건 표시
@@ -348,7 +338,6 @@ textarea.form-input { resize: vertical; min-height: 70px; }
       </div>
     </div>
   </div>
-
 </main>
 </div>
 
@@ -361,7 +350,14 @@ textarea.form-input { resize: vertical; min-height: 70px; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-const PROXY_BASE = 'https://purple-snow-ddbd.yjuio9603.workers.dev';
+// ══════════════════════════════
+// 네이버 API 키 (Worker 경유 or 직접)
+const NAVER_CLIENT_ID     = 'U5if8lC21g_3L95AgqVS';
+const NAVER_CLIENT_SECRET = '9qtZj8bb1H';
+// Cloudflare Worker URL (AI 카드생성용)
+const CLAUDE_PROXY = 'https://purple-snow-ddbd.yjuio9603.workers.dev/claude';
+// ══════════════════════════════
+
 const DAILY_QUOTA = 10;
 const TEXT_PALETTE = ['#ffffff','#000000','#e0483b','#2563eb','#f59e0b','#111111'];
 const CARD_NUM_COLORS = { 2:'#e0483b', 3:'#2563eb', 4:'#059669' };
@@ -373,7 +369,7 @@ let beautyUserTags=[], fashionUserTags=[];
 let generatedCards=[], cardImages={}, cardTitleColors={}, cardTitleSizes={};
 let generatedCaption=[], generatedHashtags='';
 
-function getQuota(){const today=new Date().toDateString();const s=JSON.parse(localStorage.getItem('cnews_quota')||'{"date":"","count":0}');return s.date!==today?{date:today,count:0}:s;}
+function getQuota(){const t=new Date().toDateString();const s=JSON.parse(localStorage.getItem('cnews_quota')||'{"date":"","count":0}');return s.date!==t?{date:t,count:0}:s;}
 function useQuota(){const q=getQuota();q.count++;localStorage.setItem('cnews_quota',JSON.stringify(q));updateQuotaBadge();}
 function updateQuotaBadge(){const q=getQuota();document.getElementById('quota-badge').textContent=`오늘 남은 생성 횟수 ${q.count} / ${DAILY_QUOTA}회`;}
 
@@ -479,6 +475,7 @@ function updatePreview(){
   else { pvLogo.innerHTML=''; pvLogo.style.background=dark?'rgba(255,255,255,0.15)':'#eee'; }
 }
 
+// ── Tags ──
 function renderTagArea(type){
   const userTags=type==='beauty'?beautyUserTags:fashionUserTags;
   const suggested=type==='beauty'?BEAUTY_SUGGESTED:FASHION_SUGGESTED;
@@ -505,32 +502,117 @@ function removeUserTag(type,idx){
   renderTagArea(type);
 }
 
+// ── Naver Search — 다중 프록시 순차 시도 (ChatGPT 방식 이식) ──
 function stripHtml(h){const d=document.createElement('div');d.innerHTML=h;return d.textContent||'';}
+
+async function fetchWithTimeout(url, options={}, timeout=10000){
+  const ctrl=new AbortController();
+  const id=setTimeout(()=>ctrl.abort(), timeout);
+  try{
+    const res=await fetch(url,{...options, signal:ctrl.signal});
+    const text=await res.text();
+    let data;
+    try{ data=JSON.parse(text); } catch(e){ throw new Error('JSON 아님: '+text.slice(0,60)); }
+    if(data.errorCode||data.errorMessage) throw new Error(data.errorMessage||'API 오류');
+    return data;
+  } finally { clearTimeout(id); }
+}
+
+async function searchNaverOpenApi(query, type){
+  const target=`https://openapi.naver.com/v1/search/news.json?query=${encodeURIComponent(query)}&display=20&sort=date`;
+  const headers={'X-Naver-Client-Id':NAVER_CLIENT_ID,'X-Naver-Client-Secret':NAVER_CLIENT_SECRET};
+
+  // 순차 시도: 여러 공개 CORS 프록시
+  const attempts=[
+    {name:'corsproxy.io',   url:`https://corsproxy.io/?${encodeURIComponent(target)}`,   opt:{headers}},
+    {name:'allorigins',     url:`https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`, opt:{}},
+    {name:'thingproxy',     url:`https://thingproxy.freeboard.io/fetch/${target}`,        opt:{headers}},
+    {name:'codetabs',       url:`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(target)}`, opt:{}},
+    {name:'direct',         url:target,                                                   opt:{headers}},
+  ];
+
+  for(const a of attempts){
+    try{
+      const data=await fetchWithTimeout(a.url, a.opt, 9000);
+      if(data.items && Array.isArray(data.items)) return data.items;
+    } catch(e){ console.warn(a.name+' 실패:', e.message); }
+  }
+  throw new Error('모든 프록시 실패');
+}
+
+function parseNaverHtml(html, query, type){
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  const seen=new Set(); const result=[];
+  doc.querySelectorAll('a').forEach(a=>{
+    const href=a.href||'';
+    const text=(a.getAttribute('title')||a.textContent||'').trim().replace(/\s+/g,' ');
+    const isNews=href.includes('n.news.naver.com')||href.includes('news.naver.com')||String(a.className||'').includes('news_tit');
+    if(!isNews||text.length<8||seen.has(href)) return;
+    seen.add(href);
+    const box=a.closest('li')||a.closest('.bx')||a.parentElement;
+    const descEl=box&&(box.querySelector('.dsc_txt_wrap')||box.querySelector('.news_dsc')||box.querySelector('p'));
+    const desc=descEl?(descEl.textContent||'').trim().replace(/\s+/g,' '):'';
+    result.push({title:text,description:desc,link:href,originallink:href,pubDate:'',source:new URL(href).hostname.replace('www.','')});
+  });
+  return result.slice(0,20);
+}
+
+async function searchNaverHtmlFallback(query, type){
+  const target=`https://search.naver.com/search.naver?where=news&sm=tab_jum&query=${encodeURIComponent(query)}&sort=1`;
+  const proxies=[
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(target)}`,
+    `https://corsproxy.io/?${encodeURIComponent(target)}`,
+  ];
+  for(const p of proxies){
+    try{
+      const res=await fetch(p);
+      if(!res.ok) continue;
+      const html=await res.text();
+      if(html.length>100){
+        const items=parseNaverHtml(html, query, type);
+        if(items.length) return items;
+      }
+    } catch(e){ console.warn('HTML fallback 실패:', e.message); }
+  }
+  throw new Error('HTML 검색도 실패');
+}
 
 async function searchNews(type){
   const userTags=type==='beauty'?beautyUserTags:fashionUserTags;
   const q=userTags.length?userTags.join(' '):(type==='beauty'?'뷰티 화장품':'패션 스타일');
   showLoading(`"${q}" 뉴스 검색 중...`);
   try{
-    const r=await fetch(`${PROXY_BASE}?query=${encodeURIComponent(q)}&display=20&sort=date`);
-    if(!r.ok){showToast(`검색 오류 (${r.status})`);hideLoading();return;}
-    const data=await r.json();
-    if(!data?.items?.length){showToast('검색 결과가 없어요. 키워드를 바꿔보세요.');hideLoading();return;}
-    renderArticleList(data.items,type);
+    let items=[];
+    try{
+      items=await searchNaverOpenApi(q, type);
+    } catch(e){
+      console.warn('OpenAPI 방식 전부 실패, HTML 검색으로 재시도:', e.message);
+      showLoading(`"${q}" 검색 재시도 중...`);
+      items=await searchNaverHtmlFallback(q, type);
+    }
+
+    if(!items.length){ showToast('검색 결과가 없어요. 키워드를 바꿔보세요.'); hideLoading(); return; }
+
+    renderArticleList(items, type);
     document.getElementById('article-result-panel').style.display='block';
-    document.getElementById('article-total').textContent=data.total?.toLocaleString()||data.items.length;
-    document.getElementById('article-shown').textContent=data.items.length;
-    document.getElementById(type+'-kw-count').textContent=`카드: ${data.items.length}개`;
+    document.getElementById('article-total').textContent=items.length;
+    document.getElementById('article-shown').textContent=items.length;
+    document.getElementById(type+'-kw-count').textContent=`카드: ${items.length}개`;
     setTimeout(()=>document.getElementById('article-result-panel').scrollIntoView({behavior:'smooth',block:'start'}),100);
-  }catch(e){console.error(e);showToast('네트워크 오류. Worker URL을 확인해주세요.');}
+    showToast(`뉴스 ${items.length}건을 불러왔어요 ✓`);
+  } catch(e){
+    console.error(e);
+    showToast('검색에 실패했어요. 잠시 후 다시 시도해주세요.');
+  }
   hideLoading();
 }
 
-function renderArticleList(items,type){
+function renderArticleList(items, type){
   const grid=document.getElementById('article-grid'); grid._items=[]; grid.innerHTML='';
-  const bc=type==='beauty'?'badge-beauty':'badge-fashion',bt=type==='beauty'?'뷰티':'패션';
+  const bc=type==='beauty'?'badge-beauty':'badge-fashion', bt=type==='beauty'?'뷰티':'패션';
   items.forEach((item,i)=>{
-    const title=stripHtml(item.title||''),desc=stripHtml(item.description||'');
+    const title=stripHtml(item.title||''), desc=stripHtml(item.description||'');
     const src=item.originallink||item.link||''; let domain='';
     try{domain=new URL(src).hostname.replace('www.','');}catch(e){}
     const date=item.pubDate?new Date(item.pubDate).toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
@@ -548,6 +630,7 @@ function renderArticleList(items,type){
   });
 }
 
+// ── AI 카드 생성 (Worker /claude 경유) ──
 async function generateFromArticle(idx,e){
   if(e) e.stopPropagation();
   const q=getQuota(); if(q.count>=DAILY_QUOTA){showToast(`오늘 생성 횟수(${DAILY_QUOTA}회)를 다 사용했어요.`);return;}
@@ -571,8 +654,9 @@ JSON 형식으로만 응답 (마크다운 없이):
 {"cardNum":4,"label":"BODY 3","title":"결론 (15자 이내)","body":"2~3줄 설명"},
 {"cardNum":5,"label":"CTA","isCtaCard":true}
 ],"caption":["첫째줄 캡션","둘째줄 캡션","셋째줄 캡션"],"tags":"#태그1 #태그2 #태그3 #태그4 #태그5 #태그6"}`;
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json'},
+
+    const resp=await fetch(CLAUDE_PROXY,{
+      method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})
     });
     const data=await resp.json(); if(data.error) throw new Error(data.error.message);
@@ -586,12 +670,12 @@ JSON 형식으로만 응답 (마크다운 없이):
     document.getElementById('card-edit-wrap').style.display='block';
     showToast('카드뉴스 생성 완료! ✓');
     setTimeout(()=>document.getElementById('card-edit-wrap').scrollIntoView({behavior:'smooth',block:'start'}),100);
-  }catch(err){console.error(err);showToast('생성 중 오류가 발생했어요.');}
+  } catch(err){ console.error(err); showToast('생성 중 오류가 발생했어요.'); }
   hideLoading();
 }
 
 function renderCardEditArea(mag){
-  const row=document.getElementById('card-row'),panels=document.getElementById('card-edit-panels');
+  const row=document.getElementById('card-row'), panels=document.getElementById('card-edit-panels');
   row.innerHTML=''; panels.innerHTML='';
   generatedCards.forEach((card,i)=>{
     if(!cardTitleColors[i]) cardTitleColors[i]=card.isCtaCard?(isColorDark(mag.bgColor)?'#fff':'#111'):'#ffffff';
@@ -630,7 +714,7 @@ function renderCardEditArea(mag){
     }
     panels.appendChild(panel);
   });
-  const capRows=document.getElementById('caption-rows'),pt=mag.ptColor||'#e0483b';
+  const capRows=document.getElementById('caption-rows'), pt=mag.ptColor||'#e0483b';
   capRows.innerHTML=generatedCaption.map((line,i)=>`
     <div class="caption-row">
       <div class="caption-bullet" style="background:${i===1?pt:'#ddd'};"></div>
@@ -640,9 +724,9 @@ function renderCardEditArea(mag){
 }
 
 function buildCardHTML(card,idx,mag){
-  const bg=mag.bgColor||'#fff',pt=mag.ptColor||'#e0483b';
-  const dark=isColorDark(bg),tc=dark?'#fff':'#111';
-  const img=cardImages[idx],tColor=cardTitleColors[idx]||(card.isCtaCard?tc:'#ffffff'),tSize=cardTitleSizes[idx]||14;
+  const bg=mag.bgColor||'#fff', pt=mag.ptColor||'#e0483b';
+  const dark=isColorDark(bg), tc=dark?'#fff':'#111';
+  const img=cardImages[idx], tColor=cardTitleColors[idx]||(card.isCtaCard?tc:'#ffffff'), tSize=cardTitleSizes[idx]||14;
   if(card.cardNum===1){
     return `<div style="width:100%;height:100%;position:relative;overflow:hidden;background:#1a1a1a;display:flex;flex-direction:column;justify-content:flex-end;">
       ${img?`<img src="${img}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0;">`:`<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a1a1a,#3a3a3a);"></div>`}
@@ -699,7 +783,7 @@ function setTitleSize(idx,val){
   refreshCard(idx);
 }
 function applyTitleStyleAll(){
-  const c=cardTitleColors[0]||'#fff',s=cardTitleSizes[0]||14;
+  const c=cardTitleColors[0]||'#fff', s=cardTitleSizes[0]||14;
   generatedCards.forEach((_,i)=>{if(!generatedCards[i].isCtaCard){cardTitleColors[i]=c;cardTitleSizes[i]=s;}});
   generatedCards.forEach((_,i)=>refreshCard(i)); showToast('전체 카드에 적용됐어요 ✓');
 }
@@ -722,7 +806,7 @@ async function downloadAll(){
     const content=await zip.generateAsync({type:'blob'});
     const a=document.createElement('a'); a.download='cardnews.zip'; a.href=URL.createObjectURL(content); a.click();
     showToast('ZIP 다운로드 완료!');
-  }catch(e){showToast('다운로드 중 오류가 발생했어요.');console.error(e);}
+  } catch(e){ showToast('다운로드 중 오류가 발생했어요.'); console.error(e); }
   hideLoading();
 }
 function copyCaption(){navigator.clipboard.writeText(generatedCaption.join('\n')).then(()=>showToast('캡션 복사됨 ✓'));}
