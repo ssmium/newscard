@@ -371,7 +371,7 @@ body{background:#fff;color:#111;}
       </div>
       <div class="manual-box">
         <div class="manual-title">본문 직접 붙여넣기 옵션</div>
-        <div class="manual-hint">언론사 본문 수집이 막힌 경우에만 사용하세요. 붙여넣은 본문이 있으면 AI가 이 내용을 최우선으로 요약합니다.</div>
+        <div class="manual-hint">언론사 본문 수집이 막힌 경우에만 사용하세요. 붙여넣은 본문이 선택한 기사 제목/설명과 맞을 때만 사용하고, 다른 기사 내용이면 자동으로 무시합니다.</div>
         <textarea id="manual-text" placeholder="선택 사항: 기사 본문을 직접 붙여넣기"></textarea>
       </div>
     </section>
@@ -515,6 +515,25 @@ function stripClientNoise(v){
     .replace(/\s+/g,' ')
     .trim();
 }
+
+function clientKeyWords(v){
+  return [...new Set(clean(v).match(/[가-힣A-Za-z0-9+]{2,16}/g)||[])]
+    .filter(w=>!/(이번|관련|소식|기사|본문|뉴스|카드뉴스|오늘|내일|정리|발표|내용|다시|읽기|사람|반응|흐름|포인트)/.test(w))
+    .slice(0,24);
+}
+function getManualTextForArticle(article){
+  const t=$('manual-text').value.trim();
+  if(t.length<80)return '';
+  const meta=clean([article?.title,article?.desc].filter(Boolean).join(' '));
+  const metaWords=clientKeyWords(meta);
+  const bodyWords=clientKeyWords(t);
+  const hits=metaWords.filter(w=>bodyWords.some(b=>b===w||b.includes(w)||w.includes(b)));
+  if(metaWords.length>=4 && hits.length<2){
+    showToast('붙여넣은 본문이 선택 기사와 달라서 이번 생성에서는 무시했어요.');
+    return '';
+  }
+  return t;
+}
 function splitHookTitle(v,article){
   let t=stripClientNoise(v||'');
   if(!t||t.length>46||/(기자|댓글|글자크기|본문|통화료|관련 소식이 전해졌어요)/.test(t))t=stripClientNoise(article?.title||'오늘의 이슈');
@@ -550,7 +569,7 @@ async function generateFromArticle(index){
   const token=++generationSeq;selectedArticleIndex=index;renderArticles();
   $('cards-panel').style.display='block';setStatus('warn','기사 본문을 우선 수집하고, 제목은 카드뉴스용으로 다시 쓰는 중이에요...');showLoading('본문 수집 + AI 요약 중...');
   try{
-    const manualText=$('manual-text').value.trim();
+    const manualText=getManualTextForArticle(article);
     const data=await workerApiJson('/generate-cardnews',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({article,query:lastQuery,manualText}),timeout:60000});
     if(token!==generationSeq)return;
     cards=normalizeCards(data.cards||[],article);lastSummary=data.summary||{};cardImages={};cardStyles={};cardAlign={};
