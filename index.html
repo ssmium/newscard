@@ -1090,5 +1090,317 @@ async function downloadAll(){
 })();
 
 </script>
+
+
+<script>
+/* MAGAZINIE editor summary v2
+   - 본문 수집 성공/실패를 명확히 표시
+   - BODY 카드의 숨겨진 title을 실제 카드에 표시
+   - NOW/THE TAKEAWAY/WHAT'S NEXT를 기사별 에디터 요약으로 재작성
+*/
+(function(){
+  function text(v){
+    const d=document.createElement('div');
+    d.innerHTML=String(v||'');
+    return (d.textContent||'')
+      .replace(/\u00a0/g,' ')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+  function cleanNewsText(v){
+    return text(v)
+      .replace(/\[[^\]]{0,40}\]/g,' ')
+      .replace(/\([^)]*?기자[^)]*?\)/g,' ')
+      .replace(/[가-힣]{2,4}\s*기자/g,' ')
+      .replace(/사진\s*=\s*[^\s]+/g,' ')
+      .replace(/이미지\s*=\s*[^\s]+/g,' ')
+      .replace(/기사제보|보도자료|구독|좋아요|공유하기/g,' ')
+      .replace(/무단전재[\s\S]*$/,' ')
+      .replace(/재배포[\s\S]*$/,' ')
+      .replace(/Copyright[\s\S]*$/i,' ')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+  function finish(s){
+    s=cleanNewsText(s).replace(/[.。]+$/,'');
+    if(!s) return '';
+    s=s.replace(/요요/g,'요').replace(/죠요/g,'죠').replace(/예요예요/g,'예요');
+    if(/(요|죠|다|니다|예요|이에요|거예요|하거든요)$/.test(s)) return s+'.';
+    return s+'예요.';
+  }
+  function short(s,max){
+    s=cleanNewsText(s);
+    if(s.length<=max) return s;
+    return s.slice(0,max-1).replace(/\s+\S*$/,'')+'…';
+  }
+  function unique(arr){
+    const seen=new Set();
+    return (arr||[]).map(cleanNewsText).filter(Boolean).filter(v=>{
+      const k=v.toLowerCase();
+      if(seen.has(k)) return false;
+      seen.add(k); return true;
+    });
+  }
+  function titleTerms(title){
+    return unique(cleanNewsText(title).split(/[\s·,|\-_:]+/)
+      .map(w=>w.replace(/["'‘’“”!?]/g,''))
+      .filter(w=>w.length>=2 && !/(단독|종합|속보|영상|포토|뉴스|기자|오늘|관련|공개|화제|등장|참석|오픈|출시)$/.test(w))
+    ).slice(0,8);
+  }
+  function splitSentences(v){
+    const source=cleanNewsText(v)
+      .replace(/([.!?。]|다\.|요\.|죠\.)\s+/g,'$1|')
+      .split('|')
+      .map(s=>cleanNewsText(s))
+      .filter(s=>s.length>=22 && s.length<=260)
+      .filter(s=>!/(무단전재|재배포|Copyright|기자|구독|공유|댓글|랭킹|많이 본 뉴스|네이버뉴스|본문 요약봇)/i.test(s));
+    return unique(source).slice(0,40);
+  }
+  function scoreSentence(sentence,terms,idx){
+    let score=0;
+    terms.forEach(t=>{ if(t && sentence.includes(t)) score+=5; });
+    if(/[‘'“"][^’'”"]{2,25}[’'”"]/.test(sentence)) score+=2;
+    if(/\d/.test(sentence)) score+=2;
+    if(/(출시|공개|오픈|참석|등장|론칭|런칭|협업|콜라보|팝업|캠페인|화보|모델|뮤즈|완판|1위|인기|확대|선보|진행|개최)/.test(sentence)) score+=4;
+    if(idx<4) score+=3;
+    if(sentence.length>150) score-=1;
+    return score;
+  }
+  function bestSentences(title,body,limit=3){
+    const terms=titleTerms(title);
+    const sents=splitSentences(body);
+    return sents.map((s,i)=>({s,score:scoreSentence(s,terms,i),i}))
+      .sort((a,b)=>b.score-a.score || a.i-b.i)
+      .slice(0,limit)
+      .sort((a,b)=>a.i-b.i)
+      .map(x=>x.s);
+  }
+  function bodyLooksValid(article,body){
+    const b=cleanNewsText(body);
+    if(b.length<220) return false;
+    if(/(검색결과|뉴스홈|랭킹뉴스|많이 본 뉴스|로그인|본문 요약봇|댓글|전체서비스)/.test(b.slice(0,800))) return false;
+    const terms=titleTerms(article.title||'');
+    if(!terms.length) return true;
+    const hits=terms.filter(t=>b.includes(t)).length;
+    return hits>=1;
+  }
+  function extractArticleBodyV2(htmlText){
+    const doc=new DOMParser().parseFromString(htmlText,'text/html');
+    doc.querySelectorAll('script,style,iframe,button,nav,aside,form,header,footer,svg,.u_likeit,.media_end_categorize,.byline,.copyright,.promotion,.related_news,.rankingnews,.comment,.reply,.sns_share,.ad,.advertisement').forEach(el=>el.remove());
+    const selectors=[
+      '#dic_area','#newsct_article .newsct_article','#newsct_article','#articeBody','#articleBodyContents',
+      '.go_trans._article_content','.newsct_article','.media_end_body','.article_body','.article-body',
+      '.article_view','.view_con','.news_view','.article-content','.article__content','.content_area','article'
+    ];
+    let candidates=[];
+    selectors.forEach(sel=>{
+      doc.querySelectorAll(sel).forEach(el=>{
+        const t=cleanNewsText(el.textContent||'');
+        if(t.length>120) candidates.push(t);
+      });
+    });
+    const og=doc.querySelector('meta[property="og:description"]')?.getAttribute('content') || doc.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+    if(og) candidates.push(cleanNewsText(og));
+    if(!candidates.length){
+      candidates.push([...doc.querySelectorAll('p')].map(p=>cleanNewsText(p.textContent||'')).filter(t=>t.length>25).join(' '));
+    }
+    candidates=unique(candidates).sort((a,b)=>b.length-a.length);
+    return cleanNewsText(candidates[0]||'');
+  }
+
+  window.extractArticleBody=function(htmlText){ return extractArticleBodyV2(htmlText); };
+
+  window.readArticleBody=async function(article){
+    const urls=candidateArticleUrls(article);
+    for(const url of urls){
+      const html=await fetchTextProxy(url);
+      if(!html) continue;
+      const body=extractArticleBodyV2(html);
+      if(bodyLooksValid(article,body)){
+        console.log('[ARTICLE_BODY_OK_V2]', body.length, url, body.slice(0,120));
+        return body;
+      }
+      console.warn('[ARTICLE_BODY_REJECTED_V2]', body.length, url, body.slice(0,120));
+    }
+    console.warn('[ARTICLE_BODY_FAIL_V2] 본문 접근 실패. 검색 결과 설명으로 대체합니다.');
+    return '';
+  };
+
+  function topicOf(article,source){
+    const s=(article.title||'')+' '+(article.desc||'')+' '+(source||'');
+    if(/(장원영|아이브|IVE|뉴진스|제니|카리나|로제|포토콜|시사회|레드카펫|셀럽|배우|아이돌)/i.test(s)) return 'celeb';
+    if(/(뷰티|화장품|스킨케어|토너|세럼|크림|선크림|메이크업|올리브영|라네즈|이니스프리|클리오|롬앤|메디큐브|향수)/.test(s)) return 'beauty';
+    if(/(패션|스타일|룩|코디|착장|공항패션|데님|무신사|W컨셉|마뗑킴|컬렉션|가방|슈즈)/.test(s)) return 'fashion';
+    if(/(팝업|스토어|플래그십|라운지|전시|오프라인|공간|매장)/.test(s)) return 'popup';
+    if(/(카페|베이커리|디저트)/.test(s)) return 'cafe';
+    if(/(서점|책방|도서)/.test(s)) return 'bookstore';
+    return 'general';
+  }
+  function extractEntities(article,source){
+    const whole=cleanNewsText([article.title,article.desc,source].join(' '));
+    const quoted=unique([...(whole.matchAll(/[‘'“"]([^’'”"]{2,28})[’'”"]/g))].map(m=>m[1]))
+      .filter(v=>!/(사진|영상|단독|종합|속보|뉴스|기자)/.test(v)).slice(0,4);
+    const numbers=unique([...(whole.matchAll(/\d+(?:\.\d+)?\s*(?:만|억|천|%|퍼센트|곳|개|명|종|건|회|일|월|년|위|배|원|만원|억원)?/g))].map(m=>m[0])).slice(0,4);
+    const places=unique([...(whole.matchAll(/(?:서울|인천|부산|대구|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)(?:\s*[가-힣]+구|\s*[가-힣]+동|\s*[가-힣]+시)?/g))].map(m=>m[0])).slice(0,3);
+    const brands=unique([...(whole.matchAll(/(?:올리브영|무신사|W컨셉|에이블리|지그재그|라네즈|이니스프리|클리오|롬앤|메디큐브|마뗑킴|샤넬|디올|구찌|루이비통|프라다|뉴진스|아이브|IVE|장원영|제니|민지|카리나|로제|더현대|성수|잠실)/gi))].map(m=>m[0])).slice(0,4);
+    return {whole,quoted,numbers,places,brands};
+  }
+  function subjectFrom(article,source){
+    const e=extractEntities(article,source);
+    if(e.quoted[0]) return short(e.quoted[0],16);
+    if(e.brands[0]) return short(e.brands[0],14);
+    const raw=cleanNewsText(article.title||'')
+      .replace(/^(단독|종합|속보|영상|포토)\s*/,'')
+      .replace(/[“”"]/g,'')
+      .replace(/\[[^\]]+\]/g,'')
+      .replace(/[,，].*$/,'')
+      .replace(/\s*[-|].*$/,'')
+      .replace(/….*$/,'')
+      .trim();
+    const cut=raw.replace(/(공개|출시|오픈|참석|등장|화제|주목|진행|개최|선보|론칭|런칭|완판|인기|협업|콜라보).*$/,'$1');
+    const words=cut.split(/\s+/).filter(Boolean).filter(w=>!/(기자|뉴스|오늘)$/.test(w));
+    return short(words.slice(0,4).join(' ')||'오늘의 이슈',18);
+  }
+  function actionFrom(textAll){
+    if(/(포토콜|행사 참석|행사에 참석|등장|레드카펫|시사회)/.test(textAll)) return '포토콜 현장 이슈';
+    if(/(팝업|스토어|플래그십|전시|라운지|오픈)/.test(textAll)) return '공간·팝업 이슈';
+    if(/(출시|런칭|론칭|발매|선보|공개|릴리즈)/.test(textAll)) return '신제품·콘텐츠 공개';
+    if(/(협업|콜라보|컬래버|캡슐 컬렉션)/.test(textAll)) return '협업 프로젝트';
+    if(/(화보|캠페인|앰배서더|모델|뮤즈)/.test(textAll)) return '캠페인 이슈';
+    if(/(공항패션|착용|스타일링|룩|데님|코디)/.test(textAll)) return '스타일링 화제';
+    if(/(매출|판매|완판|1위|인기|랭킹|수상|선정)/.test(textAll)) return '반응·성과 이슈';
+    return '새 소식';
+  }
+  function factLine(entities){
+    const points=unique([...(entities.quoted||[]), ...(entities.brands||[]), ...(entities.places||[]), ...(entities.numbers||[])]).slice(0,3);
+    return points.length ? points.map(v=>'‘'+short(v,14)+'’').join(', ') : '';
+  }
+  function paraphraseSentence(s,subject,topic){
+    s=cleanNewsText(s);
+    const entities=extractEntities({title:subject,desc:''},s);
+    const action=actionFrom(s);
+    const fp=factLine(entities);
+    if(topic==='celeb') return `${subject}이 ${action}로 주목받고 있어요${fp?`. ${fp} 같은 단서가 함께 언급돼 현장 화제성이 커졌어요`:''}`;
+    if(topic==='beauty') return `${subject} 관련 ${action}가 뷰티 이슈로 떠올랐어요${fp?`. 핵심 포인트는 ${fp}로 정리할 수 있어요`:''}`;
+    if(topic==='fashion') return `${subject} 관련 ${action}가 스타일 이슈로 번지고 있어요${fp?`. 특히 ${fp}가 반응 포인트로 보여요`:''}`;
+    if(topic==='popup') return `${subject} 관련 ${action}가 관심을 받고 있어요${fp?`. ${fp}를 통해 브랜드 경험을 직접 보여주는 흐름이에요`:''}`;
+    return `${subject} 관련 ${action}가 전해졌어요${fp?`. 기사에서 눈에 띄는 포인트는 ${fp}예요`:''}`;
+  }
+  function editorReason(topic,subject,entities,best){
+    const fp=factLine(entities);
+    if(topic==='celeb') return `${subject} 이슈는 단순한 참석 소식보다 브랜드가 원하는 이미지와 셀럽의 화제성이 한 번에 묶인다는 점이 핵심이에요${fp?`. ${fp}가 그 포인트를 더 선명하게 보여줘요`:''}`;
+    if(topic==='beauty') return `${subject} 이슈는 제품명 하나보다 모델, 사용 장면, 공간 경험까지 함께 소비되는 흐름을 보여줘요${fp?`. 그래서 ${fp}가 소비자 관심을 끄는 장치가 돼요`:''}`;
+    if(topic==='fashion') return `${subject} 이슈는 아이템 자체보다 누가 어떤 장면에서 어떻게 스타일링했는지가 반응을 좌우해요${fp?`. ${fp}가 검색과 저장을 부르는 포인트가 될 수 있어요`:''}`;
+    if(topic==='popup') return `${subject} 이슈는 판매보다 경험을 먼저 설계한 마케팅으로 볼 수 있어요${fp?`. ${fp}가 현장 방문 이유를 만들어주는 장치예요`:''}`;
+    return `${subject} 이슈는 단순 소식처럼 보여도 소비자 반응과 브랜드 흐름을 읽을 수 있는 단서가 있어요${fp?`. 특히 ${fp}가 핵심 단서예요`:''}`;
+  }
+  function editorNext(topic,subject,entities){
+    const fp=factLine(entities);
+    if(topic==='celeb') return `이후에는 현장 사진, 숏폼, 팬 반응이 퍼지면서 ${subject}의 브랜드 노출 효과가 더 커질 수 있어요${fp?`. ${fp} 관련 후속 반응도 체크 포인트예요`:''}`;
+    if(topic==='beauty') return `다음 관전 포인트는 실제 사용 후기와 SNS 저장·공유예요. 반응이 이어지면 ${subject}는 단순 노출을 넘어 구매 관심으로 연결될 수 있어요${fp?`. ${fp}가 계속 언급되는지도 봐야 해요`:''}`;
+    if(topic==='fashion') return `비슷한 무드의 착장 콘텐츠가 이어지면 ${subject} 관련 검색량과 구매 관심이 함께 올라갈 수 있어요${fp?`. ${fp}가 확산 포인트가 될 가능성이 있어요`:''}`;
+    if(topic==='popup') return `방문 후기와 인증샷이 쌓이면 ${subject}의 온라인 화제성이 오프라인 방문으로 다시 이어질 수 있어요${fp?`. ${fp}가 재방문·입소문 포인트가 될 수 있어요`:''}`;
+    return `앞으로는 후속 보도와 SNS 반응을 같이 봐야 해요. ${subject}가 일회성 소식인지, 더 넓은 트렌드로 이어질지가 관전 포인트예요${fp?`. ${fp}의 확산 여부도 중요해요`:''}`;
+  }
+  function buildEditorCards(article,sourceText,mode){
+    const source=cleanNewsText(sourceText||article.desc||article.title||'');
+    const topic=topicOf(article,source);
+    const subject=subjectFrom(article,source);
+    const whole=cleanNewsText([article.title,article.desc,source].join(' '));
+    const entities=extractEntities(article,source);
+    const best=bestSentences(article.title,source,4);
+    const nowBase=best[0] || article.desc || article.title;
+    const now=finish(paraphraseSentence(nowBase,subject,topic));
+    const take=finish(editorReason(topic,subject,entities,best));
+    const next=finish(editorNext(topic,subject,entities));
+    const action=actionFrom(whole);
+    let hook2='핵심만 정리';
+    if(topic==='celeb') hook2='왜 화제일까?';
+    else if(topic==='beauty') hook2='뷰티 이슈 정리';
+    else if(topic==='fashion') hook2='스타일 이슈 정리';
+    else if(topic==='popup') hook2='방문 전 체크';
+    const hook=`${subject}\n${hook2}`;
+    const bodyTitles={
+      now: short(action,16),
+      take: topic==='celeb'?'브랜드가 노린 장면':topic==='beauty'?'제품보다 큰 무드':topic==='fashion'?'스타일이 팔리는 방식':topic==='popup'?'경험을 파는 공간':'왜 중요한가',
+      next: topic==='beauty'?'후기·저장 반응 주목':topic==='fashion'?'검색량으로 이어질까':topic==='popup'?'방문 후기가 관건':topic==='celeb'?'숏폼 확산이 관건':'후속 반응 체크'
+    };
+    return {hook, bodyTitles, points:[short(now,164), short(take,164), short(next,164)]};
+  }
+
+  window.commitGeneratedCards=function(article,sourceText,mode='fallback'){
+    const made=buildEditorCards(article,sourceText,mode);
+    const sourceLabel = mode==='body' ? '기사 본문 기반' : '검색 설명 기반';
+    cards=[
+      {label:'HOOK',role:'HOOK',title:made.hook,body:'',subtitle:`에디터 요약 · ${sourceLabel} · ${(article.domain||'news')} ${(article.date||'')}`.trim(),type:'hook'},
+      {label:'BODY 1',role:'NOW TRENDING',title:made.bodyTitles.now,body:made.points[0]||'',type:'body'},
+      {label:'BODY 2',role:'THE TAKEAWAY',title:made.bodyTitles.take,body:made.points[1]||'',type:'body'},
+      {label:'BODY 3',role:"WHAT'S NEXT",title:made.bodyTitles.next,body:made.points[2]||'',type:'body'},
+      {label:'CTA',role:'CTA',title:'"이거 왜 난리예요?"',body:'복잡한 이슈, 핵심만 쉽게\n한 장씩 넘기면 정리 끝',type:'cta'}
+    ];
+    cardImages={};
+    cardStyles={};
+    renderCards();
+    $('cards-panel').style.display='block';
+  };
+
+  window.cardHtml=function(c,i){
+    const st=styleOf(i), img=cardImages[i], dark=st.bg==='#101010'||st.bg==='#000000';
+    if(c.type==='hook'){
+      return `<div class="card-inner" style="background:${st.bg};">
+        ${img?`<img src="${img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`:`<div style="position:absolute;inset:0;background:linear-gradient(180deg,#191919,#050505)"></div>`}
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.82) 55%,rgba(0,0,0,.08))"></div>
+        <div style="position:absolute;left:18px;right:18px;bottom:22px">
+          <div style="font-size:8px;color:rgba(255,255,255,.55);font-weight:900;letter-spacing:.12em;margin-bottom:8px">MAGAZINIE</div>
+          <div style="font-size:${st.size}px;line-height:1.25;font-weight:950">${renderHookTitle(c.title,st.title,st.accent)}</div>
+          <div style="font-size:8px;color:rgba(255,255,255,.55);margin-top:8px;line-height:1.35">${c.subtitle||''}</div>
+        </div></div>`;
+    }
+    if(c.type==='cta'){
+      return `<div class="card-inner" style="background:${st.bg};padding:22px;color:${dark?'#fff':'#111'};display:flex;flex-direction:column">
+        <div style="font-size:10px;color:#999;font-weight:800;margin-bottom:14px">MAGAZINIE</div>
+        <div style="font-size:19px;font-weight:950;margin-bottom:14px">${c.title}</div>
+        <div style="font-size:13px;color:#777;line-height:1.6;white-space:pre-line">${c.body}</div>
+        <div style="margin-top:12px;color:${st.accent};font-weight:900;font-size:13px">한 장씩 넘기면 정리 끝</div>
+        <div style="margin-top:auto;font-size:12px;font-weight:900">magazinie</div></div>`;
+    }
+    return `<div class="card-inner" style="background:${st.bg};">
+      ${img?`<img src="${img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.22">`:''}
+      <div style="position:absolute;inset:0;padding:20px;display:flex;flex-direction:column;justify-content:center">
+        <div style="font-size:7px;color:${st.accent};font-weight:950;letter-spacing:.16em;margin-bottom:7px">${c.role}</div>
+        <div style="font-size:${Math.max(12,st.size-4)}px;line-height:1.25;font-weight:950;color:${st.title};margin-bottom:10px;word-break:keep-all">${c.title||''}</div>
+        <div style="font-size:${Math.max(11,st.size-7)}px;line-height:1.62;font-weight:800;color:${st.body};white-space:pre-line;word-break:keep-all">${c.body}</div>
+      </div></div>`;
+  };
+
+  window.generateFromArticle=async function(index){
+    const token=++generationSeq;
+    const article=currentArticles[index];
+    if(!article){ showToast('기사 정보를 찾지 못했어요.'); return; }
+    document.querySelectorAll('.article').forEach((el,i)=>{
+      el.classList.toggle('selected',i===index);
+      el.classList.toggle('is-loading',i===index);
+    });
+    const quickSource=article.desc || article.title || '';
+    commitGeneratedCards(article,quickSource,'fallback');
+    if(typeof setCardStatus==='function') setCardStatus('1차 생성: 검색 결과 설명으로 먼저 카드뉴스를 만들었어요. 기사 본문을 추가로 수집 중입니다.','info');
+    setTimeout(()=>$('cards-panel').scrollIntoView({behavior:'smooth',block:'start'}),60);
+    let body='';
+    try{ body=await readArticleBody(article); }
+    catch(e){ console.warn('기사 본문 읽기 실패:',e); }
+    if(token!==generationSeq) return;
+    document.querySelectorAll('.article').forEach(el=>el.classList.remove('is-loading'));
+    if(bodyLooksValid(article,body)){
+      commitGeneratedCards(article,body,'body');
+      if(typeof setCardStatus==='function') setCardStatus(`본문 수집 성공: ${cleanNewsText(body).length}자 읽음. NOW/THE TAKEAWAY/WHAT'S NEXT를 기사별 에디터 요약으로 다시 반영했어요.`,'ok');
+      showToast('기사 본문 기반으로 다시 요약했어요.');
+    }else{
+      if(typeof setCardStatus==='function') setCardStatus('본문 수집 실패: 브라우저 보안/CORS 또는 언론사 페이지 구조 때문에 본문을 확인하지 못했어요. 현재 카드는 검색 결과 설명 기반입니다.','warn');
+      showToast('본문 접근 실패 · 검색 설명 기반으로 유지했어요.');
+    }
+  };
+})();
+</script>
+
 </body>
 </html>
