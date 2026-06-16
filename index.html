@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>카드뉴스 메이커</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Noto Sans KR',sans-serif;background:#f5f5f5;color:#111;font-size:14px}
+body{font-family:'Pretendard Variable',Pretendard,'Noto Sans KR',sans-serif;background:#f5f5f5;color:#111;font-size:14px}
 .app{display:flex;min-height:100vh}
 .sidebar{width:200px;min-width:200px;background:#fff;border-right:1px solid #e8e8e8;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:200;overflow-y:auto}
 .sidebar-logo{padding:16px 18px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0f0f0}
@@ -192,6 +193,45 @@ body{font-family:'Noto Sans KR',sans-serif;background:#f5f5f5;color:#111;font-si
 .cta-logo-badge span{font-size:20px;font-weight:900}
 @media (max-width:1200px){.toolbar-grid{grid-template-columns:1fr}}
 
+
+/* AI editor summary settings */
+.ai-panel{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px 18px;margin:-4px 0 18px;box-shadow:0 8px 24px rgba(15,23,42,.035)}
+.ai-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
+.ai-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:900;color:#111;margin-bottom:3px}
+.ai-badge{display:inline-flex;align-items:center;border:1px solid #dbeafe;background:#eff6ff;color:#2563eb;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:900;letter-spacing:.04em}
+.ai-desc{font-size:11px;line-height:1.55;color:#64748b}
+.ai-grid{display:grid;grid-template-columns:minmax(220px,1.4fr) 150px minmax(220px,1fr) 82px;gap:8px;align-items:end}
+.ai-field label{display:block;font-size:10px;font-weight:800;color:#64748b;margin-bottom:5px}
+.ai-field input,.ai-field select{width:100%;height:36px;border:1.5px solid #e5e7eb;border-radius:9px;background:#fff;padding:8px 10px;font-size:12px;font-family:inherit;outline:none}
+.ai-field input:focus,.ai-field select:focus{border-color:#111}
+.ai-save{height:36px;border:none;border-radius:9px;background:#111;color:#fff;font-size:12px;font-weight:900;font-family:inherit;cursor:pointer}
+.ai-save:hover{opacity:.88}
+.ai-note{margin-top:9px;font-size:10px;line-height:1.55;color:#94a3b8}
+.ai-switch{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:#334155;white-space:nowrap;cursor:pointer}
+.ai-switch input{width:16px;height:16px;accent-color:#111}
+@media (max-width:1100px){.ai-grid{grid-template-columns:1fr}.ai-head{flex-direction:column}.ai-save{width:100%}}
+
+
+/* Manual AI modal for no-server environment */
+.manual-ai-modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.52);z-index:3000;align-items:center;justify-content:center;padding:24px}
+.manual-ai-modal.show{display:flex}
+.manual-ai-box{width:min(920px,calc(100vw - 48px));max-height:calc(100vh - 48px);overflow:auto;background:#fff;border-radius:18px;box-shadow:0 24px 80px rgba(15,23,42,.28);padding:22px;border:1px solid #e5e7eb}
+.manual-ai-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px}
+.manual-ai-title{font-size:17px;font-weight:900;letter-spacing:-.03em;margin-bottom:4px}
+.manual-ai-desc{font-size:12px;color:#64748b;line-height:1.6}
+.manual-ai-close{width:32px;height:32px;border:1px solid #e5e7eb;border-radius:9px;background:#fff;cursor:pointer;font-weight:900}
+.manual-ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.manual-ai-field label{display:block;font-size:12px;font-weight:800;color:#334155;margin-bottom:7px}
+.manual-ai-field textarea{width:100%;min-height:320px;border:1.5px solid #cbd5e1;border-radius:12px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.55;resize:vertical;outline:none;background:#fbfdff}
+.manual-ai-field textarea:focus{border-color:#111;background:#fff}
+.manual-ai-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+.manual-ai-btn{height:38px;border-radius:9px;border:1px solid #e5e7eb;background:#fff;padding:0 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit}
+.manual-ai-btn:hover{border-color:#111}
+.manual-ai-btn.primary{background:#111;color:#fff;border-color:#111}
+.manual-ai-btn.secondary{background:#fff7fc;color:#d9468f;border-color:#ffb6dd}
+.manual-ai-warning{margin-top:12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px 12px;font-size:11px;line-height:1.55;color:#9a3412}
+@media(max-width:900px){.manual-ai-grid{grid-template-columns:1fr}.manual-ai-field textarea{min-height:220px}}
+
 </style>
 </head>
 <body>
@@ -214,7 +254,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:#f5f5f5;color:#111;font-si
   <div class="sidebar-steps" id="steps-card">
     <div style="font-size:9px;font-weight:700;color:#bbb;letter-spacing:1px;margin-bottom:10px">카드뉴스 순서 ▸</div>
     <div class="step-item"><div class="step-badge done">✓</div><div class="step-text"><div class="step-title">매거진 선택 후 기사 검색</div>키워드로 기사를 검색해요.</div></div>
-    <div class="step-item"><div class="step-badge pink">2</div><div class="step-text"><div class="step-title">기사 선택 → 생성</div>카드 생성 버튼 클릭 → 에디터처럼 요약 후 카드 생성.</div></div>
+    <div class="step-item"><div class="step-badge pink">2</div><div class="step-text"><div class="step-title">기사 선택 → 생성</div>카드 생성 버튼 클릭 → 기사 내용을 요약해 카드 생성.</div></div>
     <div class="step-item"><div class="step-badge">3</div><div class="step-text"><div class="step-title">사진·제목·색 편집</div>이미지 올리고 제목·색·크기를 다듬어요.</div></div>
     <div class="step-item"><div class="step-badge">4</div><div class="step-text"><div class="step-title">다운로드</div>ZIP으로 저장, 캡션 복사.</div></div>
   </div>
@@ -373,11 +413,40 @@ body{font-family:'Noto Sans KR',sans-serif;background:#f5f5f5;color:#111;font-si
 </main>
 </div>
 
+
+<div class="manual-ai-modal" id="manual-ai-modal">
+  <div class="manual-ai-box">
+    <div class="manual-ai-head">
+      <div>
+        <div class="manual-ai-title">요약 직접 붙여넣기</div>
+        <div class="manual-ai-desc">왼쪽 프롬프트를 복사해 요약 결과 JSON을 만든 뒤, 오른쪽에 붙여넣고 카드에 반영하세요.</div>
+      </div>
+      <button class="manual-ai-close" onclick="closeManualAiModal()">×</button>
+    </div>
+    <div class="manual-ai-grid">
+      <div class="manual-ai-field">
+        <label>1. ChatGPT에 붙여넣을 프롬프트</label>
+        <textarea id="manual-ai-prompt" readonly></textarea>
+      </div>
+      <div class="manual-ai-field">
+        <label>2. ChatGPT 답변 JSON 붙여넣기</label>
+        <textarea id="manual-ai-result" placeholder='{"hookTitle":"...","nowTrending":"...","takeaway":"...","whatsNext":"...","caption":"...","hashtags":["#..."]}'></textarea>
+      </div>
+    </div>
+    <div class="manual-ai-actions">
+      <button class="manual-ai-btn secondary" onclick="copyManualPrompt()">프롬프트 복사</button>
+      <button class="manual-ai-btn" onclick="generatePendingFallback()">기본 요약으로 생성</button>
+      <button class="manual-ai-btn primary" onclick="applyManualAiResult()">요약 카드에 반영</button>
+    </div>
+    <div class="manual-ai-warning">자동 생성 서버가 없거나 회사 보안으로 차단될 때 쓰는 예비 모드입니다. API Key 입력 없이 요약 결과 JSON만 붙여넣으면 카드에 반영됩니다.</div>
+  </div>
+</div>
+
 <div class="loading" id="loading"><div class="spinner"></div><div class="loading-text" id="loading-text">검색 중...</div></div>
 <div class="toast" id="toast"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script>
 const NAVER_ID  = 'U5if8lC21g_3L95AgqVS';
 const NAVER_SEC = '9qtZj8bb1H';
@@ -395,6 +464,24 @@ function getQ(){const t=new Date().toDateString();const s=JSON.parse(localStorag
 function useQ(){const q=getQ();q.c++;localStorage.setItem('cnq3',JSON.stringify(q));renderQuota();}
 function renderQuota(){const q=getQ();document.getElementById('quota-num').textContent=Math.max(0,DAILY_MAX-q.c);}
 
+// ── Server summary settings ──
+// 사용자 화면에는 API Key 입력칸을 노출하지 않습니다.
+// 자동 생성은 같은 도메인의 /api/editor-summary 서버 API가 있을 때만 작동합니다.
+const AI_PROXY_URL='/api/editor-summary';
+const AI_MODEL='gpt-4.1-mini';
+function loadAiSettings(){/* public UI: no-op */}
+function saveAiSettings(){showToast('이 버전은 화면에서 API Key를 입력하지 않아요. /api/editor-summary 파일과 환경변수로 설정합니다.');}
+function getAiSettings(){return {enabled:true,apiKey:'',model:AI_MODEL,proxyUrl:AI_PROXY_URL};}
+function openHowApiWorks(){
+  alert(`자동 생성을 쓰려면
+
+1) Vercel 프로젝트에 /api/editor-summary.js 파일 추가
+2) Vercel 환경변수 OPENAI_API_KEY 등록
+3) 재배포
+
+이 3가지만 하면 됩니다. 화면에는 API Key 입력칸이 보이지 않습니다. API가 없거나 차단되면 요약 붙여넣기 창이 열립니다.`);
+}
+
 // ── Init ──
 function init(){
   const s=localStorage.getItem('cnews_mags3');
@@ -402,7 +489,7 @@ function init(){
   if(!mags.length)mags=[{id:'default',name:'와디즈 매거진',logoName:'what.is.mag',logoData:'',headline:'"이거 왜 난리예요?"',copy1:'복잡한 이슈, 핵심만 쉽게',copy2:'한 장씩 넘기면 정리 끝',hashtags:'',bgColor:'#ffffff',pointColor:'#e0483b'}];
   curMagId=mags[0].id;
   renderMagList();applyMagToForm(mags[0]);populateMagSelect();
-  renderChips('beauty');renderChips('fashion');renderQuota();
+  renderChips('beauty');renderChips('fashion');renderQuota();loadAiSettings();
   ['mag-name','mag-logo-name','mag-headline','mag-copy1','mag-copy2','mag-tags'].forEach(id=>document.getElementById(id).addEventListener('input',renderLastCard));
 }
 
@@ -600,7 +687,7 @@ async function hydrateResultImages(items){
 }
 
 // ════════════════════════════════════════
-// 에디터 요약 로직 — 실제 기사 본문 + 이미지까지 읽고 카드뉴스형으로 변환
+// 요약 로직 — 실제 기사 본문 + 이미지까지 읽고 카드뉴스형으로 변환
 // ════════════════════════════════════════
 
 function cleanRawTitle(t){
@@ -845,7 +932,161 @@ async function enrichArticle(item){
   return best;
 }
 
+
+function truncateForAi(text,max=9000){
+  const t=normalizeKoreanText(text||'');
+  if(t.length<=max)return t;
+  return t.slice(0,Math.floor(max*.72))+'\n\n[중간 생략]\n\n'+t.slice(-Math.floor(max*.28));
+}
+function buildAiEditorPrompt({title,description,body,source}){
+  return `너는 트렌드 매거진 카드뉴스 에디터야. 아래 기사 내용을 읽고 인스타그램 카드뉴스용으로 새로 요약해줘.
+
+[참고 스타일]
+NOW TRENDING: 서울 서촌에 자리한 작은 서점이 인기를 끌고 있어요. 이 서점은 각 책마다 운영자가 쓴 메모가 붙어 있어 독특한 매력을 더하죠! 개인의 개성을 담은 책방이 요즘 같은 시대에 주목받고 있습니다.
+THE TAKEAWAY: 이런 책방들이 사람들이 찾는 이유는 다양한 개성과 이야기를 담고 있기 때문이에요. 독자들은 단순히 책을 사는 것이 아니라, 운영자의 생각과 취향을 느끼고 싶어 하죠. 그러면서 소통의 공간으로도 기능하고 있습니다.
+WHAT'S NEXT: 이러한 현상은 독립서점의 부흥을 알리는 신호일 수 있어요. 특히 젊은 세대는 책읽기를 넘어 다양한 문화를 사회적 공간에서 즐기길 원하거든요. 앞으로도 이런 책방들이 더 많아질 가능성이 높아요!
+
+[작성 규칙]
+1. 원문 제목을 그대로 복사하지 말고, 12~18자 안팎의 후킹 있는 2줄 제목으로 바꿔. 줄바꿈은 꼭 \n으로 넣어.
+2. NOW TRENDING은 “지금 무엇이 화제인지”를 2~3문장으로 써.
+3. THE TAKEAWAY는 “왜 사람들이 주목하는지 / 핵심 의미가 무엇인지”를 2~3문장으로 써.
+4. WHAT'S NEXT는 “앞으로 어떤 흐름이나 영향이 있을지”를 2~3문장으로 전망해.
+5. 말투는 한국어 매거진 에디터 톤. 문장 끝은 ~해요, ~있어요, ~죠, ~가능성이 높아요!처럼 자연스럽게.
+6. 기사 문장을 그대로 베끼지 말고, 이해한 뒤 재작성해.
+7. 기사에 없는 사실은 만들지 마. 근거가 약한 전망은 “가능성이 있어요” 정도로 조심스럽게 써.
+8. 너무 딱딱한 보도자료 말투, 기자 말투, 번역투는 피하고 사람이 쓴 카드뉴스처럼 써.
+9. NOW/THE/WHAT 각 항목은 160자 이상 260자 이하로 써.
+10. 캡션은 인스타그램 본문용으로 5~7줄, 해시태그는 8~12개 추천해.
+
+[기사 정보]
+제목: ${title||''}
+출처: ${source||''}
+설명: ${description||''}
+본문:
+${truncateForAi(body||description||'',9000)}`;
+}
+const CARDNEWS_JSON_SCHEMA={
+  type:'object',additionalProperties:false,
+  properties:{
+    hookTitle:{type:'string',description:'카드 1번용 2줄 제목. 줄바꿈은 \\n으로 포함'},
+    nowTrending:{type:'string',description:'NOW TRENDING 카드 본문'},
+    takeaway:{type:'string',description:'THE TAKEAWAY 카드 본문'},
+    whatsNext:{type:'string',description:"WHAT'S NEXT 카드 본문"},
+    caption:{type:'string',description:'인스타그램 캡션'},
+    hashtags:{type:'array',items:{type:'string'},description:'추천 해시태그 배열'}
+  },
+  required:['hookTitle','nowTrending','takeaway','whatsNext','caption','hashtags']
+};
+function extractOpenAiText(data){
+  if(!data)return '';
+  if(typeof data.output_text==='string')return data.output_text;
+  const chunks=[];
+  (data.output||[]).forEach(item=>{
+    (item.content||[]).forEach(c=>{
+      if(typeof c.text==='string')chunks.push(c.text);
+      if(typeof c.output_text==='string')chunks.push(c.output_text);
+    });
+  });
+  return chunks.join('\n').trim();
+}
+function safeJsonParse(text){
+  if(!text)return null;
+  let t=String(text).trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();
+  try{return JSON.parse(t);}catch(e){}
+  const m=t.match(/\{[\s\S]*\}/);
+  if(m){try{return JSON.parse(m[0]);}catch(e){}}
+  return null;
+}
+function normalizeAiSummary(obj){
+  if(!obj||typeof obj!=='object')return null;
+  const hook=normalizeKoreanText(obj.hookTitle||obj.title||'').replace(/\\n/g,'\n');
+  const now=normalizeKoreanText(obj.nowTrending||obj.now||'');
+  const takeaway=normalizeKoreanText(obj.takeaway||obj.theTakeaway||'');
+  const next=normalizeKoreanText(obj.whatsNext||obj.next||'');
+  if(!hook||!now||!takeaway||!next)return null;
+  let tags=Array.isArray(obj.hashtags)?obj.hashtags:[];
+  tags=tags.map(t=>String(t||'').trim()).filter(Boolean).map(t=>t.startsWith('#')?t:'#'+t.replace(/^#+/,''));
+  return {hookTitle:hook,nowTrending:now,takeaway,whatsNext:next,caption:normalizeKoreanText(obj.caption||''),hashtags:tags};
+}
+async function callAiEditorSummary({title,description,body,source}){
+  const cfg=getAiSettings();
+  if(!cfg.enabled||!cfg.proxyUrl)return null;
+  const proxyPayload={articleTitle:title,description,articleBody:body,source,model:cfg.model};
+  const res=await fetch(cfg.proxyUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(proxyPayload)});
+  const raw=await res.text();
+  let data;
+  try{data=JSON.parse(raw);}catch(e){throw new Error('AI 서버 응답이 JSON이 아니에요.');}
+  if(!res.ok)throw new Error(data.error||data.message||'AI 서버 호출 실패');
+  const normalized=normalizeAiSummary(data.result||data);
+  if(!normalized)throw new Error('요약 결과 형식이 맞지 않아요.');
+  return normalized;
+}
+
 // ── generateCards ──
+let pendingManualArticle=null;
+
+function finalizeCardGeneration({mag,rawTitle,articleBody,heroImg,enriched,item,ai,usedAi=false,manual=false}){
+  const fallbackPts=makeEditorialPoints(rawTitle,articleBody,enriched?.description||item?.description||'');
+  const hook=ai?.hookTitle||makeHook(rawTitle,articleBody);
+  const pts=[ai?.nowTrending||fallbackPts[0],ai?.takeaway||fallbackPts[1],ai?.whatsNext||fallbackPts[2]];
+
+  editorCards=[
+    {role:'HOOK',   kicker:mag.logoName||'what.is.mag',title:hook,body:'',labelColor:'#ffffff',titleColor:'#ffffff',bodyColor:'#ffffff',bg:'#101010',scale:100,align:'left',image:heroImg},
+    {role:'BODY 1', kicker:'NOW TRENDING', title:'NOW TRENDING',body:pts[0],labelColor:mag.pointColor||'#ff8db3',titleColor:'#111111',bodyColor:'#333333',bg:'#ffffff',scale:100,align:'left',image:heroImg},
+    {role:'BODY 2', kicker:'THE TAKEAWAY', title:'THE TAKEAWAY',body:pts[1],labelColor:mag.pointColor||'#ff8db3',titleColor:'#111111',bodyColor:'#333333',bg:'#ffffff',scale:100,align:'left',image:heroImg},
+    {role:'BODY 3', kicker:"WHAT'S NEXT", title:"WHAT'S NEXT",body:pts[2],labelColor:mag.pointColor||'#ff8db3',titleColor:'#111111',bodyColor:'#333333',bg:'#ffffff',scale:100,align:'left',image:heroImg},
+    {role:'CTA',    kicker:mag.name,title:mag.headline||'"이거 왜 난리예요?"',body:`${mag.copy1||'복잡한 이슈, 핵심만 쉽게'}\n${mag.copy2||'한 장씩 넘기면 정리 끝'}`,labelColor:mag.pointColor||'#e0483b',titleColor:isDark(mag.bgColor||'#fff')?'#fff':'#111',bodyColor:isDark(mag.bgColor||'#fff')?'rgba(255,255,255,0.8)':'#444',bg:mag.bgColor||'#ffffff',scale:100,align:'left',image:mag.logoData||''},
+  ];
+  cardBgImages={};
+  useQ();
+  renderEditor();
+  document.getElementById('editor-section').style.display='block';
+  setTimeout(()=>document.getElementById('editor-section').scrollIntoView({behavior:'smooth',block:'start'}),120);
+
+  const baseTags=(mag.hashtags||'#뷰티 #패션 #카드뉴스 #트렌드').trim().split(/\s+/).filter(Boolean);
+  const autoTags=autoHashtags(rawTitle,articleBody);
+  document.getElementById('caption-out').value=ai?.caption||`⭐ ${hook.replace('\n',' ')}\n\n📍 ${pts[0]}\n\n📌 ${pts[1]}\n\n💬 ${pts[2]}\n\n💾 저장해두고 필요한 순간 다시 확인해보세요.`;
+  document.getElementById('hashtag-out').value=baseTags.concat(ai?.hashtags||[],autoTags).filter((v,i,a)=>a.indexOf(v)===i).slice(0,14).join(' ');
+  hideLoading();
+  closeManualAiModal(false);
+  showToast(usedAi||manual?(heroImg?'요약과 기사 이미지 적용 완료! ✓':'요약 완료! 이미지는 직접 넣어주세요.'):(heroImg?'기본 요약과 기사 이미지 적용 완료!':'기본 요약 완료!'));
+}
+
+function openManualAiModal(payload){
+  pendingManualArticle=payload;
+  const prompt=buildAiEditorPrompt({title:payload.rawTitle,description:payload.enriched?.description||payload.item?.description||'',body:payload.articleBody,source:payload.item?.source||''});
+  document.getElementById('manual-ai-prompt').value=prompt;
+  document.getElementById('manual-ai-result').value='';
+  hideLoading();
+  document.getElementById('manual-ai-modal').classList.add('show');
+  setTimeout(()=>copyManualPrompt(),200);
+}
+function closeManualAiModal(clear=true){
+  const modal=document.getElementById('manual-ai-modal');
+  if(modal)modal.classList.remove('show');
+  if(clear)pendingManualArticle=null;
+}
+function copyManualPrompt(){
+  const el=document.getElementById('manual-ai-prompt');
+  if(!el)return;
+  el.select();
+  navigator.clipboard?.writeText(el.value).then(()=>showToast('프롬프트 복사 완료 ✓')).catch(()=>{
+    document.execCommand('copy');showToast('프롬프트 복사 완료 ✓');
+  });
+}
+function applyManualAiResult(){
+  if(!pendingManualArticle){showToast('적용할 기사 정보가 없어요.');return;}
+  const raw=document.getElementById('manual-ai-result').value.trim();
+  const parsed=safeJsonParse(raw);
+  const ai=normalizeAiSummary(parsed);
+  if(!ai){showToast('JSON 형식이 맞지 않아요. 중괄호 포함 전체 답변을 붙여넣어 주세요.');return;}
+  finalizeCardGeneration({...pendingManualArticle,ai,manual:true});
+}
+function generatePendingFallback(){
+  if(!pendingManualArticle){showToast('적용할 기사 정보가 없어요.');return;}
+  finalizeCardGeneration({...pendingManualArticle,ai:null,usedAi:false});
+}
+
 async function generateCards(idx){
   const q=getQ();if(q.c>=DAILY_MAX){showToast(`오늘 생성 횟수(${DAILY_MAX}회)를 다 사용했어요.`);return;}
   const grid=document.getElementById('result-grid');
@@ -859,29 +1100,18 @@ async function generateCards(idx){
 
   const rawTitle=enriched.title||stripH(item.title||'');
   const articleBody=enriched.body||enriched.description||stripH(item.description||'');
-  const hook=makeHook(rawTitle,articleBody);
-  const pts=makeEditorialPoints(rawTitle,articleBody,enriched.description||item.description||'');
   const heroImg=enriched.image||item.thumbnail||'';
+  const basePayload={mag,rawTitle,articleBody,heroImg,enriched,item};
 
-  editorCards=[
-    {role:'HOOK',   kicker:mag.logoName||'what.is.mag',title:hook,body:'',labelColor:'#ffb0b0',titleColor:'#ffffff',bodyColor:'#ffffff',bg:'#101010',scale:100,align:'left',image:heroImg},
-    {role:'BODY 1', kicker:'NOW TRENDING', title:'NOW TRENDING',body:pts[0],labelColor:mag.pointColor||'#ff8db3',titleColor:'#111111',bodyColor:'#333333',bg:'#ffffff',scale:100,align:'left',image:heroImg},
-    {role:'BODY 2', kicker:'THE TAKEAWAY', title:'THE TAKEAWAY',body:pts[1],labelColor:mag.pointColor||'#ff8db3',titleColor:'#111111',bodyColor:'#333333',bg:'#ffffff',scale:100,align:'left',image:heroImg},
-    {role:'BODY 3', kicker:"WHAT'S NEXT", title:"WHAT'S NEXT",body:pts[2],labelColor:mag.pointColor||'#ff8db3',titleColor:'#111111',bodyColor:'#333333',bg:'#ffffff',scale:100,align:'left',image:heroImg},
-    {role:'CTA',    kicker:mag.name,title:mag.headline||'"이거 왜 난리예요?"',body:`${mag.copy1||'복잡한 이슈, 핵심만 쉽게'}\n${mag.copy2||'한 장씩 넘기면 정리 끝'}`,labelColor:mag.pointColor||'#e0483b',titleColor:isDark(mag.bgColor||'#fff')?'#fff':'#111',bodyColor:isDark(mag.bgColor||'#fff')?'rgba(255,255,255,0.8)':'#444',bg:mag.bgColor||'#ffffff',scale:100,align:'left',image:mag.logoData||''},
-  ];
-  cardBgImages={};
-  useQ();
-  renderEditor();
-  document.getElementById('editor-section').style.display='block';
-  setTimeout(()=>document.getElementById('editor-section').scrollIntoView({behavior:'smooth',block:'start'}),120);
-
-  const tags=(mag.hashtags||'#뷰티 #패션 #카드뉴스 #트렌드').trim().split(/\s+/).filter(Boolean);
-  document.getElementById('caption-out').value=`⭐ ${hook.replace('\n',' ')}\n\n📍 ${pts[0]}\n\n📌 ${pts[1]}\n\n💬 ${pts[2]}\n\n💾 저장해두고 필요한 순간 다시 확인해보세요.`;
-  const autoTags=autoHashtags(rawTitle,articleBody);
-  document.getElementById('hashtag-out').value=tags.concat(autoTags).filter((v,i,a)=>a.indexOf(v)===i).slice(0,14).join(' ');
-  hideLoading();
-  showToast(heroImg?'기사 요약과 이미지 적용 완료! ✓':'기사 요약 완료! 이미지는 직접 넣어주세요.');
+  try{
+    showLoading('기사 내용을 카드뉴스 문장으로 정리 중...');
+    const ai=await callAiEditorSummary({title:rawTitle,description:enriched.description||item.description||'',body:articleBody,source:item.source||''});
+    finalizeCardGeneration({...basePayload,ai,usedAi:!!ai});
+  }catch(e){
+    console.warn('AI summary failed:',e);
+    showToast('자동 생성 서버가 없거나 차단되어 요약 붙여넣기 모드로 전환할게요.');
+    openManualAiModal(basePayload);
+  }
 }
 
 function autoHashtags(title,text){
