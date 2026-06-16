@@ -238,7 +238,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:#f5f5f5;color:#111;font-si
       <label>매거진</label>
       <select class="mag-select-sm" id="card-mag-select"></select>
       <a style="font-size:11px;color:#888;text-decoration:underline;cursor:pointer" onclick="showPage('mag')">관리</a>
-      <div class="quota-pill">오늘 남은 생성 횟수 <strong id="quota-num">10</strong> / 10회</div>
+
     </div>
 
     <div class="search-panel">
@@ -306,7 +306,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:#f5f5f5;color:#111;font-si
 <script>
 // ═══ Worker Base URL ═══
 const WORKER = 'https://purple-snow-ddbd.yjuio9603.workers.dev';
-const DAILY_MAX = 10;
+
 const BEAUTY_SG  = ['뷰티','화장품','설화수','라네즈','이니스프리','클리오','롬앤','메디큐브','아누아','올리브영'];
 const FASHION_SG = ['패션','스트릿패션','K패션','패션위크','데님','무신사','29CM','유니클로','마르디'];
 
@@ -315,10 +315,7 @@ let beautySelected=[], fashionSelected=[];
 let beautySet=[...BEAUTY_SG], fashionSet=[...FASHION_SG];
 let editorCards=[], cardBgImages={};
 
-// ─ Quota ─
-function getQ(){const t=new Date().toDateString();const s=JSON.parse(localStorage.getItem('cnq3')||'{"d":"","c":0}');return s.d!==t?{d:t,c:0}:s;}
-function useQ(){const q=getQ();q.c++;localStorage.setItem('cnq3',JSON.stringify(q));renderQuota();}
-function renderQuota(){const q=getQ();document.getElementById('quota-num').textContent=Math.max(0,DAILY_MAX-q.c);}
+
 
 // ─ Init ─
 function init(){
@@ -327,7 +324,7 @@ function init(){
   if(!mags.length)mags=[{id:'default',name:'와디즈 매거진',logoName:'what.is.mag',logoData:'',headline:'"이거 왜 난리예요?"',copy1:'복잡한 이슈, 핵심만 쉽게',copy2:'한 장씩 넘기면 정리 끝',hashtags:'',bgColor:'#ffffff',pointColor:'#e0483b'}];
   curMagId=mags[0].id;
   renderMagList();applyForm(mags[0]);populateSel();
-  renderChips('beauty');renderChips('fashion');renderQuota();
+
   ['mag-name','mag-logo-name','mag-headline','mag-copy1','mag-copy2','mag-tags'].forEach(id=>document.getElementById(id).addEventListener('input',renderLastCard));
 }
 
@@ -486,7 +483,7 @@ function selectArticle(i){
 
 // ─ Generate via Worker (크롤링 + Claude 요약) ─
 async function generateCard(idx){
-  const q=getQ();if(q.c>=DAILY_MAX){showToast(`오늘 생성 횟수(${DAILY_MAX}회)를 다 사용했어요.`);return;}
+
   const item=resultItems[idx];if(!item)return;
   selectArticle(idx);
   const mag=selMag();
@@ -543,8 +540,7 @@ async function generateCard(idx){
   // og:image를 HOOK 카드에 기본 배경으로
   if(ogImage)cardBgImages[0]=ogImage;
 
-  useQ();
-  renderEditor();
+
   const sec=document.getElementById('editor-section');sec.style.display='block';
   document.getElementById('caption-out').value=summary.caption||`⭐ ${summary.hook.replace('\n',' ')}\n\n📍 ${summary.nowTrending}\n\n📍 ${summary.theTakeaway}\n\n💬 ${summary.whatsNext}`;
   document.getElementById('hashtag-out').value=summary.hashtags||(mag.hashtags||'#뷰티 #패션 #카드뉴스 #트렌드');
