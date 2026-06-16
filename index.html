@@ -483,8 +483,7 @@ function selectArticle(i){
 
 // ─ Generate via Worker (크롤링 + Claude 요약) ─
 async function generateCard(idx){
-
-  const item=resultItems[idx];if(!item)return;
+  const item=resultItems[idx]; if(!item)return;
   selectArticle(idx);
   const mag=selMag();
   const link=item.link||item.originallink||'';
@@ -492,19 +491,15 @@ async function generateCard(idx){
   showLoading('기사 본문을 읽는 중...');
   let bodyText='', ogImage='';
 
-  // 1. 기사 본문 + og:image 크롤링
   if(link){
     try{
       const cr=await fetch(`${WORKER}/crawl?url=${encodeURIComponent(link)}`);
       if(cr.ok){const cd=await cr.json();bodyText=cd.bodyText||'';ogImage=cd.ogImage||'';}
     }catch(e){console.warn('크롤링 실패',e.message);}
   }
-  // 본문 없으면 description 사용
   if(!bodyText)bodyText=stripH(item.description||'');
 
   showLoading('AI가 에디터처럼 요약 중... (5~10초)');
-
-  // 2. Claude 요약
   let summary={hook:'',nowTrending:'',theTakeaway:'',whatsNext:'',caption:'',hashtags:''};
   try{
     const sr=await fetch(`${WORKER}/summarize`,{
@@ -512,13 +507,12 @@ async function generateCard(idx){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({title:stripH(item.title||''),bodyText,magName:mag.name,logoName:mag.logoName})
     });
-    if(sr.ok){summary=await sr.json();}
+    if(sr.ok)summary=await sr.json();
   }catch(e){console.error('요약 실패',e.message);}
 
-  // fallback
   if(!summary.hook)summary.hook=stripH(item.title||'기사 제목');
   if(!summary.nowTrending)summary.nowTrending=bodyText.slice(0,200)||'기사 내용을 불러오지 못했어요.';
-  if(!summary.theTakeaway)summary.theTakeaway='관련 이슈를 살펴보세요.';
+  if(!summary.theTakeaway)summary.theTakeaway='관련 이슈를 살펴봐요.';
   if(!summary.whatsNext)summary.whatsNext='앞으로의 변화에 주목해요.';
 
   const dark=isDark(mag.bgColor||'#fff');
@@ -529,19 +523,19 @@ async function generateCard(idx){
      labelColor:'#ffb0b0',titleColor:'#ffffff',bodyColor:'#ffffff',bg:'#101010',scale:100,align:'left'},
     {role:'BODY 2', kicker:'THE TAKEAWAY', title:'THE TAKEAWAY', body:summary.theTakeaway,
      labelColor:'#ffb0b0',titleColor:'#ffffff',bodyColor:'#ffffff',bg:'#101010',scale:100,align:'left'},
-    {role:'BODY 3', kicker:"WHAT'S NEXT",  title:"WHAT'S NEXT", body:summary.whatsNext,
+    {role:'BODY 3', kicker:"WHAT'S NEXT",  title:"WHAT'S NEXT",  body:summary.whatsNext,
      labelColor:'#ffb0b0',titleColor:'#ffffff',bodyColor:'#ffffff',bg:'#101010',scale:100,align:'left'},
     {role:'CTA',    kicker:mag.name, title:mag.headline||'"이거 왜 난리예요?"',
      body:`${mag.copy1||'복잡한 이슈, 핵심만 쉽게'}\n${mag.copy2||'한 장씩 넘기면 정리 끝'}`,
-     labelColor:mag.pointColor||'#e0483b',titleColor:dark?'#fff':'#111',bodyColor:dark?'rgba(255,255,255,.75)':'rgba(0,0,0,.65)',
+     labelColor:mag.pointColor||'#e0483b',titleColor:dark?'#fff':'#111',
+     bodyColor:dark?'rgba(255,255,255,.75)':'rgba(0,0,0,.65)',
      bg:mag.bgColor||'#ffffff',scale:100,align:'left'},
   ];
   cardBgImages={};
-  // og:image를 HOOK 카드에 기본 배경으로
   if(ogImage)cardBgImages[0]=ogImage;
 
-
-  const sec=document.getElementById('editor-section');sec.style.display='block';
+  renderEditor();
+  const sec=document.getElementById('editor-section'); sec.style.display='block';
   document.getElementById('caption-out').value=summary.caption||`⭐ ${summary.hook.replace('\n',' ')}\n\n📍 ${summary.nowTrending}\n\n📍 ${summary.theTakeaway}\n\n💬 ${summary.whatsNext}`;
   document.getElementById('hashtag-out').value=summary.hashtags||(mag.hashtags||'#뷰티 #패션 #카드뉴스 #트렌드');
   setTimeout(()=>sec.scrollIntoView({behavior:'smooth',block:'start'}),120);
@@ -627,12 +621,17 @@ function handleImg(i,inp){
 
 // ─ Download ─
 async function loadImg(src){return new Promise(r=>{if(!src)return r(null);const img=new Image();img.crossOrigin='anonymous';img.onload=()=>r(img);img.onerror=()=>r(null);img.src=src;});}
-function wrapT(ctx,text,x,y,maxW,lh){String(text||'').split('\n').forEach(raw=>{let line='';[...raw].forEach(ch=>{const t=line+ch;if(ctx.measureText(t).width>maxW&&line){ctx.fillText(line,x,y);line=ch;y+=lh;}else line=t;});ctx.fillText(line,x,y);y+=lh;});return y;}
+function wrapT(ctx,text,x,y,maxW,lh){
+  String(text||'').split('\n').forEach(raw=>{
+    let line='';[...raw].forEach(ch=>{const t=line+ch;if(ctx.measureText(t).width>maxW&&line){ctx.fillText(line,x,y);line=ch;y+=lh;}else line=t;});
+    ctx.fillText(line,x,y);y+=lh;
+  });return y;
+}
 async function drawCard(c,i){
   const W=1080,H=1350,cv=document.createElement('canvas');cv.width=W;cv.height=H;
   const ctx=cv.getContext('2d');
   ctx.fillStyle=c.bg||'#101010';ctx.fillRect(0,0,W,H);
-  const bg=await loadImg(cardBgImages[i]||c.image||'');
+  const bg=await loadImg(cardBgImages[i]||'');
   if(bg){ctx.save();ctx.globalAlpha=.35;const sc=Math.max(W/bg.width,H/bg.height),w=bg.width*sc,h=bg.height*sc;ctx.drawImage(bg,(W-w)/2,(H-h)/2,w,h);ctx.restore();}
   const gr=ctx.createLinearGradient(0,0,0,H);gr.addColorStop(0,'rgba(0,0,0,.02)');gr.addColorStop(1,'rgba(0,0,0,.34)');ctx.fillStyle=gr;ctx.fillRect(0,0,W,H);
   const al=c.align||'left',x=al==='left'?96:al==='right'?W-96:W/2;
