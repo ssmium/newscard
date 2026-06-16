@@ -1,0 +1,16 @@
+{
+  "name": "magazinie-ai-cardnews",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "check": "node --check api/search-news.js && node --check api/generate-cardnews.js"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0"
+  },
+  "devDependencies": {
+    "vercel": "latest"
+  }
+}

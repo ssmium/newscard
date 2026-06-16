@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/generate-cardnews.js": {
+      "maxDuration": 30
+    },
+    "api/search-news.js": {
+      "maxDuration": 15
+    }
+  }
+}
