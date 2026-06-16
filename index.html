@@ -157,6 +157,41 @@ body{font-family:'Noto Sans KR',sans-serif;background:#f5f5f5;color:#111;font-si
 .loading-text{font-size:13px;color:#555;font-weight:500}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 18px;border-radius:9px;font-size:12px;z-index:9999;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
+
+/* v2 editorial layout */
+.editor-toolbar{border:1px solid #e5e7eb;border-radius:14px;background:#fafafa;padding:16px 18px;margin-bottom:16px}
+.editor-toolbar-title{font-size:12px;font-weight:800;color:#334155;margin-bottom:10px}
+.toolbar-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.toolbar-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px}
+.toolbar-card h4{font-size:11px;font-weight:800;color:#111;margin-bottom:8px}
+.toolbar-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:8px}
+.toolbar-row-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:8px}
+.tool-field label{display:block;font-size:10px;color:#64748b;font-weight:700;margin-bottom:4px}
+.tool-field input[type=color]{width:100%;height:34px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;padding:2px;cursor:pointer}
+.tool-apply{width:100%;height:34px;border:none;border-radius:8px;background:#111;color:#fff;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit}
+.tool-apply:hover{opacity:.88}
+.mini-card{width:228px;height:316px;border-radius:10px;background:#fff;color:#111;overflow:hidden;display:flex;flex-direction:column;position:relative;border:1px solid rgba(0,0,0,.06);box-shadow:0 4px 16px rgba(15,23,42,.08)}
+.mini-card.hook-card,.mini-card.cta-card{justify-content:flex-end}
+.mini-photo,.mini-photo-fill{position:relative;width:100%;background:#18181b center/cover no-repeat;overflow:hidden}
+.mini-photo{height:46%}
+.mini-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.02),rgba(0,0,0,.18))}
+.mini-photo-fill{position:absolute;inset:0}
+.mini-photo-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.78),rgba(0,0,0,.2) 45%,rgba(0,0,0,.08))}
+.mini-photo-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);font-size:14px;font-weight:800;letter-spacing:.14em;z-index:1}
+.mini-panel{position:relative;z-index:2;flex:1;padding:16px 16px 18px;display:flex;flex-direction:column;justify-content:flex-start}
+.mini-content{position:relative;z-index:2;padding:18px 18px 18px}
+.hook-content{margin-top:auto;padding-top:120px}
+.cta-content{padding-top:18px}
+.mini-kicker{font-size:8px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px}
+.mini-title{font-size:16px;line-height:1.16;font-weight:900;letter-spacing:-.06em;white-space:pre-line;word-break:keep-all}
+.mini-body-title{font-size:14px;line-height:1.2;font-weight:900;letter-spacing:-.04em;margin-bottom:8px;white-space:pre-line}
+.mini-body{font-size:9px;line-height:1.55;font-weight:700;word-break:keep-all;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:7;-webkit-box-orient:vertical;overflow:hidden}
+.mini-logo{margin-top:14px;font-size:7px;font-weight:700;letter-spacing:.08em;opacity:.72}
+.cta-logo-badge{width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;margin-bottom:14px;overflow:hidden}
+.cta-logo-badge img{width:100%;height:100%;object-fit:cover}
+.cta-logo-badge span{font-size:20px;font-weight:900}
+@media (max-width:1200px){.toolbar-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -281,9 +316,46 @@ body{font-family:'Noto Sans KR',sans-serif;background:#f5f5f5;color:#111;font-si
       <div class="editor-head">
         <div>
           <h3>카드 미리보기 (실제 PNG) — 옆으로 스크롤</h3>
-          <p>사진은 각 카드의 '이미지 변경'으로 직접 넣어주세요. (저작권 보호를 위해 기사 사진은 자동으로 넣지 않아요)</p>
+          <p>기사 대표 이미지를 자동으로 가져오고, 제목은 카드뉴스용으로 변형해요. 아래 색상 툴바로 HOOK / BODY / CTA 카드 색을 바로 바꿀 수 있어요.</p>
         </div>
         <button class="zip-btn" onclick="downloadZip()">⬇ 전체 ZIP 다운로드</button>
+      </div>
+      <div class="editor-toolbar">
+        <div class="editor-toolbar-title">빠른 색상 편집</div>
+        <div class="toolbar-grid">
+          <div class="toolbar-card">
+            <h4>HOOK 카드</h4>
+            <div class="toolbar-row">
+              <div class="tool-field"><label>배경</label><input type="color" id="tb-hook-bg" value="#101010"></div>
+              <div class="tool-field"><label>제목</label><input type="color" id="tb-hook-title" value="#ffffff"></div>
+            </div>
+            <div class="toolbar-row">
+              <div class="tool-field"><label>로고 라벨</label><input type="color" id="tb-hook-label" value="#ffffff"></div>
+              <div class="tool-field"><label>본문</label><input type="color" id="tb-hook-body" value="#ffffff"></div>
+            </div>
+            <button class="tool-apply" onclick="applyPalette('hook')">HOOK 적용</button>
+          </div>
+          <div class="toolbar-card">
+            <h4>BODY 1~3</h4>
+            <div class="toolbar-row-4">
+              <div class="tool-field"><label>패널배경</label><input type="color" id="tb-body-bg" value="#ffffff"></div>
+              <div class="tool-field"><label>라벨</label><input type="color" id="tb-body-label" value="#ff9bc0"></div>
+              <div class="tool-field"><label>타이틀</label><input type="color" id="tb-body-title" value="#111111"></div>
+              <div class="tool-field"><label>본문</label><input type="color" id="tb-body-body" value="#333333"></div>
+            </div>
+            <button class="tool-apply" onclick="applyPalette('body')">BODY 1~3 적용</button>
+          </div>
+          <div class="toolbar-card">
+            <h4>마지막 CTA 카드</h4>
+            <div class="toolbar-row-4">
+              <div class="tool-field"><label>배경</label><input type="color" id="tb-cta-bg" value="#ffffff"></div>
+              <div class="tool-field"><label>라벨</label><input type="color" id="tb-cta-label" value="#e0483b"></div>
+              <div class="tool-field"><label>제목</label><input type="color" id="tb-cta-title" value="#111111"></div>
+              <div class="tool-field"><label>본문</label><input type="color" id="tb-cta-body" value="#444444"></div>
+            </div>
+            <button class="tool-apply" onclick="applyPalette('cta')">CTA 적용</button>
+          </div>
+        </div>
       </div>
       <div class="card-scroll"><div class="card-edit-grid" id="card-edit-grid"></div></div>
       <div class="text-output">
@@ -499,7 +571,7 @@ function renderResults(items,type){
     const date=item.pubDate?new Date(item.pubDate).toLocaleDateString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
     const thumb=item.thumbnail||'';
     return `<div class="article-card" onclick="document.querySelectorAll('.article-card').forEach((c,j)=>c.classList.toggle('selected',j===${i}))">
-      <div class="article-thumb">
+      <div class="article-thumb" id="article-thumb-${i}">
         ${thumb?`<img src="${thumb}" alt="" onerror="this.parentElement.innerHTML='<div class=article-thumb-placeholder>🗞️</div>'">`:`<div class="article-thumb-placeholder">🗞️</div>`}
       </div>
       <div class="article-card-body">
@@ -511,196 +583,325 @@ function renderResults(items,type){
     </div>`;
   }).join('');
   setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'start'}),100);
+  hydrateResultImages(items);
+}
+
+async function hydrateResultImages(items){
+  const top=items.slice(0,12);
+  for(let i=0;i<top.length;i++){
+    const el=document.getElementById(`article-thumb-${i}`);
+    if(!el)continue;
+    try{
+      const enriched=await enrichArticle(top[i]);
+      const img=enriched.image||top[i].thumbnail||'';
+      if(img)el.innerHTML=`<img src="${esc(img)}" alt="" onerror="this.parentElement.innerHTML='<div class=article-thumb-placeholder>🗞️</div>'">`;
+    }catch(e){console.warn('thumb hydrate:',e.message);}
+  }
 }
 
 // ════════════════════════════════════════
-// 에디터 요약 로직 — 센스있게 기사를 읽고 변환
+// 에디터 요약 로직 — 실제 기사 본문 + 이미지까지 읽고 카드뉴스형으로 변환
 // ════════════════════════════════════════
 
 function cleanRawTitle(t){
-  // 대괄호·인용부호·기호 제거, 언론사명 제거
   return String(t||'')
+    .replace(/<[^>]*>/g,' ')
+    .replace(/&quot;|&apos;|&#39;|&amp;/g,' ')
+    .replace(/[“”"'‘’]/g,'')
     .replace(/\[[^\]]+\]\s*/g,'')
-    .replace(/["""'']/g,'')
-    .replace(/\(기자\s*[가-힣]+\)/g,'')
-    .replace(/<[^>]*>/g,'')
-    .replace(/&[a-z]+;/g,' ')
+    .replace(/\([^)]*기자[^)]*\)/g,'')
     .replace(/\s+/g,' ')
     .trim();
 }
 
-function toFriendly(s){
-  // 뉴스 문체 → 친근한 문체로 변환
-  let t=String(s||'').trim();
-  t=t
-    .replace(/다고\s*(밝혔다|전했다|설명했다|말했다)\.?$/,'다고 해요.')
-    .replace(/라고\s*(밝혔다|전했다|설명했다|말했다)\.?$/,'라고 해요.')
-    .replace(/ 밝혔다\.?$/,' 밝혔어요.')
-    .replace(/ 전했다\.?$/,' 전했어요.')
-    .replace(/ 예정이다\.?$/,' 예정이에요.')
-    .replace(/ 있다\.?$/,' 있어요.')
-    .replace(/ 없다\.?$/,' 없어요.')
-    .replace(/ 했다\.?$/,' 했어요.')
-    .replace(/ 됐다\.?$/,' 됐어요.')
-    .replace(/ 한다\.?$/,' 해요.')
-    .replace(/ 이다\.?$/,' 이에요.')
-    .replace(/ 됩니다\.?$/,' 돼요.')
-    .replace(/ 합니다\.?$/,' 해요.')
-    .replace(/ 입니다\.?$/,'이에요.')
-    .replace(/다\.$/,'어요.')
-    .replace(/다$/, '어요.');
-  // 너무 길면 자르기
-  if(t.length>130)t=t.slice(0,127).replace(/\s+\S*$/,'')+'…';
-  return t;
+function normalizeKoreanText(text){
+  return String(text||'')
+    .replace(/\u00a0/g,' ')
+    .replace(/\r/g,'\n')
+    .replace(/\t/g,' ')
+    .replace(/\n{2,}/g,'\n')
+    .replace(/\s{2,}/g,' ')
+    .replace(/([.!?])([가-힣A-Za-z0-9])/g,'$1 $2')
+    .trim();
+}
+
+function stripBoilerplate(text){
+  return normalizeKoreanText(text)
+    .split(/\n|(?<=다\.)\s+|(?<=요\.)\s+|(?<=\.)\s+/)
+    .map(v=>v.trim())
+    .filter(v=>v.length>8)
+    .filter(v=>!/무단전재|재배포|Copyright|저작권|구독|공유|카카오톡|페이스북|트위터|URL복사|기자\s*=|사진\s*=|영상\s*=|제보|뉴스제보|기사제보|앵커|리포트|클릭|관련기사|많이 본 뉴스/i.test(v))
+    .join(' ');
 }
 
 function splitSentences(text){
-  return String(text||'')
-    .replace(/\[[^\]]+\]/g,'')
-    .replace(/<[^>]*>/g,'')
-    .split(/(?<=[.!?。！？]|요\.|다\.|죠\.|어요\.|이에요\.)\s+/)
-    .map(v=>v.trim())
-    .filter(v=>v.length>10 && !/무단전재|재배포|Copyright|저작권|구독|공유|사진=|기자\s*=/.test(v));
+  const cleanText=stripBoilerplate(text)
+    .replace(/\[[^\]]+\]/g,' ')
+    .replace(/<[^>]*>/g,' ');
+  const rough=cleanText.split(/(?<=[.!?。！？]|요\.|다\.|죠\.|어요\.|이에요\.)\s+/);
+  const out=[];
+  rough.forEach(v=>{
+    let s=normalizeKoreanText(v).trim();
+    if(s.length<12)return;
+    if(s.length>170){
+      const chunks=s.split(/,\s+|;\s+|\s+-\s+/).map(x=>x.trim()).filter(Boolean);
+      if(chunks.length>1)chunks.forEach(c=>{if(c.length>12)out.push(c);});
+      else out.push(s);
+    }else out.push(s);
+  });
+  return [...new Set(out)].slice(0,18);
 }
 
-// ─ 훅 제목 (2줄로 임팩트 있게) ─
-function makeHook(title){
-  const t=cleanRawTitle(title);
+function toFriendly(s){
+  let t=normalizeKoreanText(s).trim();
+  if(!t)return '';
+  t=t
+    .replace(/([가-힣])다고\s*(밝혔다|전했다|설명했다|말했다)\.?$/,'$1다고 해요.')
+    .replace(/([가-힣])라고\s*(밝혔다|전했다|설명했다|말했다)\.?$/,'$1라고 해요.')
+    .replace(/발령됐다\.?$/,'발령됐어요.')
+    .replace(/발표했다\.?$/,'발표했어요.')
+    .replace(/밝혔다\.?$/,'밝혔어요.')
+    .replace(/전했다\.?$/,'전했어요.')
+    .replace(/설명했다\.?$/,'설명했어요.')
+    .replace(/예정이다\.?$/,'예정이에요.')
+    .replace(/전망이다\.?$/,'전망이에요.')
+    .replace(/상황이다\.?$/,'상황이에요.')
+    .replace(/이다\.?$/,'이에요.')
+    .replace(/있다\.?$/,'있어요.')
+    .replace(/없다\.?$/,'없어요.')
+    .replace(/했다\.?$/,'했어요.')
+    .replace(/됐다\.?$/,'됐어요.')
+    .replace(/한다\.?$/,'해요.')
+    .replace(/된다\.?$/,'돼요.')
+    .replace(/됩니다\.?$/,'돼요.')
+    .replace(/합니다\.?$/,'해요.')
+    .replace(/입니다\.?$/,'이에요.');
+  if(!/[.!?요]$/.test(t))t+='.';
+  if(t.length>145)t=t.slice(0,142).replace(/\s+\S*$/,'')+'…';
+  return t;
+}
 
-  // 키워드별 패턴 매칭
-  if(/호우|폭우|특보|호우특보/.test(t)){
-    const region=t.match(/(서울|부산|인천|대구|광주|대전|수원|경기|전국)/);
-    return `${region?region[1]:'서울'} 첫 호우특보\n강풍도 동시 발령!`;
+function pickSentence(sents, patterns, fallbackIndex=0){
+  for(const p of patterns){
+    const found=sents.find(s=>p.test(s));
+    if(found)return found;
   }
-  if(/소나기|강풍|폭설|태풍/.test(t)){
-    const region=t.match(/(서울|부산|인천|대구|경기|전국)/);
-    return `${region?region[1]:'전국'} 강한 소나기\n왜 갑자기 내렸을까?`;
+  return sents[fallbackIndex]||sents[0]||'';
+}
+
+function compactTitleLine(text,max=12){
+  const t=cleanRawTitle(text).replace(/…|\.\.\./g,'');
+  if(t.length<=max)return t;
+  const parts=t.split(/\s+/);
+  let line='';
+  for(const p of parts){
+    if((line+p).length>max)break;
+    line+=(line?' ':'')+p;
   }
-  if(/물놀이장/.test(t)){const m=t.match(/([0-9]+)\s*(곳|개)/);return `여름 물놀이장 ${m?m[0]:'다수'}\n순차적으로 열려요!`;}
+  return line||t.slice(0,max);
+}
+
+// ─ 훅 제목: 기사 제목을 카드뉴스 제목처럼 2줄로 압축 ─
+function makeHook(title,articleText=''){
+  const t=cleanRawTitle(title);
+  const all=t+' '+articleText;
+  if(/호우|폭우|특보|소나기|강풍|태풍|폭설|장마/.test(all)){
+    const region=(all.match(/(서울|수원|포천|경기|경기도|인천|부산|대구|광주|대전|전국|수도권)/)||[])[1]||'서울';
+    if(/호우특보/.test(all)&&/강풍/.test(all))return `${region} 첫 호우특보\n강풍도 동시 발령!`;
+    if(/호우특보/.test(all))return `${region} 호우특보\n갑자기 왜?`;
+    if(/강풍/.test(all))return `${region} 강한 소나기\n강풍까지 동반!`;
+    return `${region} 날씨 이슈\n지금 확인해요!`;
+  }
+  if(/물놀이장/.test(t)){const m=t.match(/([0-9]+)\s*(곳|개)/);return `여름 물놀이장 ${m?m[0]:'오픈'}\n어디서 즐길까?`;}
   if(/팝업/.test(t))return `이 팝업 스토어\n왜 난리예요?`;
   if(/카페/.test(t)){const r=t.match(/(서울|강남|홍대|성수|한남|서촌|연남|합정|망원)/);return `${r?r[1]:'요즘'} 카페\n왜 화제일까?`;}
   if(/올리브영/.test(t))return `올리브영 지금\n뭐가 핫해요?`;
-  if(/룩|패션|스타일|코디/.test(t))return `이 스타일\n왜 화제일까?`;
-  if(/화장품|뷰티|스킨케어|토너|세럼/.test(t))return `이 뷰티템\n왜 주목받을까?`;
+  if(/룩|패션|스타일|코디|착장/.test(t))return `이 스타일\n왜 화제일까?`;
+  if(/화장품|뷰티|스킨케어|토너|세럼|크림/.test(t))return `이 뷰티템\n왜 주목받을까?`;
   if(/세일|할인|혜택|쿠폰/.test(t))return `이 혜택\n놓치면 후회해요!`;
   if(/신상|출시|런칭|뉴/.test(t))return `새로 나온 이것\n지금 바로 확인해요!`;
   if(/논란|사건|사고/.test(t))return `이거 왜\n난리예요?`;
 
-  // 일반: 제목을 2줄로 나누기
   const words=t.split(' ');let l1='',l2='';
   for(const w of words){
-    if((l1+' '+w).trim().length<=14)l1=(l1+' '+w).trim();
-    else l2=(l2+' '+w).trim();
+    if((l1+' '+w).trim().length<=13)l1=(l1+' '+w).trim();
+    else if((l2+' '+w).trim().length<=15)l2=(l2+' '+w).trim();
   }
-  if(!l2||l2.length<3){
-    // 제목 자체가 짧으면 의문형 추가
-    return `${t.slice(0,15)}\n왜 주목받을까?`;
-  }
-  return `${l1}\n${l2.slice(0,16)}`;
+  return l2?`${l1}\n${l2}`:`${compactTitleLine(t,14)}\n왜 주목받을까?`;
 }
 
-// ─ 3포인트 요약 (NOW TRENDING / THE TAKEAWAY / WHAT'S NEXT) ─
-function makePoints(title,desc){
+function makeEditorialPoints(title,articleText,desc){
   const t=cleanRawTitle(title);
-  const d=clean(stripH(desc||''));
-  const sents=splitSentences(d);
+  const base=normalizeKoreanText([articleText,desc].filter(Boolean).join(' '));
+  const sents=splitSentences(base);
 
-  // === 날씨/재난 ===
-  if(/호우|폭우|특보|소나기|강풍|태풍|폭설/.test(t)){
-    const s0=sents[0]?toFriendly(sents[0]):'서울에 올해 첫 호우특보가 발령됐어요. 이번 호우특보는 갑작스럽고 강한 비와 함께 강풍이 동반되는 상황이에요.';
-    const s1=sents[1]?toFriendly(sents[1]):'이번 특보는 예상보다 빠른 장마의 시작과 관련이 있어요. 기상청에 따르면 강한 소나기가 내리면서 특보가 발령됐어요. 갑작스러운 날씨 변화에 대비해야 해요!';
-    const s2=sents[2]?toFriendly(sents[2]):'강력한 소나기가 기온 하락 및 수확기에 영향을 미칠 수 있어요. 이러한 폭우는 농업과 도시 생활에 직격탄이 되겠죠. 앞으로 이와 같은 이상기후가 더욱 잦아질 것이라는 예측도 있어요.';
-    return [s0,s1,s2];
-  }
-
-  // === 물놀이장 ===
-  if(/물놀이장/.test(t)){
+  if(/호우|폭우|특보|소나기|강풍|태풍|폭설|장마/.test(t+' '+base)){
+    const now=pickSentence(sents,[/발령|내리|쏟아|강풍|비가|빗줄기|호우|소나기|특보|피해|영상|우산|의자/],0);
+    const why=pickSentence(sents,[/기상청|예상|장마|대기|불안정|저기압|전선|원인|관련|때문|따르면|시작/],1);
+    const next=pickSentence(sents,[/주의|대비|영향|피해|우려|전망|가능성|앞으로|수확|농업|교통|시설물|안전/],2);
     return [
-      '이번 여름 도심 속 물놀이장이 순차적으로 개장해요. 장소마다 운영 기간이 달라 방문 전 확인이 필요해요.',
-      '가족 단위 방문객이 몰릴 수 있어요. 이용 시간과 안전 수칙을 미리 체크해두면 좋아요.',
-      '이런 여름 인프라는 지역 상권과 SNS 콘텐츠에도 긍정적인 파급 효과를 줄 수 있어요.',
+      now?toFriendly(now):'서울과 경기 일부 지역에 강한 비와 바람이 동시에 나타나며 올해 첫 호우특보 이슈가 커지고 있어요.',
+      why?toFriendly(why):'이번 특보는 예상보다 빠른 장마 흐름과 강한 소나기성 비가 겹치며 발령된 것으로 볼 수 있어요. 갑작스러운 날씨 변화에 대비해야 해요!',
+      next?toFriendly(next):'짧은 시간 강한 비가 내리면 도심 이동, 농작물, 시설물 관리에 영향을 줄 수 있어요. 비슷한 기습 호우가 반복될 가능성도 체크해야 해요.'
     ];
   }
 
-  // === 팝업 ===
-  if(/팝업/.test(t)){
-    const s0=sents[0]?toFriendly(sents[0]):'이번 팝업은 브랜드 경험을 오프라인으로 확장하는 전략이에요.';
+  if(/올리브영|화장품|토너|세럼|스킨케어|뷰티|클렌징|메이크업|향수/.test(t+' '+base)){
+    const now=pickSentence(sents,[/출시|품절|판매|인기|관심|주목|랭킹|세일|할인|신제품/],0);
+    const why=pickSentence(sents,[/성분|저자극|피부|장벽|보습|진정|후기|수요|트렌드|선호/],1);
+    const next=pickSentence(sents,[/전망|확대|계획|소비자|시장|브랜드|경쟁|가능성|앞으로/],2);
     return [
-      s0,
-      '현장에서 체험, 인증, 구매가 한 번에 가능해서 방문 욕구가 높아져요.',
-      '짧은 운영 기간이 희소성을 만들고 SNS 확산을 가속해요.',
+      now?toFriendly(now):'새로운 뷰티 이슈가 소비자 관심을 빠르게 끌고 있어요.',
+      why?toFriendly(why):'핵심은 단순한 화제성이 아니라 성분, 사용감, 피부 타입 적합성까지 함께 비교된다는 점이에요.',
+      next?toFriendly(next):'앞으로는 할인율보다 “내 피부에 맞는지”를 따지는 소비가 더 강해질 가능성이 커요.'
     ];
   }
 
-  // === 올리브영 / 화장품 ===
-  if(/올리브영|화장품|토너|세럼|스킨케어|뷰티|클렌징/.test(t)){
-    const s0=sents[0]?toFriendly(sents[0]):'이번 세일에서 진정 토너 제품들이 빠르게 품절되며 관심을 받고 있어요.';
-    const s1=sents[1]?toFriendly(sents[1]):'피부 장벽 케어, 저자극 성분을 강조한 제품이 선택 기준으로 떠오르고 있어요.';
+  if(/룩|패션|스타일|코디|착장|트렌드|브랜드|컬렉션/.test(t+' '+base)){
+    const now=pickSentence(sents,[/착용|공개|선보|화제|주목|트렌드|스타일|룩|컬렉션/],0);
+    const why=pickSentence(sents,[/분위기|실루엣|소재|색상|브랜드|소비자|SNS|반응|인기/],1);
+    const next=pickSentence(sents,[/확산|전망|시즌|유행|수요|출시|가능성|앞으로/],2);
     return [
-      s0,
-      s1,
-      '소비자는 할인율뿐 아니라 성분과 피부 타입 적합성까지 함께 비교하고 있어요.',
+      now?toFriendly(now):'이번 스타일링이 SNS와 기사에서 함께 주목받고 있어요.',
+      why?toFriendly(why):'브랜드보다 바로 따라 할 수 있는 조합과 분위기에 반응이 모이는 흐름이에요.',
+      next?toFriendly(next):'저장형 콘텐츠로 확산되기 좋아 비슷한 아이템 검색과 구매로 이어질 가능성이 있어요.'
     ];
   }
 
-  // === 패션 ===
-  if(/룩|패션|스타일|코디|착장|트렌드/.test(t)){
-    const s0=sents[0]?toFriendly(sents[0]):'이번 스타일링이 SNS와 기사에서 함께 주목받고 있어요.';
-    const s1=sents[1]?toFriendly(sents[1]):'소비자는 브랜드보다 바로 따라 할 수 있는 조합과 분위기에 반응하고 있어요.';
-    return [
-      s0,
-      s1,
-      '이런 패션 이슈는 저장형 콘텐츠로 확산되기 좋아요. 비슷한 아이템을 찾거나 따라 입는 소비로 이어질 가능성이 커요.',
-    ];
-  }
-
-  // === 기본: 기사 문장 정제 ===
   const p0=sents[0]?toFriendly(sents[0]):`${t} 관련 소식이 새롭게 주목받고 있어요.`;
-  const p1=sents[1]?toFriendly(sents[1]):`기사의 핵심은 변화의 이유와 현재 반응을 함께 보는 데 있어요.`;
-  const p2=sents.slice(2,4).join(' ')||sents[1]||'';
-  return [p0, p1, p2?toFriendly(p2):'이번 이슈는 관련 분야의 변화를 보여주는 사례로 볼 수 있어요.'];
+  const p1=sents[1]?toFriendly(sents[1]):'핵심은 단순한 사건보다 왜 지금 이 이슈가 커졌는지를 보는 데 있어요.';
+  const p2=sents[2]?toFriendly(sents[2]):'앞으로 관련 반응과 후속 움직임을 함께 확인하면 흐름을 더 잘 읽을 수 있어요.';
+  return [p0,p1,p2];
+}
+
+function resolveUrl(url,base){
+  try{return new URL(url,base||location.href).href;}catch(e){return url||'';}
+}
+function proxiedImage(url){
+  if(!url)return '';
+  const clean=url.replace(/^https?:\/\//,'');
+  return `https://images.weserv.nl/?url=${encodeURIComponent(clean)}`;
+}
+function getMeta(doc,name){
+  const sels=[`meta[property="${name}"]`,`meta[name="${name}"]`];
+  for(const sel of sels){const el=doc.querySelector(sel);const v=el&&el.getAttribute('content');if(v)return v.trim();}
+  return '';
+}
+function parseArticleHtml(html,url){
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  doc.querySelectorAll('script,style,noscript,iframe,svg,button,nav,aside,footer,header').forEach(el=>el.remove());
+  const image=getMeta(doc,'og:image')||getMeta(doc,'twitter:image')||
+    (doc.querySelector('#img1,.end_photo_org img,figure img,article img,.article img,.newsct_body img')?.getAttribute('src')||'');
+  const desc=getMeta(doc,'og:description')||getMeta(doc,'description');
+  const title=getMeta(doc,'og:title')||doc.querySelector('title')?.textContent||'';
+  const selectors=['#dic_area','#newsct_article','article','[itemprop="articleBody"]','#articleBodyContents','.article_body','.article-view-content','.article_view','.news_view','.view_article','.view_cont','.article-body','.newsct_body'];
+  let body='';
+  for(const sel of selectors){
+    const el=doc.querySelector(sel);
+    const txt=stripBoilerplate(el?.textContent||'');
+    if(txt.length>body.length)body=txt;
+  }
+  if(body.length<180){
+    const ps=[...doc.querySelectorAll('p')].map(p=>p.textContent.trim()).filter(v=>v.length>20).join(' ');
+    if(stripBoilerplate(ps).length>body.length)body=stripBoilerplate(ps);
+  }
+  return {title:cleanRawTitle(title),description:desc,body,image:resolveUrl(image,url)};
+}
+
+async function fetchTextThroughProxies(target){
+  const urls=[
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(target)}`,
+    `https://corsproxy.io/?${encodeURIComponent(target)}`,
+    target
+  ];
+  for(const url of urls){
+    try{
+      const res=await fetch(url,{headers:{'Accept':'text/html,application/xhtml+xml'}});
+      if(!res.ok)continue;
+      const txt=await res.text();
+      if(txt&&txt.length>300)return txt;
+    }catch(e){console.warn('article fetch:',e.message);}
+  }
+  throw new Error('기사 본문을 불러오지 못했어요.');
+}
+
+async function enrichArticle(item){
+  if(item._enriched)return item._enriched;
+  const urls=[item.originallink,item.link].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
+  let best={title:stripH(item.title||''),description:stripH(item.description||''),body:stripH(item.description||''),image:item.thumbnail||''};
+  for(const url of urls){
+    try{
+      const html=await fetchTextThroughProxies(url);
+      const parsed=parseArticleHtml(html,url);
+      if(parsed.body&&parsed.body.length>best.body.length)best.body=parsed.body;
+      if(parsed.description&&parsed.description.length>best.description.length)best.description=parsed.description;
+      if(parsed.title&&parsed.title.length>best.title.length)best.title=parsed.title;
+      if(parsed.image&&!best.image)best.image=parsed.image;
+    }catch(e){console.warn('enrich fail:',url,e.message);}
+  }
+  if(best.image)best.image=proxiedImage(best.image);
+  item._enriched=best;
+  return best;
 }
 
 // ── generateCards ──
-function generateCards(idx){
+async function generateCards(idx){
   const q=getQ();if(q.c>=DAILY_MAX){showToast(`오늘 생성 횟수(${DAILY_MAX}회)를 다 사용했어요.`);return;}
   const grid=document.getElementById('result-grid');
   const item=grid._items?.[idx];if(!item){showToast('기사 정보를 찾을 수 없어요.');return;}
   document.querySelectorAll('.article-card').forEach((c,i)=>c.classList.toggle('selected',i===idx));
   const mag=selMag();if(!mag)return;
 
-  const rawTitle=stripH(item.title||'');
-  const rawDesc=stripH(item.description||'');
+  showLoading('기사 본문과 대표 이미지를 읽는 중...');
+  let enriched;
+  try{enriched=await enrichArticle(item);}catch(e){console.warn(e);enriched={title:stripH(item.title||''),description:stripH(item.description||''),body:stripH(item.description||''),image:item.thumbnail||''};}
 
-  const hook=makeHook(rawTitle);
-  const pts=makePoints(rawTitle,rawDesc);
+  const rawTitle=enriched.title||stripH(item.title||'');
+  const articleBody=enriched.body||enriched.description||stripH(item.description||'');
+  const hook=makeHook(rawTitle,articleBody);
+  const pts=makeEditorialPoints(rawTitle,articleBody,enriched.description||item.description||'');
+  const heroImg=enriched.image||item.thumbnail||'';
 
   editorCards=[
-    {role:'HOOK',   kicker:mag.logoName||'what.is.mag',title:hook,body:'',labelColor:'#ffb0b0',titleColor:'#ffffff',bodyColor:'#ffffff',bg:'#101010',scale:100,align:'left',image:''},
-    {role:'BODY 1', kicker:'NOW TRENDING',            title:'NOW TRENDING',body:pts[0],labelColor:'#ffb0b0',titleColor:'#ffffff',bodyColor:'#ffffff',bg:'#101010',scale:100,align:'left',image:''},
-    {role:'BODY 2', kicker:'THE TAKEAWAY',            title:'THE TAKEAWAY',body:pts[1],labelColor:'#ffb0b0',titleColor:'#ffffff',bodyColor:'#ffffff',bg:'#101010',scale:100,align:'left',image:''},
-    {role:'BODY 3', kicker:"WHAT'S NEXT",             title:"WHAT'S NEXT",body:pts[2],labelColor:'#ffb0b0',titleColor:'#ffffff',bodyColor:'#ffffff',bg:'#101010',scale:100,align:'left',image:''},
-    {role:'CTA',    kicker:mag.name,title:mag.headline||'"이거 왜 난리예요?"',body:`${mag.copy1||'복잡한 이슈, 핵심만 쉽게'}\n${mag.copy2||'한 장씩 넘기면 정리 끝'}`,labelColor:mag.pointColor||'#e0483b',titleColor:isDark(mag.bgColor||'#fff')?'#fff':'#111',bodyColor:isDark(mag.bgColor||'#fff')?'rgba(255,255,255,0.8)':'#444',bg:mag.bgColor||'#ffffff',scale:100,align:'left',image:''},
+    {role:'HOOK',   kicker:mag.logoName||'what.is.mag',title:hook,body:'',labelColor:'#ffb0b0',titleColor:'#ffffff',bodyColor:'#ffffff',bg:'#101010',scale:100,align:'left',image:heroImg},
+    {role:'BODY 1', kicker:'NOW TRENDING', title:'NOW TRENDING',body:pts[0],labelColor:mag.pointColor||'#ff8db3',titleColor:'#111111',bodyColor:'#333333',bg:'#ffffff',scale:100,align:'left',image:heroImg},
+    {role:'BODY 2', kicker:'THE TAKEAWAY', title:'THE TAKEAWAY',body:pts[1],labelColor:mag.pointColor||'#ff8db3',titleColor:'#111111',bodyColor:'#333333',bg:'#ffffff',scale:100,align:'left',image:heroImg},
+    {role:'BODY 3', kicker:"WHAT'S NEXT", title:"WHAT'S NEXT",body:pts[2],labelColor:mag.pointColor||'#ff8db3',titleColor:'#111111',bodyColor:'#333333',bg:'#ffffff',scale:100,align:'left',image:heroImg},
+    {role:'CTA',    kicker:mag.name,title:mag.headline||'"이거 왜 난리예요?"',body:`${mag.copy1||'복잡한 이슈, 핵심만 쉽게'}\n${mag.copy2||'한 장씩 넘기면 정리 끝'}`,labelColor:mag.pointColor||'#e0483b',titleColor:isDark(mag.bgColor||'#fff')?'#fff':'#111',bodyColor:isDark(mag.bgColor||'#fff')?'rgba(255,255,255,0.8)':'#444',bg:mag.bgColor||'#ffffff',scale:100,align:'left',image:mag.logoData||''},
   ];
   cardBgImages={};
   useQ();
   renderEditor();
   document.getElementById('editor-section').style.display='block';
   setTimeout(()=>document.getElementById('editor-section').scrollIntoView({behavior:'smooth',block:'start'}),120);
-  showToast('카드뉴스 생성 완료! ✓');
 
-  // 캡션 & 해시태그
   const tags=(mag.hashtags||'#뷰티 #패션 #카드뉴스 #트렌드').trim().split(/\s+/).filter(Boolean);
-  document.getElementById('caption-out').value=`⭐ ${hook.replace('\n',' ')}\n\n📍 ${pts[0]}\n\n📍 ${pts[1]}\n\n💬 ${pts[2]}\n\n💾 저장해두고 필요한 순간 다시 확인해보세요.`;
-  document.getElementById('hashtag-out').value=tags.concat(['#뷰티','#패션','#카드뉴스','#트렌드']).filter((v,i,a)=>a.indexOf(v)===i).slice(0,12).join(' ');
+  document.getElementById('caption-out').value=`⭐ ${hook.replace('\n',' ')}\n\n📍 ${pts[0]}\n\n📌 ${pts[1]}\n\n💬 ${pts[2]}\n\n💾 저장해두고 필요한 순간 다시 확인해보세요.`;
+  const autoTags=autoHashtags(rawTitle,articleBody);
+  document.getElementById('hashtag-out').value=tags.concat(autoTags).filter((v,i,a)=>a.indexOf(v)===i).slice(0,14).join(' ');
+  hideLoading();
+  showToast(heroImg?'기사 요약과 이미지 적용 완료! ✓':'기사 요약 완료! 이미지는 직접 넣어주세요.');
+}
+
+function autoHashtags(title,text){
+  const all=(title+' '+text);
+  const tags=['#카드뉴스','#트렌드'];
+  if(/호우|비|소나기|강풍|장마|날씨/.test(all))tags.unshift('#날씨','#호우특보');
+  if(/뷰티|화장품|스킨케어|토너|세럼|올리브영/.test(all))tags.unshift('#뷰티','#스킨케어');
+  if(/패션|룩|코디|스타일|브랜드/.test(all))tags.unshift('#패션','#스타일');
+  if(/서울/.test(all))tags.push('#서울');
+  if(/경기|수원|포천/.test(all))tags.push('#경기');
+  return tags;
 }
 
 // ── Editor render ──
 function renderEditor(){
   document.getElementById('card-edit-grid').innerHTML=editorCards.map((c,i)=>renderUnit(c,i)).join('');
+  syncToolbarFromCards();
 }
 function renderUnit(card,i){
-  const isH=i===0;
+  const isH=i===0, isCTA=i===editorCards.length-1;
   return `<div class="edit-unit" id="unit-${i}">
     <p class="card-unit-label">${card.role}</p>
     <div id="mini-wrap-${i}">${renderMiniCard(card,i)}</div>
@@ -712,19 +913,24 @@ function renderUnit(card,i){
     <button class="img-change-btn" onclick="document.getElementById('img-${i}').click()">이미지 변경</button>
     <input type="file" id="img-${i}" style="display:none" accept="image/*" onchange="handleImg(${i},this)">
     <div class="edit-small">
-      <label>${isH?'제목 수정':'라벨 수정'}</label>
-      <input type="text" value="${esc(isH?card.title:card.kicker)}" oninput="${isH?`setP(${i},'title',this.value)`:`setP(${i},'kicker',this.value)`}">
+      <label>${isH?'제목 수정':(isCTA?'매거진 라벨':'라벨 수정')}</label>
+      <input type="text" value="${esc(isH?card.title:card.kicker)}" oninput="${isH?`setP(${i},'title',this.value)`: `setP(${i},'kicker',this.value)`}">
     </div>
     ${!isH?`<div class="edit-small"><label>라벨 색</label><div class="ctrl-row"><input type="color" value="${card.labelColor}" oninput="setP(${i},'labelColor',this.value)"></div></div>`:''}
     <div class="edit-small">
-      <label>${isH?'제목 상세':'본문 수정'}</label>
-      <textarea oninput="${isH?`setP(${i},'title',this.value)`:`setP(${i},'body',this.value)`}">${esc(isH?card.title:card.body)}</textarea>
+      <label>${isH?'제목 상세':(isCTA?'문구 수정':'본문 수정')}</label>
+      <textarea oninput="${isH?`setP(${i},'title',this.value)`: isCTA?`setP(${i},'body',this.value)`:`setP(${i},'body',this.value)`}">${esc(isH?card.title:card.body)}</textarea>
     </div>
+    ${!isH&&!isCTA?`<div class="edit-small"><label>본문 상단 타이틀</label><input type="text" value="${esc(card.title)}" oninput="setP(${i},'title',this.value)"></div>`:''}
     <div class="ctrl-row">
-      <span>${isH?'윗줄':'본문'} 색</span>
-      <input type="color" value="${isH?card.titleColor:card.bodyColor}" oninput="setP(${i},'${isH?'titleColor':'bodyColor'}',this.value)">
+      <span>${isH?'제목':'타이틀'} 색</span>
+      <input type="color" value="${card.titleColor}" oninput="setP(${i},'titleColor',this.value)">
       <span>배경</span>
       <input type="color" value="${card.bg}" oninput="setP(${i},'bg',this.value)">
+    </div>
+    <div class="ctrl-row">
+      <span>본문 색</span>
+      <input type="color" value="${card.bodyColor}" oninput="setP(${i},'bodyColor',this.value)">
     </div>
     <div class="scale-row">
       <span>크기</span>
@@ -732,47 +938,110 @@ function renderUnit(card,i){
       <span id="scl-${i}">${card.scale}%</span>
       <button class="scale-btn" onclick="adjScale(${i},5)">＋</button>
     </div>
-    <button class="apply-unit-btn" onclick="showToast('적용됐어요 ✓')">${isH?'제목·색·크기 적용':'본문·라벨 적용'}</button>
+    <button class="apply-unit-btn" onclick="showToast('적용됐어요 ✓')">카드 적용</button>
   </div>`;
 }
 function alignLabel(a){return a==='center'?'중앙':a==='right'?'우측':'좌측';}
 function renderMiniCard(card,i){
   const a=card.align||'left';
   const ta=a==='center'?'center':a==='right'?'right':'left';
-  const tSz=Math.round(16*card.scale/100),bSz=Math.max(6,Math.round(7.5*card.scale/100));
   const imgSrc=cardBgImages[i]||card.image||'';
+  const isHook=i===0, isCTA=i===editorCards.length-1;
+  const titleSize=Math.round((isHook?18:(isCTA?16:14))*card.scale/100);
+  const bodySize=Math.max(8,Math.round((isCTA?9:9)*card.scale/100));
+  if(isHook){
+    return `<div class="mini-card hook-card" style="background:${card.bg};text-align:${ta}">
+      <div class="mini-photo-fill" style="background-image:url('${esc(imgSrc)}')">${!imgSrc?'<div class="mini-photo-empty">IMAGE</div>':''}</div>
+      <div class="mini-content hook-content">
+        <div class="mini-title" style="color:${card.titleColor};font-size:${titleSize}px">${esc(card.title||'')}</div>
+        <div class="mini-logo" style="color:${card.labelColor}">${esc(card.kicker||'')}</div>
+      </div>
+    </div>`;
+  }
+  if(isCTA){
+    return `<div class="mini-card cta-card" style="background:${card.bg};text-align:${ta}">
+      <div class="mini-content cta-content">
+        <div class="cta-logo-badge">${imgSrc?`<img src="${esc(imgSrc)}" alt="">`:`<span style="color:${card.titleColor}">${esc((card.kicker||'M').slice(0,1))}</span>`}</div>
+        <div class="mini-kicker" style="color:${card.labelColor}">${esc(card.kicker||'')}</div>
+        <div class="mini-title" style="color:${card.titleColor};font-size:${titleSize}px">${esc(card.title||'')}</div>
+        ${card.body?`<div class="mini-body" style="color:${card.bodyColor};font-size:${bodySize}px;margin-top:10px">${esc(card.body)}</div>`:''}
+      </div>
+    </div>`;
+  }
   return `<div class="mini-card" style="background:${card.bg};text-align:${ta}">
-    ${imgSrc?`<img class="bg-img" src="${imgSrc}" alt="">`:''}
-    <div class="mini-content">
+    <div class="mini-photo" style="background-image:url('${esc(imgSrc)}')">${!imgSrc?'<div class="mini-photo-empty">ARTICLE IMAGE</div>':''}</div>
+    <div class="mini-panel" style="background:${card.bg}">
       <div class="mini-kicker" style="color:${card.labelColor}">${esc(card.kicker||'')}</div>
-      <div class="mini-title" style="color:${card.titleColor};font-size:${tSz}px">${esc(card.title||'')}</div>
-      ${card.body?`<div class="mini-body" style="color:${card.bodyColor};font-size:${bSz}px">${esc(card.body)}</div>`:''}
-      ${i===0?`<div class="mini-logo">${esc(card.kicker||'')}</div>`:''}
+      <div class="mini-body-title" style="color:${card.titleColor};font-size:${titleSize}px">${esc(card.title||'')}</div>
+      ${card.body?`<div class="mini-body" style="color:${card.bodyColor};font-size:${bodySize}px">${esc(card.body)}</div>`:''}
     </div>
   </div>`;
 }
-function refreshMini(i){const w=document.getElementById(`mini-wrap-${i}`);if(w)w.innerHTML=renderMiniCard(editorCards[i],i);}
+function refreshMini(i){const w=document.getElementById(`mini-wrap-${i}`);if(w)w.innerHTML=renderMiniCard(editorCards[i],i);syncToolbarFromCards();}
 function setP(i,prop,v){editorCards[i][prop]=v;refreshMini(i);}
 function setAlign(i,dir){const c=editorCards[i];c.align=(c.align===dir)?'center':dir;const l=document.getElementById('aln-'+i);if(l)l.textContent=alignLabel(c.align);refreshMini(i);}
 function adjScale(i,d){const c=editorCards[i];c.scale=Math.max(70,Math.min(140,c.scale+d));const l=document.getElementById('scl-'+i);if(l)l.textContent=c.scale+'%';refreshMini(i);}
 function handleImg(i,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{cardBgImages[i]=e.target.result;refreshMini(i);};r.readAsDataURL(f);}
+function syncToolbarFromCards(){
+  if(!editorCards.length)return;
+  const hook=editorCards[0], body=editorCards[1]||hook, cta=editorCards[editorCards.length-1]||hook;
+  const set=(id,val)=>{const el=document.getElementById(id);if(el&&val)el.value=val;};
+  set('tb-hook-bg',hook.bg); set('tb-hook-title',hook.titleColor); set('tb-hook-label',hook.labelColor); set('tb-hook-body',hook.bodyColor);
+  set('tb-body-bg',body.bg); set('tb-body-label',body.labelColor); set('tb-body-title',body.titleColor); set('tb-body-body',body.bodyColor);
+  set('tb-cta-bg',cta.bg); set('tb-cta-label',cta.labelColor); set('tb-cta-title',cta.titleColor); set('tb-cta-body',cta.bodyColor);
+}
+function applyPalette(type){
+  if(!editorCards.length)return;
+  const gv=id=>document.getElementById(id)?.value;
+  if(type==='hook'){
+    Object.assign(editorCards[0],{bg:gv('tb-hook-bg'),titleColor:gv('tb-hook-title'),labelColor:gv('tb-hook-label'),bodyColor:gv('tb-hook-body')});
+    refreshMini(0); showToast('HOOK 색상을 적용했어요 ✓'); return;
+  }
+  if(type==='body'){
+    for(let i=1;i<=3&&i<editorCards.length-1;i++)Object.assign(editorCards[i],{bg:gv('tb-body-bg'),labelColor:gv('tb-body-label'),titleColor:gv('tb-body-title'),bodyColor:gv('tb-body-body')});
+    renderEditor(); showToast('BODY 1~3 색상을 적용했어요 ✓'); return;
+  }
+  const idx=editorCards.length-1;
+  Object.assign(editorCards[idx],{bg:gv('tb-cta-bg'),labelColor:gv('tb-cta-label'),titleColor:gv('tb-cta-title'),bodyColor:gv('tb-cta-body')});
+  refreshMini(idx); showToast('CTA 카드 색상을 적용했어요 ✓');
+}
 
 // ── Download ──
 async function loadImgEl(src){return new Promise(resolve=>{if(!src)return resolve(null);const img=new Image();img.crossOrigin='anonymous';img.onload=()=>resolve(img);img.onerror=()=>resolve(null);img.src=src;});}
 function wrapText(ctx,text,x,y,mW,lh){const lines=String(text||'').split('\n');let yy=y;lines.forEach(raw=>{const chars=raw.split('');let ln='';for(const ch of chars){const test=ln+ch;if(ctx.measureText(test).width>mW&&ln){ctx.fillText(ln,x,yy);ln=ch;yy+=lh;}else ln=test;}ctx.fillText(ln,x,yy);yy+=lh;});return yy;}
+function drawCover(ctx,img,w,h,dx,dy,dw,dh,alpha=1){if(!img)return;ctx.save();ctx.globalAlpha=alpha;const sc=Math.max(dw/img.width,dh/img.height);const rw=img.width*sc,rh=img.height*sc;ctx.drawImage(img,dx+(dw-rw)/2,dy+(dh-rh)/2,rw,rh);ctx.restore();}
 async function drawCard(card,i){
-  const W=1080,H=1350;const cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d');
-  ctx.fillStyle=card.bg||'#101010';ctx.fillRect(0,0,W,H);
-  const bgImg=await loadImgEl(cardBgImages[i]||card.image||'');
-  if(bgImg){ctx.save();ctx.globalAlpha=.34;const sc=Math.max(W/bgImg.width,H/bgImg.height);const w=bgImg.width*sc,h=bgImg.height*sc;ctx.drawImage(bgImg,(W-w)/2,(H-h)/2,w,h);ctx.restore();}
-  const gr=ctx.createLinearGradient(0,0,0,H);gr.addColorStop(0,'rgba(0,0,0,.02)');gr.addColorStop(.45,'rgba(0,0,0,.06)');gr.addColorStop(1,'rgba(0,0,0,.32)');ctx.fillStyle=gr;ctx.fillRect(0,0,W,H);
-  const a=card.align||'left';const x=a==='left'?96:a==='right'?W-96:W/2;ctx.textAlign=a;ctx.textBaseline='top';
-  let y=i===0?800:500;
-  if(card.kicker){ctx.fillStyle=card.labelColor||'#ffb0b0';ctx.font=`700 ${Math.round(26*card.scale/100)}px 'Noto Sans KR',sans-serif`;ctx.fillText((card.kicker||'').toUpperCase(),x,y);y+=64;}
-  ctx.fillStyle=card.titleColor||'#fff';const tSz=Math.round((i===0?76:52)*card.scale/100);ctx.font=`900 ${tSz}px 'Noto Sans KR',sans-serif`;
-  y=wrapText(ctx,card.title,x,y,a==='center'?840:820,Math.round((i===0?90:64)*card.scale/100));
-  if(card.body){y+=20;ctx.fillStyle=card.bodyColor||'#fff';ctx.font=`600 ${Math.round(33*card.scale/100)}px 'Noto Sans KR',sans-serif`;wrapText(ctx,card.body,x,y,a==='center'?820:800,52);}
-  if(i===0){ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='700 22px sans-serif';ctx.textAlign='right';ctx.fillText(card.kicker||'',W-96,H-130);}
+  const W=1080,H=1350,topH=620; const cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d');
+  const img=await loadImgEl(cardBgImages[i]||card.image||'');
+  const a=card.align||'left'; const x=a==='left'?96:a==='right'?W-96:W/2; ctx.textAlign=a; ctx.textBaseline='top';
+  const isHook=i===0, isCTA=i===editorCards.length-1;
+  ctx.fillStyle=card.bg||'#101010'; ctx.fillRect(0,0,W,H);
+  if(isHook){
+    if(img) drawCover(ctx,img,W,H,0,0,W,H,1); else {ctx.fillStyle='#111';ctx.fillRect(0,0,W,H);} 
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(0,0,0,.12)');g.addColorStop(.45,'rgba(0,0,0,.16)');g.addColorStop(1,'rgba(0,0,0,.82)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=card.titleColor||'#fff';ctx.font=`900 ${Math.round(76*card.scale/100)}px 'Noto Sans KR',sans-serif`;
+    let y=H-340; y=wrapText(ctx,card.title,x,y,820,Math.round(92*card.scale/100));
+    ctx.fillStyle=card.labelColor||'rgba(255,255,255,.85)';ctx.font=`800 ${Math.round(24*card.scale/100)}px 'Noto Sans KR',sans-serif`;ctx.textAlign='right';ctx.fillText(card.kicker||'',W-96,H-120);
+    return cv;
+  }
+  if(isCTA){
+    ctx.fillStyle=card.bg||'#fff'; ctx.fillRect(0,0,W,H);
+    if(img){ ctx.save(); ctx.beginPath(); ctx.arc(180,210,86,0,Math.PI*2); ctx.closePath(); ctx.clip(); ctx.drawImage(img,94,124,172,172); ctx.restore(); }
+    else { ctx.fillStyle='rgba(0,0,0,.06)'; ctx.beginPath(); ctx.arc(180,210,86,0,Math.PI*2); ctx.fill(); }
+    let y=340; ctx.textAlign=a;
+    ctx.fillStyle=card.labelColor||'#e0483b';ctx.font=`800 ${Math.round(24*card.scale/100)}px 'Noto Sans KR',sans-serif`;ctx.fillText(card.kicker||'',x,y); y+=58;
+    ctx.fillStyle=card.titleColor||'#111';ctx.font=`900 ${Math.round(68*card.scale/100)}px 'Noto Sans KR',sans-serif`;y=wrapText(ctx,card.title,x,y,860,Math.round(82*card.scale/100));
+    y+=18; ctx.fillStyle=card.bodyColor||'#444';ctx.font=`700 ${Math.round(32*card.scale/100)}px 'Noto Sans KR',sans-serif`;wrapText(ctx,card.body,x,y,860,50);
+    return cv;
+  }
+  if(img) drawCover(ctx,img,W,H,0,0,W,topH,1); else {ctx.fillStyle='#171717';ctx.fillRect(0,0,W,topH);} 
+  const gg=ctx.createLinearGradient(0,0,0,topH);gg.addColorStop(0,'rgba(0,0,0,.04)');gg.addColorStop(1,'rgba(0,0,0,.18)');ctx.fillStyle=gg;ctx.fillRect(0,0,W,topH);
+  ctx.fillStyle=card.bg||'#fff'; ctx.fillRect(0,topH,W,H-topH);
+  ctx.strokeStyle='rgba(15,23,42,.08)'; ctx.beginPath(); ctx.moveTo(0,topH); ctx.lineTo(W,topH); ctx.stroke();
+  let y=topH+72;
+  ctx.fillStyle=card.labelColor||'#ff8db3';ctx.font=`800 ${Math.round(24*card.scale/100)}px 'Noto Sans KR',sans-serif`;ctx.fillText(card.kicker||'',x,y); y+=56;
+  ctx.fillStyle=card.titleColor||'#111';ctx.font=`900 ${Math.round(46*card.scale/100)}px 'Noto Sans KR',sans-serif`;y=wrapText(ctx,card.title,x,y,850,58);
+  y+=20; ctx.fillStyle=card.bodyColor||'#333'; ctx.font=`700 ${Math.round(31*card.scale/100)}px 'Noto Sans KR',sans-serif`; wrapText(ctx,card.body,x,y,860,48);
   return cv;
 }
 async function downloadZip(){
