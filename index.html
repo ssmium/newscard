@@ -804,68 +804,161 @@ async function downloadAll(){
 
   function stripNoise(text){
     return cleanHtml(text||'')
+      .replace(/<[^>]+>/g,' ')
+      .replace(/&[a-zA-Z#0-9]+;/g,' ')
       .replace(/\[[^\]]+\]/g,' ')
       .replace(/\([^)]*기자[^)]*\)/g,' ')
       .replace(/[가-힣]{2,4}\s*기자/g,' ')
+      .replace(/사진\s*=\s*[^\s]+/g,' ')
       .replace(/무단전재.*$/,' ')
       .replace(/재배포.*$/,' ')
       .replace(/Copyright.*$/i,' ')
       .replace(/\s+/g,' ')
       .trim();
   }
+
   function trimSentence(s,max=118){
     s=stripNoise(s).replace(/[.。]+$/,'');
     if(!s) return '';
     if(s.length>max) s=s.slice(0,max-1).replace(/\s+\S*$/,'')+'…';
     return end(s);
   }
-  function splitSentences(text){
-    const cleaned=stripNoise(text)
-      .replace(/([.!?。])\s+/g,'$1|')
-      .replace(/(다|요|죠|니다|했다|됐다|밝혔다|전했다|나섰다|보인다|예정이다)\s+/g,'$1.|');
-    let arr=cleaned.split('|')
-      .map(v=>trimSentence(v,125))
-      .filter(v=>v.length>=18)
-      .filter(v=>!/(구독|좋아요|광고|제보|카카오톡|네이버에서 보기|언론사|기자 페이지)/.test(v));
-    arr=[...new Set(arr)];
-    return arr.slice(0,8);
+
+  function uniqueList(arr){
+    const seen=new Set();
+    return (arr||[]).map(v=>stripNoise(v)).filter(Boolean).filter(v=>{
+      const key=v.toLowerCase();
+      if(seen.has(key)) return false;
+      seen.add(key); return true;
+    });
   }
+
+  function cutText(s,max=34){
+    s=stripNoise(s);
+    if(s.length<=max) return s;
+    return s.slice(0,max-1).replace(/\s+\S*$/,'')+'…';
+  }
+
   function compactSubject(title,desc){
+    const whole=stripNoise((title||'')+' '+(desc||''));
     let s=removePressNoise(title||'');
-    const quoted=(s.match(/[‘'“"]([^’'”"]{2,18})[’'”"]/)||[])[1];
-    if(quoted) return quoted;
-    const name=extractName((title||'')+' '+(desc||''));
+    const quoted=(whole.match(/[‘'“\"]([^’'”\"]{2,20})[’'”\"]/g)||[])
+      .map(v=>v.replace(/[‘'“\"’”]/g,'').trim())
+      .find(v=>!/(영상|사진|종합|단독|속보)/.test(v));
+    if(quoted) return cutText(quoted,18);
+    const name=extractName(whole);
     if(name) return name;
     s=s.replace(/^(단독|종합|속보|영상|포토)\s*/,'')
+       .replace(/[“”\"]/g,'')
        .replace(/[,，].*$/,'')
        .replace(/\s*[-|].*$/,'')
-       .replace(/(공개|출시|오픈|참석|등장|화제|주목|진행|개최).*$/,'$1')
+       .replace(/….*$/,'')
        .trim();
-    const words=s.split(/\s+/).filter(Boolean);
-    return words.slice(0, Math.min(4,words.length)).join(' ').slice(0,18)||'오늘의 이슈';
+    const stop=/(공개|출시|오픈|참석|등장|화제|주목|진행|개최|선보|론칭|런칭|완판|인기|확대|협업|콜라보).*$/;
+    const match=s.match(stop);
+    if(match) s=s.slice(0, match.index + match[1].length).trim();
+    const words=s.split(/\s+/).filter(Boolean).filter(w=>!/(기자|뉴스|오늘|단독|종합)$/.test(w));
+    return cutText(words.slice(0, Math.min(4,words.length)).join(' ')||'오늘의 이슈',18);
   }
-  function hookFromArticle(article,sourceText){
-    const s=(article.title||'')+' '+(sourceText||article.desc||'');
-    const topic=inferTopic(article.title,sourceText||article.desc||'');
-    if(topic==='celeb'){
-      const n=extractName(s)||compactSubject(article.title,sourceText);
-      return `${n}\n포토콜 화제 정리`;
-    }
-    if(topic==='beauty') return `${compactSubject(article.title,sourceText)}\n뷰티 이슈 정리`;
-    if(topic==='fashion') return `${compactSubject(article.title,sourceText)}\n스타일 이슈 정리`;
-    if(topic==='popup') return `${compactSubject(article.title,sourceText)}\n요즘 왜 화제?`;
-    return `${compactSubject(article.title,sourceText)}\n핵심만 정리`;
-  }
-  function buildBodyPoints(article,sourceText){
+
+  function extractFacts(article,sourceText){
     const title=stripNoise(article.title||'');
     const desc=stripNoise(article.desc||'');
     const source=stripNoise(sourceText||'');
-    const sentences=splitSentences(source).filter(v=>!title.includes(v.replace(/[.!?]$/,'')));
-    const subject=compactSubject(title,desc||source);
-    const p1=sentences[0] || trimSentence(`${subject} 관련 소식이 새롭게 전해졌어요. ${desc||'검색 결과를 바탕으로 주요 내용을 먼저 정리했어요.'}`);
-    const p2=sentences[1] || trimSentence(`이번 이슈는 브랜드, 현장 반응, 대중의 관심이 함께 맞물리며 주목받고 있어요.`);
-    const p3=sentences[2] || trimSentence(`앞으로 후속 기사와 현장 반응이 이어질 가능성이 있어 관련 흐름을 계속 살펴보면 좋아요.`);
-    return [p1,p2,p3].map(v=>trimSentence(v,150));
+    const whole=[title,desc,source].join(' ');
+    const quoted=uniqueList([...(whole.matchAll(/[‘'“\"]([^’'”\"]{2,28})[’'”\"]/g))].map(m=>m[1]))
+      .filter(v=>!/(기자|뉴스|무단|재배포|사진|영상)/.test(v)).slice(0,3);
+    const numbers=uniqueList([...(whole.matchAll(/\d+(?:\.\d+)?\s*(?:만|억|천|%|퍼센트|곳|개|명|종|건|회|일|월|년|위|배|원|만원|억원)?/g))].map(m=>m[0]))
+      .filter(v=>v.replace(/\D/g,'').length>0).slice(0,3);
+    const places=uniqueList([...(whole.matchAll(/(?:서울|인천|부산|대구|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)(?:\s*[가-힣]+구|\s*[가-힣]+동|\s*[가-힣]+시)?/g))].map(m=>m[0])).slice(0,2);
+    const brands=uniqueList([...(whole.matchAll(/(?:올리브영|무신사|W컨셉|에이블리|지그재그|라네즈|이니스프리|클리오|롬앤|메디큐브|마뗑킴|샤넬|디올|구찌|루이비통|프라다|뉴진스|아이브|IVE|장원영|제니|민지|카리나|로제)/gi))].map(m=>m[0])).slice(0,3);
+    return {title,desc,source,whole,quoted,numbers,places,brands,subject:compactSubject(title,source||desc)};
+  }
+
+  function detectAction(whole){
+    if(/(포토콜|행사에 참석|행사 참석|등장|레드카펫|시사회)/.test(whole)) return '포토콜·행사 참석';
+    if(/(팝업|스토어|오픈|플래그십|전시|라운지)/.test(whole)) return '팝업·공간 오픈';
+    if(/(출시|런칭|론칭|발매|선보|공개|릴리즈)/.test(whole)) return '신제품·콘텐츠 공개';
+    if(/(협업|콜라보|컬래버|캡슐 컬렉션)/.test(whole)) return '협업 프로젝트';
+    if(/(화보|캠페인|앰배서더|모델|뮤즈)/.test(whole)) return '캠페인 이슈';
+    if(/(공항패션|착용|스타일링|룩|데님|코디)/.test(whole)) return '스타일링 화제';
+    if(/(매출|판매|완판|1위|인기|랭킹|수상|선정)/.test(whole)) return '성과·반응 이슈';
+    if(/(할인|세일|프로모션|기획전)/.test(whole)) return '프로모션 소식';
+    return '새로운 소식';
+  }
+
+  function highlightPhrase(facts){
+    const items=uniqueList([...(facts.quoted||[]), ...(facts.brands||[]), ...(facts.numbers||[]), ...(facts.places||[])]).slice(0,3);
+    if(!items.length) return '';
+    return items.map(v=>'‘'+cutText(v,16)+'’').join(', ');
+  }
+
+  function hookFromArticle(article,sourceText){
+    const facts=extractFacts(article,sourceText||article.desc||'');
+    const topic=inferTopic(article.title,sourceText||article.desc||'');
+    if(topic==='celeb') return `${facts.subject}\n포토콜 이슈 정리`;
+    if(topic==='beauty') return `${facts.subject}\n뷰티 이슈 정리`;
+    if(topic==='fashion') return `${facts.subject}\n스타일 이슈 정리`;
+    if(topic==='popup') return `${facts.subject}\n요즘 왜 화제?`;
+    return `${facts.subject}\n핵심만 정리`;
+  }
+
+  function editorAngle(topic,whole){
+    if(topic==='celeb') return {
+      why:'셀럽의 비주얼만 소비되는 게 아니라, 브랜드가 원하는 이미지와 화제성이 한 번에 묶이기 때문이에요.',
+      next:'이후에는 현장 사진, 숏폼, 팬 반응이 퍼지면서 브랜드 노출 효과가 더 커질 수 있어요.'
+    };
+    if(topic==='beauty') return {
+      why:'요즘 뷰티 소비자는 성분이나 제품명만 보지 않고, 모델·공간·사용 장면까지 함께 보고 판단하거든요.',
+      next:'후속 반응은 실제 사용 후기와 SNS 저장/공유에서 갈릴 가능성이 커요. 체험형 콘텐츠가 붙으면 구매 전환까지 이어질 수 있어요.'
+    };
+    if(topic==='fashion') return {
+      why:'패션 이슈는 제품 자체보다 누가, 어떤 장면에서, 어떻게 스타일링했는지가 반응을 좌우해요.',
+      next:'비슷한 무드의 아이템과 착장 콘텐츠가 이어지면 검색량과 구매 관심도 함께 올라갈 수 있어요.'
+    };
+    if(topic==='popup') return {
+      why:'요즘 팝업은 단순 판매 공간이 아니라 인증샷, 체험, 브랜드 세계관을 한 번에 보여주는 마케팅 장치예요.',
+      next:'방문 후기와 현장 이미지가 쌓이면 온라인 화제성이 오프라인 방문으로 다시 이어질 수 있어요.'
+    };
+    if(topic==='bookstore') return {
+      why:'사람들은 이제 물건만 사는 게 아니라 공간의 취향과 이야기를 함께 소비하고 있어요.',
+      next:'작은 공간일수록 운영자의 관점이 선명하면 재방문과 입소문으로 이어질 가능성이 커요.'
+    };
+    if(topic==='weather') return {
+      why:'날씨 이슈는 이동 동선과 일정에 바로 영향을 주기 때문에 체감도가 높아요.',
+      next:'당분간 지역별 예보와 실시간 안내를 확인하면서 외출 계획을 조정하는 게 좋아요.'
+    };
+    return {
+      why:'겉으로는 단순한 소식처럼 보여도, 그 안에는 소비자 반응과 브랜드 흐름을 읽을 수 있는 단서가 있어요.',
+      next:'관련 반응이 이어지면 후속 기사와 SNS 콘텐츠를 통해 더 넓게 확산될 수 있어요.'
+    };
+  }
+
+  function buildBodyPoints(article,sourceText){
+    const facts=extractFacts(article,sourceText||article.desc||'');
+    const topic=inferTopic(article.title,sourceText||article.desc||'');
+    const action=detectAction(facts.whole);
+    const hl=highlightPhrase(facts);
+    const where=facts.places && facts.places[0] ? facts.places[0]+'에서 ' : '';
+    const angle=editorAngle(topic,facts.whole);
+
+    let p1='';
+    if(topic==='celeb'){
+      p1=`${facts.subject}이 ${where}${action} 소식으로 주목받고 있어요. ${hl?hl+' 같은 키워드가 함께 언급되며 ':''}현장 분위기와 브랜드 이미지가 동시에 화제가 되는 흐름이에요.`;
+    }else if(topic==='beauty'){
+      p1=`${facts.subject} 관련 ${action}이 뷰티 업계에서 눈길을 끌고 있어요. ${hl?hl+'를 중심으로 ':''}제품력뿐 아니라 브랜드가 보여주는 분위기까지 함께 소비되는 흐름이에요.`;
+    }else if(topic==='fashion'){
+      p1=`${facts.subject} 관련 ${action}이 패션 이슈로 떠올랐어요. ${hl?hl+'가 포인트로 언급되며 ':''}아이템보다 전체 스타일 무드에 관심이 모이고 있어요.`;
+    }else if(topic==='popup'){
+      p1=`${facts.subject} 관련 ${action}이 관심을 받고 있어요. ${hl?hl+'를 앞세워 ':''}브랜드 경험을 직접 보여주는 오프라인 접점으로 읽혀요.`;
+    }else{
+      p1=`${facts.subject} 관련 ${action}이 새롭게 전해졌어요. ${hl?hl+'가 주요 포인트로 언급됐고, ':''}지금 사람들이 왜 이 소식에 반응하는지 짚어볼 만해요.`;
+    }
+
+    const p2=angle.why;
+    const p3=angle.next;
+
+    return [p1,p2,p3].map(v=>trimSentence(v,158).replace(/요요/g,'요').replace(/죠요/g,'죠'));
   }
 
   window.searchGoogleNewsRss=async function(q){
@@ -941,11 +1034,11 @@ async function downloadAll(){
   window.commitGeneratedCards=function(article,sourceText,mode='fallback'){
     const hook=hookFromArticle(article,sourceText).replace(/요요/g,'요');
     const pts=buildBodyPoints(article,sourceText);
-    const sourceLabel = mode==='body' ? '기사 본문 기반' : '검색 결과 설명 기반';
+    const sourceLabel = mode==='body' ? '에디터 요약 · 기사 본문 기반' : '에디터 요약 · 검색 설명 기반';
     cards=[
       {label:'HOOK',role:'HOOK',title:hook,body:'',subtitle:`${sourceLabel} · ${(article.domain||'news')} ${(article.date||'')}`.trim(),type:'hook'},
-      {label:'BODY 1',role:'WHAT HAPPENED',title:'WHAT HAPPENED',body:pts[0]||'',type:'body'},
-      {label:'BODY 2',role:'WHY IT MATTERS',title:'WHY IT MATTERS',body:pts[1]||'',type:'body'},
+      {label:'BODY 1',role:'NOW TRENDING',title:'NOW TRENDING',body:pts[0]||'',type:'body'},
+      {label:'BODY 2',role:'THE TAKEAWAY',title:'THE TAKEAWAY',body:pts[1]||'',type:'body'},
       {label:'BODY 3',role:"WHAT'S NEXT",title:"WHAT'S NEXT",body:pts[2]||'',type:'body'},
       {label:'CTA',role:'CTA',title:'"이거 왜 난리예요?"',body:'복잡한 이슈, 핵심만 쉽게\n한 장씩 넘기면 정리 끝',type:'cta'}
     ];
@@ -979,8 +1072,8 @@ async function downloadAll(){
 
     if(body && body.length>180){
       commitGeneratedCards(article,body,'body');
-      setCardStatus('기사 본문을 읽어서 5컷 요약을 다시 업데이트했어요.','ok');
-      showToast('본문 기반으로 업데이트했어요.');
+      setCardStatus('기사 본문을 읽고 원문 문장을 그대로 넣지 않도록 에디터 요약으로 다시 업데이트했어요.','ok');
+      showToast('에디터 요약으로 업데이트했어요.');
     }else{
       setCardStatus('기사 본문은 브라우저 보안/CORS 때문에 읽지 못했어요. 대신 검색 결과 제목·설명으로 만든 카드를 유지합니다.','warn');
       showToast('본문 접근 실패 · 검색 설명 기반으로 유지했어요.');
