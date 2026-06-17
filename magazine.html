@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MAGAZINIE — 매거진 설정</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23111%27/%3E%3Ctext x=%2732%27 y=%2742%27 font-size=%2734%27 text-anchor=%27middle%27 fill=%27white%27 font-family=%27Georgia%27 font-weight=%27900%27%3EM%3C/text%3E%3C/svg%3E" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css" />
+<style>
+:root {
+  --ink: #111111;
+  --muted: #737373;
+  --rule: #ebebeb;
+  --bg: #ffffff;
+  --soft: #f5f5f5;
+  --g1: #ff9ec7;
+  --g2: #b9a3f5;
+  --ink2: #141019;
+  --mut2: #6c6678;
+  --line2: #ececf1;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  font-family: "Pretendard Variable", Pretendard, -apple-system, sans-serif;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  color: var(--ink);
+}
+
+/* 사이드바 */
+.app-sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 232px;
+  background: #fff; border-right: 1px solid var(--rule);
+  padding: 28px 20px; display: flex; flex-direction: column;
+  gap: 24px; z-index: 20; overflow-y: auto;
+}
+.sidebar-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; color: #111;
+  padding-bottom: 24px; border-bottom: 1px solid var(--rule);
+}
+.sidebar-logo-mark {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; background: #111; color: #fff;
+  font-family: Georgia, serif; font-weight: 800; font-size: 14px;
+  border-radius: 5px; flex-shrink: 0;
+}
+.sidebar-logo-text { font-size: 12px; font-weight: 800; letter-spacing: .18em; }
+.sidebar-nav { display: flex; flex-direction: column; gap: 4px; }
+.sidebar-nav-title {
+  padding: 0 14px 6px; font-size: 11px; font-weight: 700;
+  letter-spacing: .18em; color: #737373; text-transform: uppercase;
+}
+.sidebar-nav a, .sidebar-nav .nav-current {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  border-radius: 6px; text-decoration: none; font-size: 14px;
+  font-weight: 600; color: #737373; background: transparent; transition: all .12s;
+}
+.sidebar-nav .nav-current { color: #111; background: #f5f5f5; }
+.sidebar-nav .num { color: #737373; font-size: 13px; width: 14px; }
+
+/* 메인 */
+.app-content { margin-left: 232px; min-height: 100vh; }
+.wrap { max-width: 780px; padding: 44px 56px 80px; }
+
+.page-head { margin-bottom: 32px; }
+.section-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+}
+h1 { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
+.lead { color: var(--muted); font-size: 14px; line-height: 1.6; margin-top: 8px; }
+
+/* 카드 섹션 */
+.setting-card {
+  background: #fff; border: 1px solid var(--rule); border-radius: 12px;
+  padding: 24px; margin-bottom: 16px;
+}
+.setting-card-title {
+  font-size: 13px; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 18px;
+}
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.field:last-child { margin-bottom: 0; }
+.field label { font-size: 13px; font-weight: 700; color: var(--ink2); }
+.field .hint { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.field input[type="text"], .field input[type="url"], .field textarea, .field select {
+  font-family: inherit; font-size: 13px; color: var(--ink);
+  background: #fff; border: 1px solid var(--rule); border-radius: 8px;
+  padding: 10px 12px; letter-spacing: -.01em; transition: border-color .12s;
+  width: 100%;
+}
+.field input:focus, .field textarea:focus, .field select:focus {
+  outline: none; border-color: var(--ink);
+}
+.field textarea { resize: vertical; min-height: 64px; line-height: 1.6; }
+
+/* 팔레트 선택 */
+.palette-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+}
+.palette-item {
+  border: 2px solid var(--rule); border-radius: 10px; padding: 12px 8px;
+  cursor: pointer; text-align: center; transition: all .15s;
+  background: #fff;
+}
+.palette-item:hover { border-color: #aaa; }
+.palette-item.selected { border-color: var(--ink2); box-shadow: 0 0 0 2px var(--ink2); }
+.palette-swatch {
+  width: 100%; height: 28px; border-radius: 6px; margin-bottom: 6px;
+}
+.palette-name { font-size: 11px; font-weight: 800; color: var(--ink2); }
+
+/* 로고 미리보기 */
+.logo-preview {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px; border-radius: 8px; background: var(--soft);
+  margin-top: 12px;
+}
+.logo-mark-preview {
+  width: 32px; height: 32px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: Georgia, serif; font-weight: 900; font-size: 16px;
+  color: #fff; flex-shrink: 0;
+}
+.logo-text-preview { font-size: 11px; font-weight: 800; letter-spacing: .22em; }
+
+/* CTA 미리보기 */
+.cta-preview {
+  margin-top: 14px; padding: 16px 18px; border-radius: 10px;
+  background: #111; color: #fff;
+}
+.cta-preview-headline {
+  font-size: 15px; font-weight: 900; letter-spacing: -.02em; margin-bottom: 5px;
+}
+.cta-preview-copy { font-size: 12px; color: #999; line-height: 1.6; }
+.cta-preview-accent { font-size: 12px; font-weight: 800; margin-top: 8px; }
+
+/* 저장 버튼 */
+.save-row {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 28px; padding-top: 28px; border-top: 1px solid var(--rule);
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 12px 22px; border-radius: 8px; border: 1px solid var(--ink);
+  background: var(--ink); color: #fff; cursor: pointer; font-size: 13px;
+  font-weight: 700; letter-spacing: .01em; transition: opacity .12s;
+  text-decoration: none; font-family: inherit;
+}
+.btn:hover { opacity: .85; }
+.btn.ghost {
+  background: #fff; color: var(--ink); border: 1px solid var(--rule);
+}
+.btn.ghost:hover { border-color: var(--ink); opacity: 1; }
+.save-msg {
+  font-size: 13px; color: #047857; font-weight: 700;
+  opacity: 0; transition: opacity .3s;
+}
+.save-msg.show { opacity: 1; }
+
+/* 토스트 */
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+  background: #111; color: #fff; border-radius: 10px;
+  padding: 10px 18px; font-size: 13px; z-index: 9999;
+  opacity: 0; transition: .2s; pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+/* 모바일 */
+@media (max-width: 820px) {
+  .app-sidebar { display: none; }
+  .app-content { margin-left: 0; }
+  .wrap { padding: 24px 16px 80px; }
+  .palette-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<nav class="app-sidebar">
+  <a class="sidebar-logo" href="index.html">
+    <span class="sidebar-logo-mark">M</span>
+    <span class="sidebar-logo-text">MAGAZINIE</span>
+  </a>
+  <div class="sidebar-nav">
+    <div class="sidebar-nav-title">Make</div>
+    <div class="nav-current"><span class="num">①</span>매거진 설정</div>
+    <a href="index.html"><span class="num">②</span>카드뉴스 만들기</a>
+  </div>
+</nav>
+
+<main class="app-content">
+  <div class="wrap">
+
+    <div class="page-head">
+      <div class="section-label">Step 1</div>
+      <h1>매거진 설정</h1>
+      <p class="lead">매거진 이름, 색상, CTA 문구를 설정해요. 카드뉴스 만들기에서 자동으로 반영돼요.</p>
+    </div>
+
+    <!-- 매거진 기본 정보 -->
+    <div class="setting-card">
+      <div class="setting-card-title">기본 정보</div>
+      <div class="field">
+        <label for="mag-name">매거진 이름</label>
+        <input type="text" id="mag-name" placeholder="예: 와디즈 매거진" maxlength="24" />
+        <span class="hint">카드 1컷 로고 영역에 표시돼요. 24자 이내.</span>
+      </div>
+      <div class="field">
+        <label for="mag-handle">로고 핸들 (선택)</label>
+        <input type="text" id="mag-handle" placeholder="예: what.is.mag" maxlength="20" />
+        <span class="hint">CTA 카드 하단에 작게 표시되는 계정명이에요.</span>
+      </div>
+      <div class="logo-preview">
+        <div id="logo-mark" class="logo-mark-preview" style="background:#111;">M</div>
+        <span id="logo-text" class="logo-text-preview">MAGAZINIE</span>
+      </div>
+    </div>
+
+    <!-- 팔레트 -->
+    <div class="setting-card">
+      <div class="setting-card-title">카드 팔레트</div>
+      <div class="palette-grid" id="palette-grid">
+        <div class="palette-item selected" data-palette="peach" onclick="selectPalette(this)">
+          <div class="palette-swatch" style="background:linear-gradient(135deg,#ffb3c8,#f6bcba)"></div>
+          <div class="palette-name">Peach</div>
+        </div>
+        <div class="palette-item" data-palette="lavender" onclick="selectPalette(this)">
+          <div class="palette-swatch" style="background:linear-gradient(135deg,#c4b5fd,#a78bfa)"></div>
+          <div class="palette-name">Lavender</div>
+        </div>
+        <div class="palette-item" data-palette="mint" onclick="selectPalette(this)">
+          <div class="palette-swatch" style="background:linear-gradient(135deg,#6ee7b7,#34d399)"></div>
+          <div class="palette-name">Mint</div>
+        </div>
+        <div class="palette-item" data-palette="sky" onclick="selectPalette(this)">
+          <div class="palette-swatch" style="background:linear-gradient(135deg,#7dd3fc,#38bdf8)"></div>
+          <div class="palette-name">Sky</div>
+        </div>
+        <div class="palette-item" data-palette="sand" onclick="selectPalette(this)">
+          <div class="palette-swatch" style="background:linear-gradient(135deg,#fde68a,#fbbf24)"></div>
+          <div class="palette-name">Sand</div>
+        </div>
+        <div class="palette-item" data-palette="rose" onclick="selectPalette(this)">
+          <div class="palette-swatch" style="background:linear-gradient(135deg,#fda4af,#fb7185)"></div>
+          <div class="palette-name">Rose</div>
+        </div>
+        <div class="palette-item" data-palette="noir" onclick="selectPalette(this)">
+          <div class="palette-swatch" style="background:linear-gradient(135deg,#6b7280,#374151)"></div>
+          <div class="palette-name">Noir</div>
+        </div>
+        <div class="palette-item" data-palette="cream" onclick="selectPalette(this)">
+          <div class="palette-swatch" style="background:linear-gradient(135deg,#fef9c3,#fef08a)"></div>
+          <div class="palette-name">Cream</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA 설정 -->
+    <div class="setting-card">
+      <div class="setting-card-title">CTA 카드 문구</div>
+      <div class="field">
+        <label for="cta-headline">헤드라인</label>
+        <input type="text" id="cta-headline" placeholder='예: "이거 왜 난리예요?"' maxlength="30" />
+      </div>
+      <div class="field">
+        <label for="cta-copy1">카피 1줄</label>
+        <input type="text" id="cta-copy1" placeholder="예: 복잡한 이슈, 핵심만 쉽게" maxlength="24" />
+      </div>
+      <div class="field">
+        <label for="cta-copy2">카피 2줄</label>
+        <input type="text" id="cta-copy2" placeholder="예: 한 장씩 넘기면 정리 끝" maxlength="24" />
+      </div>
+      <div class="cta-preview">
+        <div id="preview-headline" class="cta-preview-headline">"이거 왜 난리예요?"</div>
+        <div class="cta-preview-copy">
+          <span id="preview-copy1">복잡한 이슈, 핵심만 쉽게</span><br>
+          <span id="preview-copy2">한 장씩 넘기면 정리 끝</span>
+        </div>
+        <div id="preview-accent" class="cta-preview-accent" style="color:#ff9ec7">한 장씩 넘기면 정리 끝 →</div>
+      </div>
+    </div>
+
+    <!-- 기본 검색 키워드 -->
+    <div class="setting-card">
+      <div class="setting-card-title">기본 검색 키워드</div>
+      <div class="field">
+        <label for="kw-beauty">뷰티 기본 키워드</label>
+        <input type="text" id="kw-beauty" placeholder="예: 뷰티, 화장품, 올리브영" />
+        <span class="hint">카드뉴스 만들기 페이지 진입 시 자동으로 채워져요.</span>
+      </div>
+      <div class="field">
+        <label for="kw-fashion">패션 기본 키워드</label>
+        <input type="text" id="kw-fashion" placeholder="예: 패션, 스타일, 무신사" />
+      </div>
+    </div>
+
+    <div class="save-row">
+      <button class="btn" onclick="saveSettings()">설정 저장</button>
+      <a href="index.html" class="btn ghost">카드뉴스 만들기 →</a>
+      <span id="save-msg" class="save-msg">✓ 저장됐어요!</span>
+    </div>
+
+  </div>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const PALETTE_ACCENT = {
+  peach: '#f6bcba',
+  lavender: '#a78bfa',
+  mint: '#34d399',
+  sky: '#38bdf8',
+  sand: '#fbbf24',
+  rose: '#fb7185',
+  noir: '#9ca3af',
+  cream: '#fef08a'
+};
+
+const DEFAULTS = {
+  magName: '와디즈 매거진',
+  magHandle: 'what.is.mag',
+  palette: 'peach',
+  ctaHeadline: '"이거 왜 난리예요?"',
+  ctaCopy1: '복잡한 이슈, 핵심만 쉽게',
+  ctaCopy2: '한 장씩 넘기면 정리 끝',
+  kwBeauty: '뷰티, 화장품',
+  kwFashion: '패션, 스타일'
+};
+
+function $(id) { return document.getElementById(id); }
+
+function showToast(msg) {
+  var t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2400);
+}
+
+function selectPalette(el) {
+  document.querySelectorAll('.palette-item').forEach(function(p) { p.classList.remove('selected'); });
+  el.classList.add('selected');
+  updateCtaPreview();
+}
+
+function updateLogoPreview() {
+  var name = $('mag-name').value.trim() || 'MAGAZINIE';
+  var initial = name.charAt(0).toUpperCase();
+  $('logo-mark').textContent = initial;
+  $('logo-text').textContent = name.toUpperCase();
+}
+
+function updateCtaPreview() {
+  var headline = $('cta-headline').value.trim() || '"이거 왜 난리예요?"';
+  var copy1 = $('cta-copy1').value.trim() || '복잡한 이슈, 핵심만 쉽게';
+  var copy2 = $('cta-copy2').value.trim() || '한 장씩 넘기면 정리 끝';
+  var selected = document.querySelector('.palette-item.selected');
+  var palette = selected ? selected.dataset.palette : 'peach';
+  var accent = PALETTE_ACCENT[palette] || '#ff9ec7';
+  $('preview-headline').textContent = headline;
+  $('preview-copy1').textContent = copy1;
+  $('preview-copy2').textContent = copy2;
+  $('preview-accent').textContent = copy2 + ' →';
+  $('preview-accent').style.color = accent;
+}
+
+function loadSettings() {
+  try {
+    var saved = JSON.parse(localStorage.getItem('magazinie_settings') || '{}');
+    $('mag-name').value = saved.magName || DEFAULTS.magName;
+    $('mag-handle').value = saved.magHandle || DEFAULTS.magHandle;
+    $('cta-headline').value = saved.ctaHeadline || DEFAULTS.ctaHeadline;
+    $('cta-copy1').value = saved.ctaCopy1 || DEFAULTS.ctaCopy1;
+    $('cta-copy2').value = saved.ctaCopy2 || DEFAULTS.ctaCopy2;
+    $('kw-beauty').value = saved.kwBeauty || DEFAULTS.kwBeauty;
+    $('kw-fashion').value = saved.kwFashion || DEFAULTS.kwFashion;
+    var palette = saved.palette || DEFAULTS.palette;
+    document.querySelectorAll('.palette-item').forEach(function(p) {
+      p.classList.toggle('selected', p.dataset.palette === palette);
+    });
+    updateLogoPreview();
+    updateCtaPreview();
+  } catch(e) {}
+}
+
+function saveSettings() {
+  var selected = document.querySelector('.palette-item.selected');
+  var settings = {
+    magName: $('mag-name').value.trim() || DEFAULTS.magName,
+    magHandle: $('mag-handle').value.trim() || DEFAULTS.magHandle,
+    palette: selected ? selected.dataset.palette : 'peach',
+    ctaHeadline: $('cta-headline').value.trim() || DEFAULTS.ctaHeadline,
+    ctaCopy1: $('cta-copy1').value.trim() || DEFAULTS.ctaCopy1,
+    ctaCopy2: $('cta-copy2').value.trim() || DEFAULTS.ctaCopy2,
+    kwBeauty: $('kw-beauty').value.trim() || DEFAULTS.kwBeauty,
+    kwFashion: $('kw-fashion').value.trim() || DEFAULTS.kwFashion
+  };
+  localStorage.setItem('magazinie_settings', JSON.stringify(settings));
+  var msg = $('save-msg');
+  msg.classList.add('show');
+  setTimeout(function() { msg.classList.remove('show'); }, 2500);
+  showToast('설정이 저장됐어요!');
+}
+
+// 실시간 미리보기
+$('mag-name').addEventListener('input', updateLogoPreview);
+$('cta-headline').addEventListener('input', updateCtaPreview);
+$('cta-copy1').addEventListener('input', updateCtaPreview);
+$('cta-copy2').addEventListener('input', updateCtaPreview);
+
+window.addEventListener('DOMContentLoaded', loadSettings);
+</script>
+</body>
+</html>
