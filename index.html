@@ -610,7 +610,38 @@ function setImage(i,input){const f=input.files[0];if(!f)return;const r=new FileR
 function renderCaption(){if(!cards.length){$('caption-box').innerHTML='';$('hashtag-box').textContent='';return}const lines=[];lines.push('⭐ '+clean(cards[0]?.title||''));cards.slice(1,4).forEach(c=>lines.push('📍 '+clean((c.role?c.role+' — ':'')+(c.body||''))));$('caption-box').innerHTML=lines.map(x=>`<div class="caption-line">${escapeHtml(x)}</div>`).join('');$('hashtag-box').textContent=Array.isArray(lastSummary.hashtags)&&lastSummary.hashtags.length?lastSummary.hashtags.map(clean).join(' '):'#카드뉴스 #트렌드 #매거진'}
 function copyCaption(){const text=[...document.querySelectorAll('.caption-line')].map(x=>x.textContent).join('\n')+'\n\n'+$('hashtag-box').textContent;navigator.clipboard.writeText(text).then(()=>showToast('캡션을 복사했어요.'))}
 async function downloadAll(){if(!cards.length){showToast('먼저 카드를 생성해 주세요.');return}showLoading('이미지 생성 중...');try{const zip=new JSZip();for(let i=0;i<cards.length;i++){const canvas=await html2canvas($('card-'+i),{scale:3,useCORS:true,allowTaint:true,backgroundColor:null});const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));zip.file(`card_${String(i+1).padStart(2,'0')}_${cards[i].label}.png`,blob)}zip.file('caption.txt',[...document.querySelectorAll('.caption-line')].map(x=>x.textContent).join('\n')+'\n\n'+$('hashtag-box').textContent);const data=await zip.generateAsync({type:'blob'});const a=document.createElement('a');a.href=URL.createObjectURL(data);a.download='magazinie-cardnews.zip';a.click();showToast('ZIP 다운로드 완료')}catch(e){console.error(e);showToast('다운로드 실패')}hideLoading()}
-
+function loadMagazineSettings() {
+  try {
+    var s = JSON.parse(localStorage.getItem('magazinie_settings') || '{}');
+    // 매거진 선택 드롭다운 반영
+    if (s.magName) {
+      var sel = document.getElementById('magazine');
+      if (sel) {
+        var found = false;
+        for (var i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].text === s.magName) { sel.selectedIndex = i; found = true; break; }
+        }
+        if (!found) {
+          var opt = document.createElement('option');
+          opt.value = s.magHandle || 'custom';
+          opt.text = s.magName;
+          opt.selected = true;
+          sel.appendChild(opt);
+        }
+      }
+    }
+    // 뷰티 기본 키워드 반영
+    if (s.kwBeauty) {
+      var beautyKws = s.kwBeauty.split(',').map(function(k){ return k.trim(); }).filter(Boolean);
+      if (beautyKws.length) { tags.beauty = [beautyKws[0]]; renderKeywords('beauty'); }
+    }
+    // 패션 기본 키워드 반영
+    if (s.kwFashion) {
+      var fashionKws = s.kwFashion.split(',').map(function(k){ return k.trim(); }).filter(Boolean);
+      if (fashionKws.length) { tags.fashion = [fashionKws[0]]; renderKeywords('fashion'); }
+    }
+  } catch(e) {}
+}
 </script>
 </body>
 </html>
