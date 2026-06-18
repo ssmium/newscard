@@ -184,7 +184,6 @@ h1 { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
         <h1>카드뉴스 만들기</h1>
         <p class="lead">키워드로 기사를 검색하고, 기사를 선택하면 AI가 7컷 카드뉴스를 자동으로 만들어요.</p>
       </div>
-      <span id="usage-counter" style="font-size:12px;font-weight:700;color:#737373;"></span>
       <span class="worker-status-pill">
         <span class="worker-status-dot"></span>
         <span id="worker-version">Worker 확인 중</span>
@@ -357,63 +356,7 @@ var cardImages = {};
 var cardStyles = {};
 var cardAlign = {};
 var generationSeq = 0;
-var DAILY_LIMIT = 10;
 
-function getUsageToday() {
-  try {
-    var data = JSON.parse(localStorage.getItem('magazinie_usage') || '{}');
-    var today = new Date().toISOString().slice(0, 10);
-    if (data.date !== today) return 0;
-    return data.count || 0;
-  } catch(e) { return 0; }
-}
-
-function incrementUsage() {
-  try {
-    var today = new Date().toISOString().slice(0, 10);
-    var count = getUsageToday() + 1;
-    localStorage.setItem('magazinie_usage', JSON.stringify({ date: today, count: count }));
-    updateUsageUI();
-  } catch(e) {}
-}
-
-function updateUsageUI() {
-  var el = document.getElementById('usage-counter');
-  if (!el) return;
-  if (isDevMode()) {
-    el.textContent = '🛠 개발 모드 (횟수 무제한)';
-    el.style.color = '#8b5cf6';
-    el.style.cursor = 'pointer';
-    el.title = '클릭하면 개발 모드 해제';
-  } else {
-    var used = getUsageToday();
-    var remaining = Math.max(0, DAILY_LIMIT - used);
-    el.textContent = '오늘 남은 횟수 ' + remaining + ' / ' + DAILY_LIMIT;
-    el.style.color = remaining <= 2 ? '#d93838' : '#737373';
-    el.style.cursor = 'pointer';
-    el.title = '클릭하면 개발 모드 (횟수 무제한)';
-  }
-}
-
-function isDevMode() {
-  return localStorage.getItem('dev_mode') === 'true';
-}
-
-function toggleDevMode() {
-  var current = isDevMode();
-  localStorage.setItem('dev_mode', (!current).toString());
-  updateUsageUI();
-  showToast(current ? '개발 모드 OFF — 횟수 제한 활성화' : '개발 모드 ON — 횟수 제한 해제');
-}
-
-function checkLimit() {
-  if (isDevMode()) return true;
-  if (getUsageToday() >= DAILY_LIMIT) {
-    showToast('오늘 생성 횟수(' + DAILY_LIMIT + '회)를 모두 사용했어요. 내일 다시 시도해주세요.');
-    return false;
-  }
-  return true;
-}
 var lastQuery = '';
 var lastSummary = { caption: '', hashtags: [] };
 var magSettings = {};
@@ -595,7 +538,6 @@ function alignOf(i) { if (!cardAlign[i]) cardAlign[i] = 'center'; return cardAli
 function setAlign(i, align) { cardAlign[i] = align; rerenderCard(i); }
 
 async function generateFromArticle(index) {
-  if (!checkLimit()) return;
   var article = currentArticles[index];
   if (!article) { showToast('기사 정보를 찾지 못했어요.'); return; }
   var token = ++generationSeq;
@@ -620,7 +562,6 @@ async function generateFromArticle(index) {
     var info = data.sourceInfo || {};
     setStatus(info.usedFullBody || info.usedManual ? 'ok' : 'warn', clean(info.status || 'AI 카드뉴스 생성 완료'));
     setTimeout(function() { $('cards-panel').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 80);
-    incrementUsage();
     showToast('AI 카드뉴스 7컷을 생성했어요.');
   } catch(e) {
     setStatus('warn', e.message || '카드뉴스 생성 실패');
@@ -798,10 +739,7 @@ function init() {
   loadMagazineSettings();
   renderSearchChips();
   checkWorkerHealth(false);
-  updateUsageUI();
   loadSharedCards();
-  var usageEl = document.getElementById('usage-counter');
-  if (usageEl) usageEl.addEventListener('click', toggleDevMode);
 }
 
 
