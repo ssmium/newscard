@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>MAGAZINIE — Card News Maker</title>
-<meta name="description" content="네이버 뉴스 → AI 인스타 카드뉴스 자동 생성" />
+<title>히포케이메논 카드뉴스</title>
+<meta name="description" content="네이버 뉴스 → AI 카드뉴스 자동 생성" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23111%27/%3E%3Ctext x=%2732%27 y=%2742%27 font-size=%2734%27 text-anchor=%27middle%27 fill=%27white%27 font-family=%27Georgia%27 font-weight=%27900%27%3EM%3C/text%3E%3C/svg%3E" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css" />
 <style>
@@ -113,6 +113,20 @@ h1 { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
 .btn.ghost { background: #fff; color: var(--ink); border: 1px solid var(--rule); }
 .btn.ghost:hover { border-color: var(--ink); opacity: 1; }
 
+
+/* 기사 미리보기 모달 */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 9000; display: none; align-items: center; justify-content: center; padding: 24px; }
+.modal-overlay.show { display: flex; }
+.modal-box { background: #fff; border-radius: 14px; width: 100%; max-width: 680px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 24px 64px rgba(0,0,0,.22); }
+.modal-head { padding: 22px 24px 16px; border-bottom: 1px solid var(--rule); }
+.modal-head-label { font-size: 11px; font-weight: 700; letter-spacing: .14em; color: var(--muted); margin-bottom: 6px; }
+.modal-head-title { font-size: 17px; font-weight: 900; letter-spacing: -.02em; line-height: 1.4; word-break: keep-all; }
+.modal-head-meta { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.modal-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+.modal-body-text { font-size: 14px; line-height: 1.9; color: #222; word-break: keep-all; white-space: pre-wrap; letter-spacing: -.01em; }
+.modal-body-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 32px 0; }
+.modal-foot { padding: 16px 24px; border-top: 1px solid var(--rule); display: flex; gap: 10px; justify-content: flex-end; }
+
 /* 로딩/토스트 */
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #111; color: #fff; border-radius: 10px; padding: 10px 18px; font-size: 13px; z-index: 9999; opacity: 0; transition: .2s; pointer-events: none; }
 .toast.show { opacity: 1; }
@@ -143,7 +157,7 @@ h1 { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
 <nav class="app-sidebar">
   <a class="sidebar-logo" href="index.html">
     <span class="sidebar-logo-mark">M</span>
-    <span class="sidebar-logo-text">MAGAZINIE</span>
+    <span class="sidebar-logo-text">HYPOKEIMENON</span>
   </a>
   <div class="sidebar-nav">
     <div class="sidebar-nav-title">Make</div>
@@ -170,6 +184,7 @@ h1 { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
         <h1>카드뉴스 만들기</h1>
         <p class="lead">키워드로 기사를 검색하고, 기사를 선택하면 AI가 5컷 카드뉴스를 자동으로 만들어요.</p>
       </div>
+      <span id="usage-counter" style="font-size:12px;font-weight:700;color:#737373;"></span>
       <span class="worker-status-pill">
         <span class="worker-status-dot"></span>
         <span id="worker-version">Worker 확인 중</span>
@@ -212,6 +227,8 @@ h1 { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
           <div class="hint"><b>카드 저장하기</b> — 옆으로 스크롤해서 5컷을 확인하세요.</div>
           <div class="hint">각 카드 하단에서 정렬·이미지를 바꾸고, 아래 편집 패널에서 문장을 다듬을 수 있어요.</div>
         </div>
+        <button type="button" class="btn ghost" onclick="openPreview()">📱 인스타 미리보기</button>
+        <button type="button" class="btn ghost" onclick="shareCards()">🔗 팀 공유</button>
         <button type="button" class="btn" onclick="downloadAll()">⬇ 전체 ZIP 다운로드</button>
       </div>
       <div class="card-scroll"><div id="card-row" class="card-row"></div></div>
@@ -226,14 +243,111 @@ h1 { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
   </div>
 </main>
 
+
+<!-- 기사 미리보기 모달 -->
+<div id="article-modal" class="modal-overlay" onclick="closeArticleModal(event)">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+        <div style="flex:1;min-width:0;">
+          <div class="modal-head-label">기사 본문 미리보기</div>
+          <div id="modal-title" class="modal-head-title"></div>
+          <div id="modal-meta" class="modal-head-meta"></div>
+        </div>
+        <a id="modal-origin-link" href="#" target="_blank" class="btn ghost" style="white-space:nowrap;flex-shrink:0;font-size:12px;padding:8px 12px;">원문 보기 ↗</a>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div id="modal-body-text" class="modal-body-text"></div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn ghost" onclick="closeArticleModal()">닫기</button>
+      <button type="button" class="btn" id="modal-generate-btn" onclick="generateFromModal()">이 기사로 카드뉴스 만들기 →</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- 인스타 미리보기 모달 -->
+<div id="preview-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9500;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:14px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.3);">
+    <!-- 헤더 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #efefef;">
+      <span style="font-size:13px;font-weight:800;">📱 인스타그램 미리보기</span>
+      <button type="button" id="preview-close-btn" style="border:1px solid #ddd;background:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-weight:700;">닫기</button>
+    </div>
+    <!-- 프로필 -->
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #efefef;">
+      <div id="preview-profile-initial" style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;flex-shrink:0;">H</div>
+      <div>
+        <div id="preview-profile-name" style="font-size:13px;font-weight:800;">hypokeimenon</div>
+        <div style="font-size:11px;color:#737373;">sponsored</div>
+      </div>
+      <div style="margin-left:auto;font-size:18px;color:#262626;">···</div>
+    </div>
+    <!-- 카드 이미지 -->
+    <div style="background:#111;position:relative;">
+      <div id="preview-card-img" style="width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
+      <!-- 네비 버튼 -->
+      <div id="preview-prev-btn" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.88);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;font-weight:900;box-shadow:0 2px 8px rgba(0,0,0,.25);user-select:none;">‹</div>
+      <div id="preview-next-btn" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.88);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;font-weight:900;box-shadow:0 2px 8px rgba(0,0,0,.25);user-select:none;">›</div>
+      <!-- 카운터 -->
+      <div id="preview-counter" style="position:absolute;top:8px;right:10px;font-size:11px;font-weight:700;color:rgba(255,255,255,.7);">1 / 7</div>
+      <!-- 닷 -->
+      <div id="preview-dots" style="position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:4px;pointer-events:none;"></div>
+    </div>
+    <!-- 액션 -->
+    <div style="padding:10px 14px;background:#fff;">
+      <div style="display:flex;gap:14px;margin-bottom:8px;font-size:20px;">
+        <span>🤍</span><span>💬</span><span>📤</span>
+        <span style="margin-left:auto;">🔖</span>
+      </div>
+      <div style="font-size:13px;font-weight:800;margin-bottom:4px;">좋아요 <b>128개</b></div>
+      <div id="preview-caption" style="font-size:13px;line-height:1.6;word-break:keep-all;"></div>
+      <div id="preview-hashtags" style="font-size:13px;color:#00376b;margin-top:4px;"></div>
+      <div style="font-size:12px;color:#737373;margin-top:6px;">2시간 전</div>
+    </div>
+  </div>
+</div>
+
+<!-- 공유 모달 -->
+<div id="share-modal" class="modal-overlay" onclick="closeShareModal(event)">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-head">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div class="modal-head-label">🔗 팀 공유</div>
+          <div class="modal-head-title">카드뉴스 링크 공유</div>
+        </div>
+        <button type="button" class="btn ghost" style="padding:6px 10px;font-size:12px" onclick="closeShareModal()">닫기</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div id="share-status" style="font-size:13px;color:#737373;margin-bottom:16px;">링크를 생성하고 있어요...</div>
+      <div id="share-link-box" style="display:none;">
+        <div style="font-size:12px;font-weight:700;color:#737373;margin-bottom:6px;">공유 링크 (30일 유효)</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="share-link-input" type="text" readonly style="flex:1;font-size:12px;padding:10px 12px;border:1px solid #ebebeb;border-radius:8px;background:#f5f5f5;font-family:inherit;" />
+          <button type="button" class="btn" onclick="copyShareLink()" style="white-space:nowrap;">복사</button>
+        </div>
+        <div style="margin-top:12px;padding:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12px;color:#047857;">
+          ✓ 링크를 받은 팀원은 별도 로그인 없이 카드뉴스를 확인할 수 있어요.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="loading" class="loading"><div class="spinner"></div><div id="loading-text">처리 중...</div></div>
 <div id="toast" class="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-const WORKER_API_BASE = 'https://wispy-mountain-4c30.yjuio9603.workers.dev';
-const SUGGEST_DEFAULT = ['뷰티','화장품','올리브영','장원영','무신사','패션','스타일','팝업','트렌드','서울'];
+const SUPABASE_URL = 'https://tbvuipqcmyoyowkbfbmo.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRidnVpcHFjbXlveW93a2JmYm1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NDcxMzIsImV4cCI6MjA5NzMyMzEzMn0.fhvWH6cjKEOaLupg7EDZ9ATX8g7ZBsOsLTvOEk3HuGU';
+const WORKER_API_BASE = 'https://hypokeimenon-worker.hypokeimenon001.workers.dev';
+const SUGGEST_DEFAULT = ['블록체인','가상자산','NFT','암호화폐','Web3','메타버스','디파이','코인','토큰','거래소'];
 
 var searchTags = [];
 var currentArticles = [];
@@ -243,9 +357,67 @@ var cardImages = {};
 var cardStyles = {};
 var cardAlign = {};
 var generationSeq = 0;
+var DAILY_LIMIT = 10;
+
+function getUsageToday() {
+  try {
+    var data = JSON.parse(localStorage.getItem('magazinie_usage') || '{}');
+    var today = new Date().toISOString().slice(0, 10);
+    if (data.date !== today) return 0;
+    return data.count || 0;
+  } catch(e) { return 0; }
+}
+
+function incrementUsage() {
+  try {
+    var today = new Date().toISOString().slice(0, 10);
+    var count = getUsageToday() + 1;
+    localStorage.setItem('magazinie_usage', JSON.stringify({ date: today, count: count }));
+    updateUsageUI();
+  } catch(e) {}
+}
+
+function updateUsageUI() {
+  var el = document.getElementById('usage-counter');
+  if (!el) return;
+  if (isDevMode()) {
+    el.textContent = '🛠 개발 모드 (횟수 무제한)';
+    el.style.color = '#8b5cf6';
+    el.style.cursor = 'pointer';
+    el.title = '클릭하면 개발 모드 해제';
+  } else {
+    var used = getUsageToday();
+    var remaining = Math.max(0, DAILY_LIMIT - used);
+    el.textContent = '오늘 남은 횟수 ' + remaining + ' / ' + DAILY_LIMIT;
+    el.style.color = remaining <= 2 ? '#d93838' : '#737373';
+    el.style.cursor = 'pointer';
+    el.title = '클릭하면 개발 모드 (횟수 무제한)';
+  }
+}
+
+function isDevMode() {
+  return localStorage.getItem('dev_mode') === 'true';
+}
+
+function toggleDevMode() {
+  var current = isDevMode();
+  localStorage.setItem('dev_mode', (!current).toString());
+  updateUsageUI();
+  showToast(current ? '개발 모드 OFF — 횟수 제한 활성화' : '개발 모드 ON — 횟수 제한 해제');
+}
+
+function checkLimit() {
+  if (isDevMode()) return true;
+  if (getUsageToday() >= DAILY_LIMIT) {
+    showToast('오늘 생성 횟수(' + DAILY_LIMIT + '회)를 모두 사용했어요. 내일 다시 시도해주세요.');
+    return false;
+  }
+  return true;
+}
 var lastQuery = '';
 var lastSummary = { caption: '', hashtags: [] };
 var magSettings = {};
+var modalArticleIndex = -1;
 
 function $(id) { return document.getElementById(id); }
 
@@ -395,9 +567,9 @@ function renderArticles() {
       + '<div class="article-sub">' + escapeHtml(date) + ' · ' + escapeHtml(a.domain || '') + '</div>'
       + '<div class="article-desc">' + escapeHtml(a.desc || '기사 설명 없음') + '</div>'
       + '</div>'
-      + '<button type="button" class="btn">AI 생성</button>';
-    div.addEventListener('click', function() { generateFromArticle(i); });
-    div.querySelector('button').addEventListener('click', function(e) { e.stopPropagation(); generateFromArticle(i); });
+      + '<button type="button" class="btn">본문 보기</button>';
+    div.addEventListener('click', function() { openArticleModal(i); });
+    div.querySelector('button').addEventListener('click', function(e) { e.stopPropagation(); openArticleModal(i); });
     list.appendChild(div);
   });
 }
@@ -423,6 +595,7 @@ function alignOf(i) { if (!cardAlign[i]) cardAlign[i] = 'center'; return cardAli
 function setAlign(i, align) { cardAlign[i] = align; rerenderCard(i); }
 
 async function generateFromArticle(index) {
+  if (!checkLimit()) return;
   var article = currentArticles[index];
   if (!article) { showToast('기사 정보를 찾지 못했어요.'); return; }
   var token = ++generationSeq;
@@ -447,6 +620,7 @@ async function generateFromArticle(index) {
     var info = data.sourceInfo || {};
     setStatus(info.usedFullBody || info.usedManual ? 'ok' : 'warn', clean(info.status || 'AI 카드뉴스 생성 완료'));
     setTimeout(function() { $('cards-panel').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 80);
+    incrementUsage();
     showToast('AI 카드뉴스 5컷을 생성했어요.');
   } catch(e) {
     setStatus('warn', e.message || '카드뉴스 생성 실패');
@@ -467,7 +641,7 @@ function normalizeCards(rawCards, article) {
   var findRole = function(role) { return arr.find(function(c) { return String(c && c.role || '').toUpperCase() === role; }) || null; };
   var hook = arr.find(function(c) { return c && c.type === 'hook'; }) || arr[0] || {};
   var cta = arr.find(function(c) { return c && c.type === 'cta'; }) || arr[4] || {};
-  var roles = ['NOW TRENDING', 'THE TAKEAWAY', "WHAT'S NEXT"];
+  var roles = ['NOW TRENDING', 'CONTEXT', 'THE TAKEAWAY', "WHAT'S NEXT", 'WHY IT MATTERS'];
   var magName = magSettings.magName || '와디즈 매거진';
   return [
     { label: 'HOOK', role: 'HOOK', title: clean(hook.title || ''), body: '', subtitle: clean(hook.subtitle || ''), type: 'hook', magName: magName },
@@ -624,6 +798,227 @@ function init() {
   loadMagazineSettings();
   renderSearchChips();
   checkWorkerHealth(false);
+  updateUsageUI();
+  loadSharedCards();
+  var usageEl = document.getElementById('usage-counter');
+  if (usageEl) usageEl.addEventListener('click', toggleDevMode);
+}
+
+
+async function openArticleModal(index) {
+  var article = currentArticles[index];
+  if (!article) return;
+  modalArticleIndex = index;
+
+  // 모달 열기
+  var modal = $('article-modal');
+  $('modal-title').textContent = article.title;
+  $('modal-meta').textContent = (article.pubDate ? new Date(article.pubDate).toLocaleDateString('ko-KR') + ' · ' : '') + (article.domain || '');
+  $('modal-body-text').innerHTML = '<div class="modal-body-empty">본문 불러오는 중...</div>';
+  // 원문 링크 설정
+  var originLink = $('modal-origin-link');
+  if (originLink) {
+    originLink.href = article.origin || article.url || '#';
+  }
+  modal.classList.add('show');
+  document.body.style.overflow = 'hidden';
+
+  // 본문 fetch
+  try {
+    var res = await fetchWithTimeout(WORKER_API_BASE + '/fetch-article', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url: article.url, origin: article.origin, title: article.title, desc: article.desc })
+    }, 20000);
+    var data = await res.json();
+    if (data.ok && data.body) {
+      // 노이즈 제거 + 단락 구분
+      var cleaned = data.body
+        .replace(/var\s+\w+\s*=\s*[^;]{0,80};/g, ' ')
+        .replace(/ⓒ\s*\S+/g, '')
+        .replace(/\[사진[^\]]*\]/g, '')
+        .replace(/\[이미지[^\]]*\]/g, '')
+        .replace(/사진\s*=\s*[^\s]+/g, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+      $('modal-body-text').textContent = cleaned;
+    } else {
+      $('modal-body-text').innerHTML = '<div class="modal-body-empty">본문을 불러오지 못했어요.<br>기사 원문을 직접 확인해주세요.</div>';
+    }
+  } catch(e) {
+    $('modal-body-text').innerHTML = '<div class="modal-body-empty">본문 로딩 실패: ' + e.message + '</div>';
+  }
+}
+
+function closeArticleModal(e) {
+  if (e && e.target !== $('article-modal')) return;
+  $('article-modal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function generateFromModal() {
+  $('article-modal').classList.remove('show');
+  document.body.style.overflow = '';
+  generateFromArticle(modalArticleIndex);
+}
+
+
+// ── 인스타 미리보기 ──────────────────────────────
+function openPreview() {
+  if (!cards.length) { showToast('먼저 카드를 생성해 주세요.'); return; }
+  previewIndex = 0;
+
+  var modal = document.getElementById('preview-modal');
+  var imgBox = document.getElementById('preview-card-img');
+  var dots = document.getElementById('preview-dots');
+
+  imgBox.innerHTML = '';
+  dots.innerHTML = '';
+
+  // 프로필
+  var handle = (magSettings.magHandle || 'hypokeimenon').replace('@','');
+  document.getElementById('preview-profile-name').textContent = handle;
+  document.getElementById('preview-profile-initial').textContent = handle.charAt(0).toUpperCase();
+
+  // 닷 생성
+  for (var di = 0; di < cards.length; di++) {
+    var dot = document.createElement('div');
+    dot.style.cssText = 'width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.4);transition:.2s;flex-shrink:0;';
+    dots.appendChild(dot);
+  }
+
+  // 캡션
+  document.getElementById('preview-caption').textContent = lastSummary.caption || '';
+  document.getElementById('preview-hashtags').textContent = Array.isArray(lastSummary.hashtags) ? lastSummary.hashtags.join(' ') : '';
+
+  // 모달 표시
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  // 버튼 이벤트
+  document.getElementById('preview-close-btn').onclick = function() { closePreviewModal(); };
+  document.getElementById('preview-prev-btn').onclick = function() { if (previewIndex > 0) renderPreviewCard(previewIndex - 1); };
+  document.getElementById('preview-next-btn').onclick = function() { if (previewIndex < cards.length - 1) renderPreviewCard(previewIndex + 1); };
+
+  // 바로 첫 카드 렌더링 (DOM 복제 방식)
+  renderPreviewCard(0);
+}
+
+function renderPreviewCard(idx) {
+  if (idx < 0 || idx >= cards.length) return;
+  previewIndex = idx;
+  var imgBox = document.getElementById('preview-card-img');
+  imgBox.innerHTML = '';
+
+  // 원본 카드 복제
+  var original = document.getElementById('card-' + idx);
+  if (original) {
+    var clone = original.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.style.cssText = 'width:100%;height:100%;border-radius:0;position:relative;';
+    imgBox.appendChild(clone);
+  } else {
+    imgBox.innerHTML = '<div style="color:#555;font-size:12px;padding:20px;">카드를 찾을 수 없어요</div>';
+  }
+
+  // 닷 업데이트
+  var dotEls = document.getElementById('preview-dots').children;
+  for (var i = 0; i < dotEls.length; i++) {
+    dotEls[i].style.background = i === idx ? '#fff' : 'rgba(255,255,255,0.4)';
+  }
+  // 카운터
+  document.getElementById('preview-counter').textContent = (idx+1) + ' / ' + cards.length;
+}
+
+function closePreviewModal() {
+  document.getElementById('preview-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// ── 팀 공유 ──────────────────────────────────────
+async function shareCards() {
+  if (!cards.length) { showToast('먼저 카드를 생성해 주세요.'); return; }
+
+  document.getElementById('share-modal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('share-status').textContent = '링크를 생성하고 있어요...';
+  document.getElementById('share-link-box').style.display = 'none';
+
+  try {
+    // share_id 생성
+    var shareId = 'hypo-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    var title = cards[0] && cards[0].title ? cards[0].title.replace(/\n/g, ' ') : '히포케이메논 카드뉴스';
+
+    // Supabase 저장
+    var res = await fetch(SUPABASE_URL + '/rest/v1/cardnews_shares', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        share_id: shareId,
+        title: title,
+        cards: cards,
+        summary: lastSummary
+      })
+    });
+
+    if (!res.ok) throw new Error('저장 실패: ' + res.status);
+
+    // 공유 URL 생성
+    var shareUrl = location.origin + location.pathname + '?share=' + shareId;
+    document.getElementById('share-link-input').value = shareUrl;
+    document.getElementById('share-status').textContent = '✓ 링크가 생성됐어요!';
+    document.getElementById('share-link-box').style.display = 'block';
+
+  } catch(e) {
+    document.getElementById('share-status').textContent = '링크 생성 실패: ' + e.message;
+  }
+}
+
+function copyShareLink() {
+  var input = document.getElementById('share-link-input');
+  navigator.clipboard.writeText(input.value).then(function() {
+    showToast('링크를 복사했어요!');
+  });
+}
+
+function closeShareModal(e) {
+  if (e && e.target !== document.getElementById('share-modal')) return;
+  document.getElementById('share-modal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+// ── 공유 링크로 접속 시 카드 불러오기 ──────────────
+async function loadSharedCards() {
+  var params = new URLSearchParams(location.search);
+  var shareId = params.get('share');
+  if (!shareId) return;
+
+  showLoading('공유된 카드뉴스를 불러오는 중...');
+  try {
+    var res = await fetch(SUPABASE_URL + '/rest/v1/cardnews_shares?share_id=eq.' + encodeURIComponent(shareId) + '&select=*', {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    var data = await res.json();
+    if (!data || !data[0]) throw new Error('카드를 찾을 수 없어요.');
+    var row = data[0];
+    cards = row.cards || [];
+    lastSummary = row.summary || {};
+    cardImages = {}; cardStyles = {}; cardAlign = {};
+    document.getElementById('cards-panel').style.display = 'block';
+    renderCards();
+    setStatus('ok', '공유된 카드뉴스를 불러왔어요: ' + (row.title || ''));
+    showToast('공유된 카드뉴스를 불러왔어요!');
+    setTimeout(function() { document.getElementById('cards-panel').scrollIntoView({ behavior: 'smooth' }); }, 200);
+  } catch(e) {
+    showToast('공유 링크 오류: ' + e.message);
+  } finally {
+    hideLoading();
+  }
 }
 
 window.addEventListener('DOMContentLoaded', init);
