@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>히포케이메논 카드뉴스</title>
+<title>MAGAZINIE — Card News Maker</title>
 <meta name="description" content="네이버 뉴스 → AI 카드뉴스 자동 생성" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23111%27/%3E%3Ctext x=%2732%27 y=%2742%27 font-size=%2734%27 text-anchor=%27middle%27 fill=%27white%27 font-family=%27Georgia%27 font-weight=%27900%27%3EM%3C/text%3E%3C/svg%3E" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css" />
@@ -157,7 +157,7 @@ h1 { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
 <nav class="app-sidebar">
   <a class="sidebar-logo" href="index.html">
     <span class="sidebar-logo-mark">M</span>
-    <span class="sidebar-logo-text">HYPOKEIMENON</span>
+    <span class="sidebar-logo-text">MAGAZINIE</span>
   </a>
   <div class="sidebar-nav">
     <div class="sidebar-nav-title">Make</div>
@@ -168,7 +168,7 @@ h1 { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
     <div class="side-steps-head">카드뉴스 만드는 순서</div>
     <ol class="side-step-list">
       <li class="side-step"><span class="side-step-num">1</span><span><b class="side-step-title">기사 검색</b><br><span class="side-step-desc">키워드를 넣고 뉴스를 불러와요.</span></span></li>
-      <li class="side-step"><span class="side-step-num">2</span><span><b class="side-step-title">기사 선택</b><br><span class="side-step-desc">기사를 클릭하면 AI가 5컷을 만들어요.</span></span></li>
+      <li class="side-step"><span class="side-step-num">2</span><span><b class="side-step-title">기사 선택</b><br><span class="side-step-desc">기사를 클릭하면 AI가 7컷을 만들어요.</span></span></li>
       <li class="side-step"><span class="side-step-num">3</span><span><b class="side-step-title">편집</b><br><span class="side-step-desc">문장·색상·이미지를 다듬어요.</span></span></li>
       <li class="side-step"><span class="side-step-num">4</span><span><b class="side-step-title">저장</b><br><span class="side-step-desc">PNG/ZIP으로 다운로드해요.</span></span></li>
     </ol>
@@ -182,7 +182,7 @@ h1 { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
       <div>
         <div class="section-label">Step 2</div>
         <h1>카드뉴스 만들기</h1>
-        <p class="lead">키워드로 기사를 검색하고, 기사를 선택하면 AI가 5컷 카드뉴스를 자동으로 만들어요.</p>
+        <p class="lead">키워드로 기사를 검색하고, 기사를 선택하면 AI가 7컷 카드뉴스를 자동으로 만들어요.</p>
       </div>
       <span id="usage-counter" style="font-size:12px;font-weight:700;color:#737373;"></span>
       <span class="worker-status-pill">
@@ -346,8 +346,8 @@ h1 { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
 <script>
 const SUPABASE_URL = 'https://tbvuipqcmyoyowkbfbmo.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRidnVpcHFjbXlveW93a2JmYm1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NDcxMzIsImV4cCI6MjA5NzMyMzEzMn0.fhvWH6cjKEOaLupg7EDZ9ATX8g7ZBsOsLTvOEk3HuGU';
-const WORKER_API_BASE = 'https://hypokeimenon-worker.hypokeimenon001.workers.dev';
-const SUGGEST_DEFAULT = ['블록체인','가상자산','NFT','암호화폐','Web3','메타버스','디파이','코인','토큰','거래소'];
+const WORKER_API_BASE = 'https://wispy-mountain-4c30.yjuio9603.workers.dev';
+const SUGGEST_DEFAULT = ['뷰티','화장품','올리브영','장원영','무신사','패션','스타일','팝업','트렌드','서울'];
 
 var searchTags = [];
 var currentArticles = [];
@@ -621,7 +621,7 @@ async function generateFromArticle(index) {
     setStatus(info.usedFullBody || info.usedManual ? 'ok' : 'warn', clean(info.status || 'AI 카드뉴스 생성 완료'));
     setTimeout(function() { $('cards-panel').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 80);
     incrementUsage();
-    showToast('AI 카드뉴스 5컷을 생성했어요.');
+    showToast('AI 카드뉴스 7컷을 생성했어요.');
   } catch(e) {
     setStatus('warn', e.message || '카드뉴스 생성 실패');
     showToast(e.message || '카드뉴스 생성 실패');
@@ -947,7 +947,7 @@ async function shareCards() {
   try {
     // share_id 생성
     var shareId = 'hypo-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    var title = cards[0] && cards[0].title ? cards[0].title.replace(/\n/g, ' ') : '히포케이메논 카드뉴스';
+    var title = cards[0] && cards[0].title ? cards[0].title.replace(/\n/g, ' ') : 'MAGAZINIE — Card News Maker';
 
     // Supabase 저장
     var res = await fetch(SUPABASE_URL + '/rest/v1/cardnews_shares', {
